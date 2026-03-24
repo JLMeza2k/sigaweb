@@ -1,0 +1,30 @@
+{
+  "name": "vtcapi",
+  "version": "1.0.0",
+  "description": "API gestor de comisiones de trabajo",
+  "keywords": [
+    "viaticos",
+    "ssa"
+  ],
+  "license": "ISC",
+  "author": "Juan Luis Meza Lucero",
+  "main": "index.ts",
+  "scripts": {
+    "start": "nodemon index.ts"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "consign": "^0.1.6",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mssql": "^12.2.0",
+    "nodemailer": "^7.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  }
+}
