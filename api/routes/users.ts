@@ -201,16 +201,7 @@ routerUsers.post('/reset-password', checkToken, async (req: AuthRequest, res: Re
 	}
 });
 
-function makeCode() { // Generar un código aleatorio de 5 caracteres para recuperación de contraseña
-	let codigo = '';
-	for (let i = 0; i < 5; i++) {
-		const ascii = Math.floor(Math.random() * (90 - 65 + 1)) + 65;
-		codigo += String.fromCharCode(ascii);
-	}
-	return codigo;
-}
-
-function checkToken(req: AuthRequest, res: Response, next: NextFunction) {  // Middleware para verificar que el token enviado por el cliente sea válido
+export function checkToken(req: AuthRequest, res: Response, next: NextFunction) {  // Middleware para verificar que el token enviado por el cliente sea válido
 	const token = req.headers['authorization'];
 	if (typeof token === 'undefined')
 		res.sendStatus(403)
