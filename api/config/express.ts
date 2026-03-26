@@ -1,4 +1,4 @@
-import express, { Application } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import routerVtc from './../routes/viaticos';
 import routerUsers from '../routes/users';
@@ -13,3 +13,4 @@ app.use('/api', routerVtc);
 app.use('/api', routerUsers);
 
 export default app;
+

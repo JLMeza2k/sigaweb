@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { poolPromise } from '../config/db';
+import { poolPromise, sql } from '../config/db';
+import { checkToken } from '../routes/users';
 
 const routerVtc = Router();
 

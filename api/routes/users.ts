@@ -6,8 +6,7 @@ import nodemailer from 'nodemailer';
 
 const routerUsers = Router();
 
-// Interfaz para extender Request y añadir idUser
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
 	idUser?: number;
 }
 
@@ -226,16 +225,7 @@ routerUsers.post('/reset-password', checkToken, async (req: AuthRequest, res: Re
 	}
 });
 
-function makeCode() { // Ok
-	let codigo = '';
-	for (let i = 0; i < 5; i++) {
-		const ascii = Math.floor(Math.random() * (90 - 65 + 1)) + 65;
-		codigo += String.fromCharCode(ascii);
-	}
-	return codigo;
-}
-
-function checkToken(req: AuthRequest, res: Response, next: NextFunction) {  // Ok
+export function checkToken(req: AuthRequest, res: Response, next: NextFunction) {  // Ok
 	const token = req.headers['authorization'];
 	if (typeof token === 'undefined')
 		res.sendStatus(403)
@@ -248,6 +238,15 @@ function checkToken(req: AuthRequest, res: Response, next: NextFunction) {  // O
 		})
 		next();
 	}
+}
+
+function makeCode() { // Ok
+	let codigo = '';
+	for (let i = 0; i < 5; i++) {
+		const ascii = Math.floor(Math.random() * (90 - 65 + 1)) + 65;
+		codigo += String.fromCharCode(ascii);
+	}
+	return codigo;
 }
 
 export default routerUsers;
