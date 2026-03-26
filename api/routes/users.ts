@@ -9,20 +9,7 @@ const routerUsers = Router();
 export interface AuthRequest extends Request {
 	idUser?: number;
 }
-/*
-routerUsers.get('/users', async (req: Request, res: Response) => {  // ok
-	try {
-		const pool = await poolPromise;
-		const result = await (pool as sql.ConnectionPool)
-			.request()
-			.query(`SELECT vu.RFC, e.Nombre, vu.Profile FROM Viaticos_WebUsers vu INNER JOIN Empleados e ON e.RFC = vu.RFC WHERE vu.Activo = 1`);
-		return res.json(result.recordset);
-	} catch (error) {
-		console.error('Error en la consulta a la base de datos:', error);
-		return res.status(500).json({ message: 'Error en el servidor al obtener los usuarios.' });
-	}
-});
-*/
+
 routerUsers.get('/user', checkToken, async (req: AuthRequest, res: Response) => { // Obtener datos del usuario logueado
 	try {
 		const pool = await poolPromise;
@@ -216,7 +203,7 @@ export function checkToken(req: AuthRequest, res: Response, next: NextFunction) 
 	}
 }
 
-function makeCode() { // Ok
+function makeCode() { // Generar un código aleatorio de 5 caracteres para recuperación de contraseña
 	let codigo = '';
 	for (let i = 0; i < 5; i++) {
 		const ascii = Math.floor(Math.random() * (90 - 65 + 1)) + 65;
