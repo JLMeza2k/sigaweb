@@ -9,7 +9,7 @@ const routerUsers = Router();
 export interface AuthRequest extends Request {
 	idUser?: number;
 }
-
+/*
 routerUsers.get('/users', async (req: Request, res: Response) => {  // ok
 	try {
 		const pool = await poolPromise;
@@ -22,8 +22,8 @@ routerUsers.get('/users', async (req: Request, res: Response) => {  // ok
 		return res.status(500).json({ message: 'Error en el servidor al obtener los usuarios.' });
 	}
 });
-
-routerUsers.get('/user', checkToken, async (req: AuthRequest, res: Response) => { // ok
+*/
+routerUsers.get('/user', checkToken, async (req: AuthRequest, res: Response) => { // Obtener datos del usuario logueado
 	try {
 		const pool = await poolPromise;
 		const userRow = await (pool as sql.ConnectionPool)
@@ -37,7 +37,7 @@ routerUsers.get('/user', checkToken, async (req: AuthRequest, res: Response) => 
 	}
 });
 
-routerUsers.post('/user', async (req: Request, res: Response) => {  // Ok
+routerUsers.post('/user', async (req: Request, res: Response) => {  // Crear nuevo usuario
 	try {
 		const saltRounds = 10;
 		const { rfc, email, password } = req.body;
@@ -62,31 +62,7 @@ routerUsers.post('/user', async (req: Request, res: Response) => {  // Ok
 	}
 });
 
-/*
-routerUsers.put('/user', checkToken, async (req, res) => {
-	let db;
-	try {
-		db = await connect();
-		const { first_name, last_name, password, profile_image } = req.body;
-		const idUser = req.idUser;
-		let query = `UPDATE users SET first_name='${first_name}', last_name='${last_name}', profile_image='${profile_image}'`
-		if (password.length > 0) {
-			const saltRounds = 10;
-			const hashPassword = bcrypt.hashSync(password, salt)
-			query += `, password='${hashPassword}'`
-		}
-		query += ` WHERE id=${idUser}`
-		const [result] = await db.execute(query);
-		res.status(200).json(result)
-	} catch (err) {
-		return res.status(500).json({ message: db ? err.sqlMessage : "DB connection issue" })
-	} finally {
-		if (db) await db.end();
-	}
-});
-*/
-
-routerUsers.post('/login', async (req: Request, res: Response) => {   // Ok
+routerUsers.post('/login', async (req: Request, res: Response) => {   // Acceso de usuario a la aplicación
 	try {
 		const { identifier, password } = req.body
 		let idUser: number = 0;
@@ -114,7 +90,7 @@ routerUsers.post('/login', async (req: Request, res: Response) => {   // Ok
 	}
 });
 
-routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {
+routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {  // Enviar código de recuperación de contraseña al correo del usuario
 	try {
 		const saltRounds = 10;
 		const { identifier } = req.body
@@ -185,7 +161,7 @@ routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {
 	}
 });
 
-routerUsers.post('/verify-reset-code', async (req: Request, res: Response) => {
+routerUsers.post('/verify-reset-code', async (req: Request, res: Response) => {   // Verificar que el código de recuperación de contraseña sea correcto
 	try {
 		const { identifier, code } = req.body
 		let idUser: number = 0;
@@ -209,7 +185,7 @@ routerUsers.post('/verify-reset-code', async (req: Request, res: Response) => {
 	}
 });
 
-routerUsers.post('/reset-password', checkToken, async (req: AuthRequest, res: Response) => {
+routerUsers.post('/reset-password', checkToken, async (req: AuthRequest, res: Response) => {   // Restablecer la contraseña del usuario después de verificar el código de recuperación
 	try {
 		const saltRounds = 10;
 		const pool = await poolPromise;
@@ -225,7 +201,16 @@ routerUsers.post('/reset-password', checkToken, async (req: AuthRequest, res: Re
 	}
 });
 
-export function checkToken(req: AuthRequest, res: Response, next: NextFunction) {  // Ok
+function makeCode() { // Generar un código aleatorio de 5 caracteres para recuperación de contraseña
+	let codigo = '';
+	for (let i = 0; i < 5; i++) {
+		const ascii = Math.floor(Math.random() * (90 - 65 + 1)) + 65;
+		codigo += String.fromCharCode(ascii);
+	}
+	return codigo;
+}
+
+function checkToken(req: AuthRequest, res: Response, next: NextFunction) {  // Middleware para verificar que el token enviado por el cliente sea válido
 	const token = req.headers['authorization'];
 	if (typeof token === 'undefined')
 		res.sendStatus(403)
