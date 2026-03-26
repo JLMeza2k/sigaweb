@@ -15,9 +15,10 @@ routerUsers.get('/user', checkToken, async (req: AuthRequest, res: Response) => 
 		const pool = await poolPromise;
 		const userRow = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`SELECT vu.RFC, e.Nombre, vu.Profile FROM Viaticos_WebUsers vu INNER JOIN Empleados e ON e.RFC = vu.RFC WHERE vu.Activo = 1 AND vu.IdUser=${req.idUser}`);
+			.query(`SELECT vu.IdUser, vu.RFC, e.Nombre, vu.eMail, vu.Profile, vu.Activo FROM WebUsers vu INNER JOIN Empleados e ON e.RFC = vu.RFC WHERE vu.IdUser=${req.idUser}`);
 		if (userRow.recordset.length === 0)
 			return res.status(404).json({ message: 'No se encontró el usuario' })
+		console.log("Usuario obtenido", JSON.stringify(userRow.recordset[0]))
 		res.status(200).json(userRow.recordset)
 	} catch (err: any) {
 		return res.status(500).json({ message: err.message || 'Error desconocido' })
@@ -35,14 +36,15 @@ routerUsers.post('/user', async (req: Request, res: Response) => {  // Crear nue
 			.input("RFC", sql.VarChar(13), rfc)
 			.input("pwd", sql.VarChar(1000), hashPassword)
 			.input("eMail", sql.VarChar(100), email)
+			.input("ActivationCode", sql.VarChar(5), makeCode())
 			.execute('webCreateUser');
 		console.log(userRow);
 		if (userRow.returnValue === 0)
-			res.status(409).json({message: "El usuario ya existe"})
-		if(userRow.returnValue === -1)
-			res.status(409).json({message: "El empleado no existe"})
+			res.status(409).json({ message: "El usuario ya existe" })
+		if (userRow.returnValue === -1)
+			res.status(409).json({ message: "El empleado no existe" })
 		if (userRow.returnValue === -2)
-			res.status(400).json({message: "Faltan datos obligatorios"})
+			res.status(400).json({ message: "Faltan datos obligatorios" })
 		res.status(200).json(userRow.recordset)
 	} catch (err: any) {
 		res.status(500).json({ message: err.message || 'Error desconocido' })
@@ -56,7 +58,7 @@ routerUsers.post('/login', async (req: Request, res: Response) => {   // Acceso 
 		const pool = await poolPromise;
 		const result = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`SELECT idUser, password FROM Viaticos_WebUsers WHERE rfc='${identifier}' OR email='${identifier}'`);
+			.query(`SELECT idUser, password FROM WebUsers WHERE rfc='${identifier}' OR email='${identifier}'`);
 		if (result.recordset.length > 0) {
 			if (bcrypt.compareSync(password, result.recordset[0].password))
 				idUser = result.recordset[0].idUser
@@ -70,7 +72,7 @@ routerUsers.post('/login', async (req: Request, res: Response) => {   // Acceso 
 			return res.status(404).json({ message: 'El usuario no existe' })
 		}
 		const token = jwt.sign({ idUser }, process.env.SECRET!, { expiresIn: '1d' })
-		console.log(token)
+		console.log("Acceso concedido", idUser)
 		res.status(200).json({ token: token, message: "Acceso concedido" })
 	} catch (error) {
 		res.status(500).json({ message: 'Error en el servidor al obtener el usuario.' });
@@ -85,7 +87,7 @@ routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {  /
 		const pool = await poolPromise;
 		const rowUser = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`SELECT vu.IdUser, vu.email, e.Nombre FROM Viaticos_WebUsers vu INNER JOIN Empleados e ON e.RFC=vu.RFC WHERE vu.Activo=1 AND rfc='${identifier}' OR email='${identifier}'`);
+			.query(`SELECT vu.IdUser, vu.email, e.Nombre FROM WebUsers vu INNER JOIN Empleados e ON e.RFC=vu.RFC WHERE vu.Activo=1 AND rfc='${identifier}' OR email='${identifier}'`);
 		if (rowUser.recordset.length > 0) {
 			idUser = rowUser.recordset[0].idUser
 			email = rowUser.recordset[0].email
@@ -137,7 +139,7 @@ routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {  /
 			const hashedCode = bcrypt.hashSync(code, saltRounds);
 			await (pool as sql.ConnectionPool)
 				.request()
-				.query(`UPDATE Viaticos_WebUsers SET CodePassRecover='${hashedCode}' WHERE IdUser=${idUser}`);
+				.query(`UPDATE WebUsers SET CodePassRecover='${hashedCode}' WHERE IdUser=${idUser}`);
 			return res.status(200).json({ email: email, message: 'Codigo enviado correctamente al correo electrónico' })
 		}
 		else
@@ -155,14 +157,14 @@ routerUsers.post('/verify-reset-code', async (req: Request, res: Response) => { 
 		const pool = await poolPromise;
 		const result = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`SELECT idUser, ISNULL(CodePassRecover,'') CodePassRecover FROM Viaticos_WebUsers WHERE rfc='${identifier}' OR email='${identifier}'`);
+			.query(`SELECT idUser, ISNULL(CodePassRecover,'') CodePassRecover FROM WebUsers WHERE rfc='${identifier}' OR email='${identifier}'`);
 		if (result.recordset.length > 0) {
 			if (!bcrypt.compareSync(code, result.recordset[0].CodePassRecover))
 				return res.status(401).json({ message: 'Código de recuperación incorrecto' })
 			else
 				idUser = result.recordset[0].idUser
 			const token = jwt.sign({ idUser }, process.env.SECRET!, { expiresIn: '1d' })
-			return res.status(200).json({ token: token, message: "Restablecimiento de Contraseña autorizado"})
+			return res.status(200).json({ token: token, message: "Restablecimiento de Contraseña autorizado" })
 		}
 		else
 			return res.status(404).json({ message: 'El usuario no existe' })
@@ -180,13 +182,54 @@ routerUsers.post('/reset-password', checkToken, async (req: AuthRequest, res: Re
 		const hashPassword = bcrypt.hashSync(newPassword, saltRounds);
 		const result = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`UPDATE Viaticos_WebUsers SET password='${hashPassword}' WHERE idUser=${req.idUser}`);
+			.query(`UPDATE WebUsers SET CodePassRecover=NULL password='${hashPassword}' WHERE idUser=${req.idUser}`);
 		res.status(200).json(result)
 	} catch (error) {
 		console.error('Error en la consulta a la base de datos:', error);
 		return res.status(500).json({ message: 'Error en el servidor al obtener los usuarios.' });
 	}
 });
+
+routerUsers.post('/verify-activation-code', checkToken, async (req: AuthRequest, res: Response) => {   // Verificar que el código de activación sea correcto
+	try {
+		const { code } = req.body
+		const pool = await poolPromise;
+		const result = await (pool as sql.ConnectionPool)
+			.request()
+			.query(`SELECT idUser, ISNULL(ActivationCode,'') ActivationCode FROM WebUsers WHERE IdUser=${req.idUser}`);
+		if (result.recordset.length > 0) {
+			if (!bcrypt.compareSync(code, result.recordset[0].ActivationCode))
+				return res.status(401).json({ message: 'Código de recuperación incorrecto' })
+			const rslUpdate = await (pool as sql.ConnectionPool)
+				.request()
+				.query(`UPDATE WebUsers SET ActivationCode=NULL, Activo=1 WHERE IdUser=${req.idUser}`);
+			return res.status(200).json({ message: "Activación exitosa" })
+		}
+		else
+			return res.status(404).json({ message: 'El usuario no existe' })
+	} catch (error) {
+		console.error('Error en la consulta a la base de datos:', error);
+		return res.status(500).json({ message: 'Error en el servidor al obtener los usuarios.' });
+	}
+});
+
+routerUsers.post("/add-employee-to-user", checkToken, async (req: AuthRequest, res: Response) => {   // Agregar un empleado para su gestión a un usuario
+	try {
+		const { RFC, eMail } = req.body
+		const pool = await poolPromise;
+		const result = await (pool as sql.ConnectionPool)
+			.request()
+			.input("IdUser", req.idUser)
+			.input("RFC", RFC)
+			.input("eMail", eMail)
+			.execute("webAddEmployeeToUser");
+		res.status(200).json(result)
+	} catch (error) {
+		console.error('Error en la consulta a la base de datos:', error);
+		return res.status(500).json({ message: 'Error en el servidor al obtener los usuarios.' });
+	}
+});
+
 
 export function checkToken(req: AuthRequest, res: Response, next: NextFunction) {  // Middleware para verificar que el token enviado por el cliente sea válido
 	const token = req.headers['authorization'];

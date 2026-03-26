@@ -1,11 +1,10 @@
 export type UserType = {
-   id: number;
-   username: string;
-   first_name: string;
-   last_name: string;
-   email: string;
-   profile_image: string | null,  
-   isAdmin: boolean
+   IdUser: number;
+   RFC: string;
+   Nombre: string;
+   eMail: string;
+   Profile: number,
+   Activo: boolean
 }
 
 export type LoginType = {
