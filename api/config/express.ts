@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import routerVtc from './../routes/viaticos';
 import routerUsers from '../routes/users';
+import routerCatalogos from '../routes/catalogos';
 
 const app: Application = express();
 app.use(express.json({ limit: '50mb' }));
@@ -11,7 +12,7 @@ app.set('port', process.env.PORT || 3000);
 
 app.use('/api', routerVtc);
 app.use('/api', routerUsers);
-
+app.use('/api', routerCatalogos);
 
 export default app;
 

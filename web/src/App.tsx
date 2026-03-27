@@ -3,6 +3,7 @@ import { useAuth } from './utils/useAuth';
 import Login from './components/Login';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import NuevaComision from './components/NuevaComision';
 
 function App() {
   const { user, token, logout, isLoading } = useAuth();
@@ -129,7 +130,11 @@ function App() {
                </>
             )}
 
-            {activeView !== 'dashboard' && (
+            {activeView === 'comisiones' && (
+               <NuevaComision onSuccess={() => setActiveView('dashboard')} />
+            )}
+
+            {activeView !== 'dashboard' && activeView !== 'comisiones' && (
                <div className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-200 text-center animate-in slide-in-from-bottom-4 duration-500">
                   <div className="w-20 h-20 bg-slate-100 rounded-3xl mx-auto mb-6 flex items-center justify-center text-slate-400">
                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +143,7 @@ function App() {
                   </div>
                   <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight uppercase">Módulo en Desarrollo</h2>
                   <p className="text-slate-500 max-w-lg mx-auto font-medium text-lg leading-relaxed">
-                     Estamos trabajando arduamente para integrar las funcionalidades de <span className="text-blue-600 font-bold">{getViewTitle()}</span> próximamente.
+                     Estamos trabajando para integrar las funcionalidades de <span className="text-blue-600 font-bold">{getViewTitle()}</span> próximamente.
                   </p>
                   <button onClick={() => setActiveView('dashboard')} className="mt-10 px-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all active:scale-95">
                      Volver al Inicio
