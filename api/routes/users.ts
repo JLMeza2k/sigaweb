@@ -224,12 +224,12 @@ routerUsers.post("/add-employee-to-user", checkToken, async (req: AuthRequest, r
 			.input("eMail", eMail)
 			.execute("webAddEmployeeToUser");
 		if (result.returnValue === 0)
-			res.status(409).json({ message: "El usuario gestor no existe" })
+			return res.status(409).json({ message: "El usuario gestor no existe" })
 		if (result.returnValue === -1)
-			res.status(409).json({ message: "El RFC del empleado a gestionar no existe" })
+			return res.status(409).json({ message: "El RFC del empleado a gestionar no existe" })
 		if (result.returnValue === -2)
-			res.status(400).json({ message: "El gestor ya tiene ese empleado asignado" })
-		res.status(200).json({ message: "Empleado agregado correctamente" })
+			return res.status(400).json({ message: "El gestor ya tiene ese empleado asignado" })
+		return res.status(200).json({ message: "Empleado agregado correctamente" })
 	} catch (error) {
 		console.error('Error en la consulta a la base de datos:', error);
 		return res.status(500).json({ message: 'Error en el servidor al obtener los usuarios.' });

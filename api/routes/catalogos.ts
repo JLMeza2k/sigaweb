@@ -29,6 +29,21 @@ routerCatalogos.get('/catalogos/empleados', async (req: Request, res: Response) 
    }
 });
 
+routerCatalogos.get('/catalogos/buscar-empleados', async (req: Request, res: Response) => {   // Buscar empleados por RFC o nombre (patrón)
+   try {
+      let searchPattern = (req.query.searchPattern as string) || '';
+      searchPattern = '%' + searchPattern.trim().replace(/\s+/g, '%') + '%';
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT TOP 50 RFC, Nombre, CLUES, Unidad FROM vwEmplLastClUES WHERE Nombre LIKE '${searchPattern}' OR RFC LIKE '${searchPattern}'`);
+      res.status(200).json(result)
+   } catch (error) {
+      console.error('Error en la consulta a la base de datos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener el catálogo de empleados.' });
+   }
+});
+
 routerCatalogos.get('/catalogos/clues/:clues', async (req: Request, res: Response) => {   // Obtener el catálogo de CLUES
    try {
       const pool = await poolPromise;
