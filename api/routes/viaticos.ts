@@ -9,7 +9,7 @@ routerVtc.get('/comision', checkToken, async (req: AuthRequest, res: Response) =
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
          .request()
-         .query(`SELECT * FROM ComisionesTrabajo WHERE CreatedBy=${req.idUser}`);
+         .query(`SELECT Nombre, Adscripcion, FechaSalida, FechaRegreso, Localidad, Motivo, NumOficio, Status FROM vwComisionTrabajo WHERE CreatedBy=${req.idUser}`);
       return res.status(200).json(result.recordset)
    } catch (error) {
       console.error('Error al obtener las comisiones:', error);

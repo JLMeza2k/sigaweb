@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import NuevaComision from './components/NuevaComision';
+import MisViaticos from './components/MisViaticos';
 
 function App() {
   const { user, token, logout, isLoading } = useAuth();
@@ -134,7 +135,11 @@ function App() {
                <NuevaComision onSuccess={() => setActiveView('dashboard')} />
             )}
 
-            {activeView !== 'dashboard' && activeView !== 'comisiones' && (
+            {activeView === 'viaticos' && (
+               <MisViaticos />
+            )}
+
+            {activeView !== 'dashboard' && activeView !== 'comisiones' && activeView !== 'viaticos' && (
                <div className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-200 text-center animate-in slide-in-from-bottom-4 duration-500">
                   <div className="w-20 h-20 bg-slate-100 rounded-3xl mx-auto mb-6 flex items-center justify-center text-slate-400">
                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
