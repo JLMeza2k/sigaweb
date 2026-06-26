@@ -10,7 +10,8 @@
   "author": "Juan Luis Meza Lucero",
   "main": "index.ts",
   "scripts": {
-    "start": "nodemon index.ts"
+    "start": "nodemon index.ts",
+    "dev": "nodemon --exec \"node --env-file=.env -r ts-node/register\" index.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

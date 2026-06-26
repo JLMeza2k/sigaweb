@@ -47,4 +47,26 @@ routerVtc.post('/comision', checkToken, async (req: AuthRequest, res: Response) 
    }
 })
 
+routerVtc.post('/relviaticos', checkToken, async (req: AuthRequest, res: Response) => {
+   try {
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .input('Año', sql.SmallInt, req.body.Año)
+         .input('RFC', sql.VarChar(13), req.body.RFC)
+         .input('FF', sql.VarChar(3), req.body.FF)
+         .input('Director', sql.VarChar(13), req.body.Director)
+         .input('FromUA', sql.TinyInt, req.body.FromUA)
+         .input('FromCentro', sql.TinyInt, req.body.FromCentro)
+         .input('FromFecha', sql.Date, req.body.FromFecha)
+         .input('ToFecha', sql.Date, req.body.ToFecha)
+         .input('OnlyPend', sql.Bit, req.body.OnlyPend)
+         .execute("webRelViaticos");
+      return res.status(200).json(result.recordset)
+   } catch (error) {
+      console.error('Error al obtener la relación de viáticos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener la relación de viáticos.' });
+   }
+})
+
 export default routerVtc;

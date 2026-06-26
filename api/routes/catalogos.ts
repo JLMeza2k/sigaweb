@@ -122,4 +122,43 @@ routerCatalogos.get('/catalogos/localidad/:idLocalidad', async (req: Request, re
    }
 });
 
+routerCatalogos.get('/catalogos/ff/:ejercicio', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
+   try {
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT Codigo, Descripcion FROM Fuentes_Financiamiento WHERE Consolidable=1 AND MomentosEgreso=63 AND Año=${req.params.ejercicio}`);
+      res.status(200).json(result)
+   } catch (error) {
+      console.error('Error en la consulta a la base de datos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener las fuentes de financiamiento.' });
+   }
+});
+
+routerCatalogos.get('/catalogos/unidades', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
+   try {
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT Unidad, ShortName FROM Areas WHERE Centro=0 AND Area='000'`);
+      res.status(200).json(result)
+   } catch (error) {
+      console.error('Error en la consulta a la base de datos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener las unidades aplicativas.' });
+   }
+});
+
+routerCatalogos.get('/catalogos/centros/:ua', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
+   try {
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT Unidad, Centro, ShortName FROM Areas WHERE Area='000' AND Unidad=${req.params.ua}`);
+      res.status(200).json(result)
+   } catch (error) {
+      console.error('Error en la consulta a la base de datos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener los centros de trabajo.' });
+   }
+});
+
 export default routerCatalogos;

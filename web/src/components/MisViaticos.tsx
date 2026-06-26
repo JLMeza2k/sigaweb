@@ -1,54 +1,52 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '../utils/useAuth';
 import HttpClient from '../utils/HttpClient';
 
 /* ─────────────────────────────────────────────
    Types
 ───────────────────────────────────────────── */
-type Comision = {
+type RelViatico = {
+  Numero: number;
+  Año: number;
+  OfComision: string | null;
   Nombre: string;
-  Adscripcion: string;
-  FechaSalida: string;
-  FechaRegreso: string;
-  Localidad: string;
+  Comisionado_a: string;
+  Periodo_Del: string;
   Motivo: string;
-  NumOficio: string | null;
-  Status: string | number | null;
+  FF: string;
+  Dias: number;
+  Viaticos: number;
+  Pasajes: number;
+  FechaPago: string | null;
+  Comprobado: boolean | null;
 };
 
-type ActionKey = 'autorizar' | 'asignarOficio' | 'imprimir';
+type FFItem = { Codigo: string; Descripcion: string };
+type UAItem = { Unidad: number; ShortName: string };
+type CentroItem = { Unidad: number; Centro: number; ShortName: string };
 
-interface ActionItem {
-  key: ActionKey;
-  label: string;
-  icon: string;
-  colorClass: string;
+interface Filters {
+  Año: number;
+  FF: string;
+  RFC: string;
+  Director: string;
+  FromUA: number | '';
+  FromCentro: number | '';
+  FromFecha: string;
+  ToFecha: string;
+  OnlyPend: boolean;
 }
-
-const ACTIONS: ActionItem[] = [
-  {
-    key: 'autorizar',
-    label: 'Autorizar',
-    icon: 'M5 13l4 4L19 7',
-    colorClass: 'text-emerald-600 hover:bg-emerald-50',
-  },
-  {
-    key: 'asignarOficio',
-    label: 'Asignar Oficio',
-    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-    colorClass: 'text-blue-600 hover:bg-blue-50',
-  },
-  {
-    key: 'imprimir',
-    label: 'Imprimir',
-    icon: 'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z',
-    colorClass: 'text-slate-600 hover:bg-slate-100',
-  },
-];
 
 /* ─────────────────────────────────────────────
    Helpers
 ───────────────────────────────────────────── */
+const CURRENT_YEAR = new Date().getFullYear();
+const START_YEAR = 2024;
+const YEARS = Array.from({ length: CURRENT_YEAR - START_YEAR + 1 }, (_, i) => START_YEAR + i);
+
+function defaultFromFecha(year: number) { return `${year}-01-01`; }
+function defaultToFecha(year: number) { return `${year}-12-31`; }
+
 function formatDate(raw: string | null | undefined): string {
   if (!raw) return '—';
   const d = new Date(raw);
@@ -56,313 +54,42 @@ function formatDate(raw: string | null | undefined): string {
   return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function statusBadge(status: string | number | null) {
-  const s = String(status ?? '').toLowerCase();
-  const map: Record<string, { label: string; cls: string }> = {
-    '1': { label: 'Pendiente', cls: 'bg-amber-100 text-amber-700 border-amber-200' },
-    'pendiente': { label: 'Pendiente', cls: 'bg-amber-100 text-amber-700 border-amber-200' },
-    '2': { label: 'Autorizado', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    'autorizado': { label: 'Autorizado', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    '3': { label: 'Rechazado', cls: 'bg-red-100 text-red-700 border-red-200' },
-    'rechazado': { label: 'Rechazado', cls: 'bg-red-100 text-red-700 border-red-200' },
-  };
-  const resolved = map[s] ?? { label: status ?? '—', cls: 'bg-slate-100 text-slate-600 border-slate-200' };
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${resolved.cls}`}>
-      {resolved.label}
-    </span>
-  );
+function formatMoney(value: number | null | undefined): string {
+  if (value == null) return '—';
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value);
 }
 
 /* ─────────────────────────────────────────────
-   Actions Dropdown
+   Reusable field components
 ───────────────────────────────────────────── */
-import { createPortal } from 'react-dom';
-
-interface ActionsDropdownProps {
-  row: Comision;
-  onAction: (action: ActionKey, row: Comision) => void;
+interface SelectFieldProps {
+  id: string; label: string; value: string | number;
+  onChange: (v: string) => void; disabled?: boolean; children: React.ReactNode;
 }
-
-function ActionsDropdown({ row, onAction }: ActionsDropdownProps) {
-  const [open, setOpen] = useState(false);
-  const [rect, setRect] = useState<DOMRect | null>(null);
-  const ref = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      // Close if clicking outside the button AND outside the menu
-      if (
-        ref.current && !ref.current.contains(e.target as Node) &&
-        menuRef.current && !menuRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    const handleScroll = () => setOpen(false); // Close on scroll for simplicity
-
-    document.addEventListener('mousedown', handler);
-    window.addEventListener('scroll', handleScroll, true); // true to catch scroll in table
-    return () => {
-      document.removeEventListener('mousedown', handler);
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, []);
-
-  const handleToggle = (e: React.MouseEvent) => {
-    if (!open) {
-      setRect(e.currentTarget.getBoundingClientRect());
-      setOpen(true);
-    } else {
-      setOpen(false);
-    }
-  };
-
+function SelectField({ id, label, value, onChange, disabled, children, className }: SelectFieldProps & { className?: string }) {
   return (
-    <>
-      <button ref={ref} id={`actions-btn-${row.NumOficio ?? row.FechaSalida}`} onClick={handleToggle}
-        className="relative z-10 inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 text-xs font-bold rounded-lg transition-all duration-150 border border-slate-200 hover:border-slate-300 shadow-sm" >
-        Acciones
-        <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24" >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {open && rect && createPortal(
-        <div
-          ref={menuRef}
-          className="fixed z-[9999] w-48 rounded-xl bg-white shadow-xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
-          style={{ top: rect.bottom + 8, right: window.innerWidth - rect.right }}
-        >
-          {ACTIONS.map(action => (
-            <button
-              key={action.key}
-              id={`action-${action.key}-${row.NumOficio ?? row.FechaSalida}`}
-              onClick={() => { setOpen(false); onAction(action.key, row); }}
-              className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold transition-colors duration-100 ${action.colorClass}`}
-            >
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={action.icon} />
-              </svg>
-              {action.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </>
+    <div className={`flex flex-col gap-1 ${className || ''}`}>
+      <label htmlFor={id} className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+      <select id={id} value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
+        className="h-9 px-3 pr-8 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all appearance-none cursor-pointer text-slate-700 font-medium shadow-sm w-full"
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.6rem center', backgroundSize: '1rem' }}>
+        {children}
+      </select>
+    </div>
   );
 }
 
-/* ─────────────────────────────────────────────
-   Main Component
-───────────────────────────────────────────── */
-export default function MisViaticos() {
-  const { token } = useAuth();
-  const httpClient = useMemo(() => new HttpClient('/api'), []);
-
-  const [comisiones, setComisiones] = useState<Comision[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-
-  /* Fetch ─────────────────────────────────── */
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    httpClient.get('comision', token)
-      .then(async res => {
-        if (cancelled) return;
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          setError(body.message ?? `Error ${res.status}`);
-          return;
-        }
-        const data: Comision[] = await res.json();
-        setComisiones(data);
-      })
-      .catch(err => {
-        if (!cancelled) setError(err.message ?? 'Error de red');
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [token]);
-
-  /* Filter ────────────────────────────────── */
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    if (!q) return comisiones;
-    return comisiones.filter(c =>
-      [c.Nombre, c.Adscripcion, c.Localidad, c.Motivo, c.NumOficio ?? '']
-        .some(v => v.toLowerCase().includes(q))
-    );
-  }, [comisiones, search]);
-
-  /* Action handler (placeholder) ──────────── */
-  const handleAction = (action: ActionKey, row: Comision) => {
-    // TODO: Implementar lógica de cada acción
-    console.log('[MisViaticos] Acción:', action, row);
-  };
-
-  /* ─────── Skeleton ─────── */
-  if (loading) {
-    return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <PageHeader />
-        <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse" />
-          </div>
-          <div className="divide-y divide-slate-100">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex gap-4 px-6 py-4">
-                {Array.from({ length: 6 }).map((_, j) => (
-                  <div key={j} className="h-4 flex-1 bg-slate-100 rounded animate-pulse" style={{ animationDelay: `${j * 60}ms` }} />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ─────── Error ─────── */
-  if (error) {
-    return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <PageHeader />
-        <div className="bg-white rounded-[2rem] shadow-sm border border-red-100 p-12 text-center">
-          <div className="w-16 h-16 bg-red-50 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-black text-slate-800 mb-2">No se pudieron cargar los viáticos</h3>
-          <p className="text-slate-500 text-sm font-medium">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  /* ─────── Render ─────── */
+interface InputFieldProps {
+  id: string; label: string; type?: string; value: string;
+  onChange: (v: string) => void; min?: string; max?: string; placeholder?: string;
+}
+function InputField({ id, label, type = 'text', value, onChange, min, max, placeholder }: InputFieldProps) {
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader />
-
-      {/* Stats bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: 'Total', value: comisiones.length, color: 'bg-blue-600' },
-          { label: 'Pendientes', value: comisiones.filter(c => String(c.Status) === '1' || String(c.Status).toLowerCase() === 'pendiente').length, color: 'bg-amber-500' },
-          { label: 'Autorizados', value: comisiones.filter(c => String(c.Status) === '2' || String(c.Status).toLowerCase() === 'autorizado').length, color: 'bg-emerald-600' },
-          { label: 'Con oficio', value: comisiones.filter(c => !!c.NumOficio).length, color: 'bg-slate-700' },
-        ].map(stat => (
-          <div key={stat.label} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center gap-4">
-            <div className={`w-10 h-10 ${stat.color} rounded-xl flex-shrink-0`} />
-            <div>
-              <p className="text-2xl font-black text-slate-900">{stat.value}</p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{stat.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Table card */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
-        {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-slate-100">
-          <h2 className="text-base font-black text-slate-800 uppercase tracking-tight">Historial de Comisiones</h2>
-          <div className="relative w-full sm:w-72">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              id="viaticos-search"
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, localidad…"
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 placeholder:text-slate-400 transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Empty state */}
-        {filtered.length === 0 ? (
-          <div className="py-20 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <p className="text-slate-500 font-semibold">
-              {search ? 'Sin resultados para tu búsqueda' : 'No tienes comisiones registradas'}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  {['Empleado / Adscripción', 'Periodo', 'Localidad', 'Motivo', 'No. Oficio', 'Estatus', 'Acciones'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.map((row, idx) => (
-                  <tr
-                    key={idx}
-                    className="hover:bg-blue-50/40 transition-colors duration-100 group"
-                  >
-                    <td className="px-4 py-3 max-w-[200px]">
-                      <p className="font-semibold text-slate-800 truncate" title={row.Nombre}>{row.Nombre}</p>
-                      <p className="text-xs text-slate-400 truncate mt-0.5" title={row.Adscripcion}>{row.Adscripcion || '—'}</p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="text-slate-700 text-xs font-semibold">{formatDate(row.FechaSalida)}</p>
-                      <p className="text-slate-400 text-xs mt-0.5">{formatDate(row.FechaRegreso)}</p>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap max-w-[140px] truncate" title={row.Localidad}>
-                      {row.Localidad || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 max-w-[200px] truncate" title={row.Motivo}>
-                      {row.Motivo || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap font-mono text-xs">
-                      {row.NumOficio ?? <span className="text-slate-400 italic">Sin asignar</span>}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">{statusBadge(row.Status)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <ActionsDropdown row={row} onAction={handleAction} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Footer count */}
-        {filtered.length > 0 && (
-          <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50">
-            <p className="text-xs text-slate-400 font-medium">
-              Mostrando <span className="font-bold text-slate-600">{filtered.length}</span> de{' '}
-              <span className="font-bold text-slate-600">{comisiones.length}</span> registros
-            </p>
-          </div>
-        )}
-      </div>
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+      <input id={id} type={type} value={value} onChange={e => onChange(e.target.value)}
+        min={min} max={max} placeholder={placeholder}
+        className="h-9 px-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all text-slate-700 font-medium shadow-sm placeholder:text-slate-400" />
     </div>
   );
 }
@@ -380,9 +107,406 @@ function PageHeader() {
         </svg>
       </div>
       <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Mis Viáticos</h1>
-        <p className="text-sm text-slate-500 font-medium">Consulta y gestiona tus comisiones de trabajo</p>
+        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Relación de Viáticos</h1>
+        <p className="text-sm text-slate-500 font-medium">Consulta y filtra el registro de comisiones de trabajo</p>
       </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Main Component
+───────────────────────────────────────────── */
+export default function MisViaticos() {
+  const { token } = useAuth();
+  const httpClient = useMemo(() => new HttpClient('/api'), []);
+
+  // Catalog states
+  const [ffList, setFfList] = useState<FFItem[]>([]);
+  const [uaList, setUaList] = useState<UAItem[]>([]);
+  const [centroList, setCentroList] = useState<CentroItem[]>([]);
+  const [loadingFF, setLoadingFF] = useState(false);
+  const [loadingUA, setLoadingUA] = useState(false);
+  const [loadingCentro, setLoadingCentro] = useState(false);
+
+  // Filter state
+  const [filters, setFilters] = useState<Filters>({
+    Año: CURRENT_YEAR, FF: '', RFC: '', Director: '',
+    FromUA: 12, FromCentro: 1,
+    FromFecha: defaultFromFecha(CURRENT_YEAR),
+    ToFecha: defaultToFecha(CURRENT_YEAR),
+    OnlyPend: false,
+  });
+
+  // Result states
+  const [rows, setRows] = useState<RelViatico[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searched, setSearched] = useState(false);
+  const [search, setSearch] = useState('');
+
+  /* Load FF when year changes */
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingFF(true);
+    setFfList([]);
+    setFilters(f => ({ ...f, FF: '' }));
+    httpClient.get(`catalogos/ff/${filters.Año}`, token)
+      .then(async res => {
+        if (cancelled || !res.ok) return;
+        const data = await res.json();
+        setFfList(data?.recordset ?? data);
+      })
+      .catch(() => { })
+      .finally(() => { if (!cancelled) setLoadingFF(false); });
+    return () => { cancelled = true; };
+  }, [filters.Año, token]);
+
+  /* Load Unidades once */
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingUA(true);
+    httpClient.get('catalogos/unidades', token)
+      .then(async res => {
+        if (cancelled || !res.ok) return;
+        const data = await res.json();
+        setUaList(data?.recordset ?? data);
+      })
+      .catch(() => { })
+      .finally(() => { if (!cancelled) setLoadingUA(false); });
+    return () => { cancelled = true; };
+  }, [token]);
+
+  // Keep track of whether we've done the initial load of centros to avoid resetting the default FromCentro: 1
+  const isInitialCentrosLoad = useRef(true);
+
+  /* Load Centros when UA changes */
+  useEffect(() => {
+    if (filters.FromUA === '') {
+      setCentroList([]);
+      setFilters(f => ({ ...f, FromCentro: '' }));
+      return;
+    }
+    let cancelled = false;
+    setLoadingCentro(true);
+    setCentroList([]);
+
+    // If it's not the initial load, reset Centro to empty when UA changes.
+    if (!isInitialCentrosLoad.current) {
+      setFilters(f => ({ ...f, FromCentro: '' }));
+    }
+
+    httpClient.get(`catalogos/centros/${filters.FromUA}`, token)
+      .then(async res => {
+        if (cancelled || !res.ok) return;
+        const data = await res.json();
+        setCentroList(data?.recordset ?? data);
+      })
+      .catch(() => { })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingCentro(false);
+          isInitialCentrosLoad.current = false;
+        }
+      });
+    return () => { cancelled = true; };
+  }, [filters.FromUA, token]);
+
+  const handleYearChange = useCallback((val: string) => {
+    const y = Number(val);
+    setFilters(f => ({ ...f, Año: y, FromFecha: defaultFromFecha(y), ToFecha: defaultToFecha(y) }));
+  }, []);
+
+  const setFilter = useCallback(<K extends keyof Filters>(key: K, val: Filters[K]) => {
+    setFilters(f => ({ ...f, [key]: val }));
+  }, []);
+
+  const handleSearch = useCallback(async () => {
+    setLoading(true); setError(null); setRows([]); setSearched(true); setSearch('');
+    const body = {
+      Año: filters.Año,
+      RFC: filters.RFC.trim() || '',
+      FF: filters.FF || '',
+      Director: filters.Director.trim() || '',
+      FromUA: filters.FromUA === '' ? 0 : Number(filters.FromUA),
+      FromCentro: filters.FromCentro === '' ? 0 : Number(filters.FromCentro),
+      FromFecha: filters.FromFecha,
+      ToFecha: filters.ToFecha,
+      OnlyPend: filters.OnlyPend,
+    };
+    try {
+      const res = await httpClient.post('relviaticos', body, token);
+      if (!res.ok) { const e = await res.json().catch(() => ({})); setError(e.message ?? `Error ${res.status}`); return; }
+      setRows(await res.json());
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error de red');
+    } finally { setLoading(false); }
+  }, [filters, token, httpClient]);
+
+  /* Client-side text filter */
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    if (!q) return rows;
+    return rows.filter(r =>
+      [r.Nombre, r.Comisionado_a, r.Motivo, r.FF, r.OfComision]
+        .some(v => String(v ?? '').toLowerCase().includes(q))
+    );
+  }, [rows, search]);
+
+  /* Totals */
+  const totalViaticos = rows.reduce((s, r) => s + (r.Viaticos ?? 0), 0);
+  const totalPasajes = rows.reduce((s, r) => s + (r.Pasajes ?? 0), 0);
+  const pending = rows.filter(r => !r.FechaPago).length;
+
+  return (
+    <div className="w-full space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+      {/* ── Filter panel ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-slate-50/60">
+          <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+          </svg>
+          <span className="text-sm font-black text-slate-700 uppercase tracking-tight">Filtros de búsqueda</span>
+        </div>
+        <div className="p-5 space-y-4">
+          {/* Row 1 */}
+          <div className="flex flex-wrap gap-3">
+            <SelectField id="fil-anio" label="Año" value={filters.Año} onChange={handleYearChange} className="w-24 shrink-0">
+              {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            </SelectField>
+            <SelectField id="fil-ff" label="Fuente de Financiamiento" value={filters.FF} onChange={v => setFilter('FF', v)} disabled={loadingFF} className="flex-1 min-w-[200px]">
+              <option value="">{loadingFF ? 'Cargando…' : 'Todas las FF'}</option>
+              {ffList.map(ff => <option key={ff.Codigo} value={ff.Codigo}>{ff.Codigo} — {ff.Descripcion}</option>)}
+            </SelectField>
+            <SelectField id="fil-ua" label="Unidad Administrativa" value={filters.FromUA} onChange={v => setFilter('FromUA', v === '' ? '' : Number(v))} disabled={loadingUA} className="flex-1 min-w-[200px]">
+              <option value="">{loadingUA ? 'Cargando…' : 'Todas las UA'}</option>
+              {uaList.map(ua => <option key={ua.Unidad} value={ua.Unidad}>{ua.ShortName}</option>)}
+            </SelectField>
+            <SelectField id="fil-centro" label="Centro de Trabajo" value={filters.FromCentro} onChange={v => setFilter('FromCentro', v === '' ? '' : Number(v))} disabled={filters.FromUA === '' || loadingCentro} className="flex-1 min-w-[200px]">
+              <option value="">{filters.FromUA === '' ? 'Selecciona UA primero' : loadingCentro ? 'Cargando…' : 'Todos los centros'}</option>
+              {centroList.map(c => <option key={`${c.Unidad}-${c.Centro}`} value={c.Centro}>{c.ShortName}</option>)}
+            </SelectField>
+          </div>
+          {/* Row 2 */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+            <InputField id="fil-from-fecha" label="Fecha Desde" type="date" value={filters.FromFecha} onChange={v => setFilter('FromFecha', v)} min={`${filters.Año}-01-01`} max={`${filters.Año}-12-31`} />
+            <InputField id="fil-to-fecha" label="Fecha Hasta" type="date" value={filters.ToFecha} onChange={v => setFilter('ToFecha', v)} min={`${filters.Año}-01-01`} max={`${filters.Año}-12-31`} />
+            <InputField id="fil-rfc" label="RFC Empleado" value={filters.RFC} onChange={v => setFilter('RFC', v)} placeholder="(todos)" />
+            <InputField id="fil-director" label="RFC Director" value={filters.Director} onChange={v => setFilter('Director', v)} placeholder="(todos)" />
+            {/* Solo pendientes */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Pendientes</span>
+              <label htmlFor="fil-only-pend" className="h-9 flex items-center gap-2 cursor-pointer select-none px-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-blue-300 transition-all">
+                <input id="fil-only-pend" type="checkbox" checked={filters.OnlyPend} onChange={e => setFilter('OnlyPend', e.target.checked)} className="w-4 h-4 accent-blue-600 cursor-pointer" />
+                <span className="text-sm font-semibold text-slate-600">Solo pendientes</span>
+              </label>
+            </div>
+            {/* Buscar */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide opacity-0 pointer-events-none select-none">.</span>
+              <button id="btn-buscar-viaticos" onClick={handleSearch} disabled={loading}
+                className="h-9 px-5 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-700 hover:to-sky-600 active:scale-95 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                {loading ? (
+                  <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>Buscando…</>
+                ) : (
+                  <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>Buscar</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Error ── */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in duration-300">
+          <div className="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-red-700">{error}</p>
+        </div>
+      )}
+
+      {/* ── Stats (after search) ── */}
+      {searched && !loading && !error && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-in fade-in duration-300">
+          {[
+            { label: 'Registros', value: rows.length.toString(), from: 'from-blue-600', to: 'to-sky-400', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+            { label: 'Pendientes de pago', value: pending.toString(), from: 'from-amber-500', to: 'to-orange-400', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { label: 'Total Viáticos', value: formatMoney(totalViaticos), from: 'from-emerald-600', to: 'to-teal-400', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { label: 'Total Pasajes', value: formatMoney(totalPasajes), from: 'from-violet-600', to: 'to-purple-400', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
+          ].map(stat => (
+            <div key={stat.label} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center gap-3 overflow-hidden">
+              <div className={`w-10 h-10 bg-gradient-to-br ${stat.from} ${stat.to} rounded-xl flex-shrink-0 flex items-center justify-center shadow-md`}>
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={stat.icon} />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-black text-slate-900 truncate">{stat.value}</p>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide truncate">{stat.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Results table ── */}
+      {searched && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-300">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
+            <h2 className="text-sm font-black text-slate-700 uppercase tracking-tight">
+              Resultados
+              {!loading && filtered.length > 0 && (
+                <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full font-bold">{filtered.length}</span>
+              )}
+            </h2>
+            {rows.length > 0 && (
+              <div className="relative w-full sm:w-72">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input id="viaticos-table-search" type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Filtrar en resultados…"
+                  className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 placeholder:text-slate-400 transition-all" />
+              </div>
+            )}
+          </div>
+
+          {/* Skeleton */}
+          {loading && (
+            <div className="divide-y divide-slate-100">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex gap-3 px-5 py-3">
+                  {Array.from({ length: 9 }).map((_, j) => (
+                    <div key={j} className="h-4 flex-1 bg-slate-100 rounded animate-pulse" style={{ animationDelay: `${j * 50}ms` }} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!loading && filtered.length === 0 && (
+            <div className="py-16 text-center">
+              <div className="w-14 h-14 bg-slate-100 rounded-2xl mx-auto mb-3 flex items-center justify-center">
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p className="text-slate-500 font-semibold">
+                {search ? 'Sin resultados para tu búsqueda' : 'No se encontraron registros con los filtros aplicados'}
+              </p>
+            </div>
+          )}
+
+          {/* Table */}
+          {!loading && filtered.length > 0 && (
+            <div className="overflow-x-auto">
+              {/* CSS Grid-based table layout to guarantee precise 1:1:2 ratio (25%/25%/50%) for flexible columns */}
+              <table className="w-full text-sm block" style={{ minWidth: '980px' }}>
+                <thead className="block">
+                  <tr className="bg-slate-50 border-b border-slate-200 grid grid-cols-[48px_84px_1fr_1fr_108px_2fr_52px_90px_90px_120px_80px] items-stretch">
+                    {[
+                      { label: 'No.' }, { label: 'Oficio' }, { label: 'Empleado' }, { label: 'Comisionado a' }, { label: 'Periodo' },
+                      { label: 'Motivo' }, { label: 'FF' }, { label: 'Viáticos' }, { label: 'Pasajes' }, { label: 'Fecha Pago' }, { label: 'Comp.' },
+                    ].map(h => (
+                      <th key={h.label} className={`px-4 py-1 text-xs font-black text-slate-500 flex items-center text-center flex justify-center`}>{h.label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 block">
+                  {filtered.map((row, idx) => (
+                    <tr key={`${row.Numero}-${row.Año}-${idx}`} className="hover:bg-blue-50/40 transition-colors duration-100 grid grid-cols-[48px_84px_1fr_1fr_108px_2fr_52px_90px_90px_120px_80px] items-stretch">
+                      <td className="px-4 py-3 text-center flex items-center justify-center">
+                        <span className="text-xs font-mono font-bold text-slate-400">{row.Numero}</span>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-slate-600 flex items-center">{row.OfComision ?? '—'}</td>
+                      <td className="px-4 py-3 whitespace-normal break-words text-xs font-semibold text-slate-800 flex items-center" style={{ wordBreak: 'break-word' }}>{row.Nombre}</td>
+                      <td className="px-4 py-3 whitespace-normal break-words text-xs text-slate-600 flex items-center" style={{ wordBreak: 'break-word' }}>{row.Comisionado_a || '—'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-600 flex flex-col justify-center">
+                        <div>{formatDate(row.Periodo_Del)}</div>
+                        <div className="text-[10px] font-bold text-slate-400 mt-0.5">{row.Dias} {row.Dias === 1 ? 'día' : 'días'}</div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-normal break-words text-xs text-slate-600 flex items-center" style={{ wordBreak: 'break-word' }}>{row.Motivo || '—'}</td>
+                      <td className="px-4 py-3 text-center flex items-center justify-center">
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-bold">{row.FF || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap flex items-center justify-end">
+                        <span className="text-emerald-700 font-bold text-xs">{formatMoney(row.Viaticos)}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap flex items-center justify-end">
+                        <span className="text-violet-700 font-bold text-xs">{formatMoney(row.Pasajes)}</span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap flex items-center">
+                        {row.FechaPago ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                            {formatDate(row.FechaPago)}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold border border-amber-200">Pendiente</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={!!row.Comprobado}
+                          readOnly
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-not-allowed"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tbody className="block">
+                  <tr className="bg-slate-50 border-t-2 border-slate-200 grid grid-cols-[48px_84px_1fr_1fr_108px_2fr_52px_90px_90px_120px_80px] items-stretch">
+                    <td className="col-span-4 px-4 py-3 text-right text-xs font-black text-slate-500 uppercase tracking-wider flex items-center justify-end">
+                      Totales ({filtered.length} registros)
+                    </td>
+                    <td className="px-4 py-3 text-left text-xs font-black text-slate-700 whitespace-nowrap flex flex-col justify-center">
+                      {filtered.reduce((s, r) => s + (r.Dias ?? 0), 0)} días
+                    </td>
+                    <td className="flex items-center" />
+                    <td className="flex items-center" />
+                    <td className="px-4 py-3 text-right whitespace-nowrap flex items-center justify-end">
+                      <span className="text-emerald-700 font-black text-xs">{formatMoney(filtered.reduce((s, r) => s + (r.Viaticos ?? 0), 0))}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap flex items-center justify-end">
+                      <span className="text-violet-700 font-black text-xs">{formatMoney(filtered.reduce((s, r) => s + (r.Pasajes ?? 0), 0))}</span>
+                    </td>
+                    <td className="col-span-1 flex items-center" />
+                    <td className="flex items-center" />
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {!loading && filtered.length > 0 && (
+            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50">
+              <p className="text-xs text-slate-400 font-medium">
+                Mostrando <span className="font-bold text-slate-600">{filtered.length}</span> de{' '}
+                <span className="font-bold text-slate-600">{rows.length}</span> registros
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Initial prompt (before any search) */}
+      {!searched && (
+        <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-14 text-center">
+          <div className="w-14 h-14 bg-slate-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+            <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+            </svg>
+          </div>
+          <p className="text-slate-500 font-semibold">Aplica los filtros y presiona <span className="font-black text-slate-700">Buscar</span> para ver los registros</p>
+        </div>
+      )}
     </div>
   );
 }
