@@ -3,6 +3,11 @@ import HttpClient from "../utils/HttpClient.ts";
 import type { UserType } from "./types";
 import Swal from 'sweetalert2'
 
+function getErrorMessage(error: unknown): string {
+   if (error instanceof Error) return error.message;
+   return String(error);
+}
+
 const NoUser: UserType = { IdUser: -1, RFC: '', Nombre: '', eMail: '', Profile: 0, Activo: false }
 
 interface AuthContextType {
@@ -42,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                sessionStorage.removeItem('token');
             }
          }
-      } catch (error) {
+      } catch {
          setUser(NoUser);
       }
    }
@@ -52,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (token && user.IdUser === -1) {
          dbGetUserData(token);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [token]);
 
    const dbLogin = async (identifier: string, password: string) => {
@@ -67,8 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
          } else {
             return { success: false, message: data.message || 'Error de autenticación' };
          }
-      } catch (error: any) {
-         return { success: false, message: error.message };
+      } catch (error: unknown) {
+         return { success: false, message: getErrorMessage(error) };
       } finally {
          setIsLoading(false);
       }
@@ -87,8 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Código inválido' });
             return false;
          }
-      } catch (error: any) {
-         Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+      } catch (error: unknown) {
+         Swal.fire({ icon: 'error', title: 'Error', text: getErrorMessage(error) });
          return false;
       } finally {
          setIsLoading(false);
@@ -106,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
    const context = useContext(AuthContext);
    if (context === undefined) {
@@ -113,6 +120,3 @@ export const useAuth = () => {
    }
    return context;
 };
-
-// Keep the default export for compatibility if needed, though useAuth is preferred
-export default useAuth;

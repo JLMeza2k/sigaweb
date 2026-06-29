@@ -18,11 +18,10 @@ ALTER PROCEDURE [dbo].[webRelViaticos] @Año SMALLINT, @RFC VARCHAR(13), @FF VAR
 BEGIN
 	SET NOCOUNT ON
 	
-	SELECT Numero, Año, OfComision, Nombre, Comisionado_a, Periodo_Del, Motivo, FF, Dias, Viaticos, Pasajes, FechaPago, Comprobado
+	SELECT Numero, Año, OfComision, Nombre, Comisionado_a, Periodo_Del, Motivo, FF, Dias, Viaticos, Pasajes, FechaPago, Comprobado, eArch_FUC IdFUC, eArch_Oficio IdOficio 
 	FROM vwRelViaticos 
 	WHERE Año=@Año AND (RFC=@RFC OR @RFC='') AND (FF=@FF OR @FF='') AND (Director=@Director OR @Director='') AND FromUA=@FromUA AND FromCentro=@FromCentro 
 		AND Periodo_del BETWEEN @FromFecha AND @ToFecha --AND ISNULL(FolioPago,-1)=CASE @OnlyPend WHEN 1 THEN -1 ELSE ISNULL(FolioPago,-1) END
 		AND Comprobado=CASE @OnlyPend WHEN 1 THEN 0 ELSE Comprobado END
 END
-
 

@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useAuth } from '../utils/useAuth';
-import HttpClient from '../utils/HttpClient';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useFetch, useLazyFetch } from '../hooks/useFetch';
+import VisorDocumentos from './VisorDocumentos';
+import type { DocumentoItem } from './VisorDocumentos';
 
 /* ─────────────────────────────────────────────
    Types
@@ -19,6 +20,8 @@ type RelViatico = {
   Pasajes: number;
   FechaPago: string | null;
   Comprobado: boolean | null;
+  IdFUC: number | null;
+  IdOficio: number | null;
 };
 
 type FFItem = { Codigo: string; Descripcion: string };
@@ -95,40 +98,9 @@ function InputField({ id, label, type = 'text', value, onChange, min, max, place
 }
 
 /* ─────────────────────────────────────────────
-   Page header
-───────────────────────────────────────────── */
-function PageHeader() {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-sky-400 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
-        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      </div>
-      <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Relación de Viáticos</h1>
-        <p className="text-sm text-slate-500 font-medium">Consulta y filtra el registro de comisiones de trabajo</p>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────
    Main Component
 ───────────────────────────────────────────── */
 export default function MisViaticos() {
-  const { token } = useAuth();
-  const httpClient = useMemo(() => new HttpClient('/api'), []);
-
-  // Catalog states
-  const [ffList, setFfList] = useState<FFItem[]>([]);
-  const [uaList, setUaList] = useState<UAItem[]>([]);
-  const [centroList, setCentroList] = useState<CentroItem[]>([]);
-  const [loadingFF, setLoadingFF] = useState(false);
-  const [loadingUA, setLoadingUA] = useState(false);
-  const [loadingCentro, setLoadingCentro] = useState(false);
-
   // Filter state
   const [filters, setFilters] = useState<Filters>({
     Año: CURRENT_YEAR, FF: '', RFC: '', Director: '',
@@ -138,83 +110,43 @@ export default function MisViaticos() {
     OnlyPend: false,
   });
 
-  // Result states
-  const [rows, setRows] = useState<RelViatico[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Catalog fetches
+  const { data: ffListData, loading: loadingFF } = useFetch<FFItem[]>(`catalogos/ff/${filters.Año}`, [filters.Año]);
+  const ffList = ffListData ?? [];
+  const { data: uaListData, loading: loadingUA } = useFetch<UAItem[]>(`catalogos/unidades`, []);
+  const uaList = uaListData ?? [];
+  const { data: centroListData, loading: loadingCentro } = useFetch<CentroItem[]>(
+    filters.FromUA === '' ? null : `catalogos/centros/${filters.FromUA}`,
+    [filters.FromUA]
+  );
+  const centroList = centroListData ?? [];
+
+  // Result fetch
+  const { data: rowsData, loading, error, execute: searchRows } = useLazyFetch<RelViatico[]>('relviaticos');
+  const rows = useMemo(() => rowsData ?? [], [rowsData]);
   const [searched, setSearched] = useState(false);
-  const [search, setSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
 
-  /* Load FF when year changes */
+  // Document viewer state
+  const [docParams, setDocParams] = useState<{ IdFUC: number | null; IdOficio: number | null } | null>(null);
+  const docUrl = docParams ? `earchdata/${docParams.IdFUC}/${docParams.IdOficio}` : null;
+  const { data: documentosData, loading: loadingDocs, error: errorDocs } = useFetch<DocumentoItem[]>(docUrl, [docUrl]);
+
+  const modalRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    let cancelled = false;
-    setLoadingFF(true);
-    setFfList([]);
-    setFilters(f => ({ ...f, FF: '' }));
-    httpClient.get(`catalogos/ff/${filters.Año}`, token)
-      .then(async res => {
-        if (cancelled || !res.ok) return;
-        const data = await res.json();
-        setFfList(data?.recordset ?? data);
-      })
-      .catch(() => { })
-      .finally(() => { if (!cancelled) setLoadingFF(false); });
-    return () => { cancelled = true; };
-  }, [filters.Año, token]);
-
-  /* Load Unidades once */
-  useEffect(() => {
-    let cancelled = false;
-    setLoadingUA(true);
-    httpClient.get('catalogos/unidades', token)
-      .then(async res => {
-        if (cancelled || !res.ok) return;
-        const data = await res.json();
-        setUaList(data?.recordset ?? data);
-      })
-      .catch(() => { })
-      .finally(() => { if (!cancelled) setLoadingUA(false); });
-    return () => { cancelled = true; };
-  }, [token]);
-
-  // Keep track of whether we've done the initial load of centros to avoid resetting the default FromCentro: 1
-  const isInitialCentrosLoad = useRef(true);
-
-  /* Load Centros when UA changes */
-  useEffect(() => {
-    if (filters.FromUA === '') {
-      setCentroList([]);
-      setFilters(f => ({ ...f, FromCentro: '' }));
-      return;
+    if (docParams) {
+      document.body.style.overflow = 'hidden';
+      modalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      document.body.style.overflow = '';
     }
-    let cancelled = false;
-    setLoadingCentro(true);
-    setCentroList([]);
-
-    // If it's not the initial load, reset Centro to empty when UA changes.
-    if (!isInitialCentrosLoad.current) {
-      setFilters(f => ({ ...f, FromCentro: '' }));
-    }
-
-    httpClient.get(`catalogos/centros/${filters.FromUA}`, token)
-      .then(async res => {
-        if (cancelled || !res.ok) return;
-        const data = await res.json();
-        setCentroList(data?.recordset ?? data);
-      })
-      .catch(() => { })
-      .finally(() => {
-        if (!cancelled) {
-          setLoadingCentro(false);
-          isInitialCentrosLoad.current = false;
-        }
-      });
-    return () => { cancelled = true; };
-  }, [filters.FromUA, token]);
+    return () => { document.body.style.overflow = ''; };
+  }, [docParams]);
 
   const handleYearChange = useCallback((val: string) => {
     const y = Number(val);
-    setFilters(f => ({ ...f, Año: y, FromFecha: defaultFromFecha(y), ToFecha: defaultToFecha(y) }));
+    setFilters(f => ({ ...f, Año: y, FF: '', FromFecha: defaultFromFecha(y), ToFecha: defaultToFecha(y) }));
   }, []);
 
   const setFilter = useCallback(<K extends keyof Filters>(key: K, val: Filters[K]) => {
@@ -222,7 +154,7 @@ export default function MisViaticos() {
   }, []);
 
   const handleSearch = useCallback(async () => {
-    setLoading(true); setError(null); setRows([]); setSearched(true); setSearch('');
+    setSearched(true); setSearchText('');
     const body = {
       Año: filters.Año,
       RFC: filters.RFC.trim() || '',
@@ -234,24 +166,18 @@ export default function MisViaticos() {
       ToFecha: filters.ToFecha,
       OnlyPend: filters.OnlyPend,
     };
-    try {
-      const res = await httpClient.post('relviaticos', body, token);
-      if (!res.ok) { const e = await res.json().catch(() => ({})); setError(e.message ?? `Error ${res.status}`); return; }
-      setRows(await res.json());
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Error de red');
-    } finally { setLoading(false); }
-  }, [filters, token, httpClient]);
+    await searchRows(body);
+  }, [filters, searchRows]);
 
   /* Client-side text filter */
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
+    const q = searchText.toLowerCase();
     if (!q) return rows;
     return rows.filter(r =>
       [r.Nombre, r.Comisionado_a, r.Motivo, r.FF, r.OfComision]
         .some(v => String(v ?? '').toLowerCase().includes(q))
     );
-  }, [rows, search]);
+  }, [rows, searchText]);
 
   /* Totals */
   const totalViaticos = rows.reduce((s, r) => s + (r.Viaticos ?? 0), 0);
@@ -279,7 +205,7 @@ export default function MisViaticos() {
               <option value="">{loadingFF ? 'Cargando…' : 'Todas las FF'}</option>
               {ffList.map(ff => <option key={ff.Codigo} value={ff.Codigo}>{ff.Codigo} — {ff.Descripcion}</option>)}
             </SelectField>
-            <SelectField id="fil-ua" label="Unidad Administrativa" value={filters.FromUA} onChange={v => setFilter('FromUA', v === '' ? '' : Number(v))} disabled={loadingUA} className="flex-1 min-w-[200px]">
+            <SelectField id="fil-ua" label="Unidad Administrativa" value={filters.FromUA} onChange={v => { setFilter('FromUA', v === '' ? '' : Number(v)); setFilter('FromCentro', ''); }} disabled={loadingUA} className="flex-1 min-w-[200px]">
               <option value="">{loadingUA ? 'Cargando…' : 'Todas las UA'}</option>
               {uaList.map(ua => <option key={ua.Unidad} value={ua.Unidad}>{ua.ShortName}</option>)}
             </SelectField>
@@ -369,7 +295,7 @@ export default function MisViaticos() {
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <input id="viaticos-table-search" type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Filtrar en resultados…"
+                <input id="viaticos-table-search" type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="Filtrar en resultados…"
                   className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 placeholder:text-slate-400 transition-all" />
               </div>
             )}
@@ -397,14 +323,14 @@ export default function MisViaticos() {
                 </svg>
               </div>
               <p className="text-slate-500 font-semibold">
-                {search ? 'Sin resultados para tu búsqueda' : 'No se encontraron registros con los filtros aplicados'}
+                {searchText ? 'Sin resultados para tu búsqueda' : 'No se encontraron registros con los filtros aplicados'}
               </p>
             </div>
           )}
 
           {/* Table */}
           {!loading && filtered.length > 0 && (
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[65vh]">
               {/* CSS Grid-based table layout to guarantee precise 1:1:2 ratio (25%/25%/50%) for flexible columns */}
               <table className="w-full text-sm block" style={{ minWidth: '980px' }}>
                 <thead className="block">
@@ -421,7 +347,13 @@ export default function MisViaticos() {
                   {filtered.map((row, idx) => (
                     <tr key={`${row.Numero}-${row.Año}-${idx}`} className="hover:bg-blue-50/40 transition-colors duration-100 grid grid-cols-[48px_84px_1fr_1fr_108px_2fr_52px_90px_90px_120px_80px] items-stretch">
                       <td className="px-4 py-3 text-center flex items-center justify-center">
-                        <span className="text-xs font-mono font-bold text-slate-400">{row.Numero}</span>
+                        <button
+                          onClick={() => row.IdFUC != null && row.IdOficio != null && setDocParams({ IdFUC: row.IdFUC, IdOficio: row.IdOficio })}
+                          disabled={row.IdFUC == null || row.IdOficio == null}
+                          className="text-xs font-mono font-bold text-slate-400 hover:text-blue-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:hover:text-slate-400 cursor-pointer transition-colors"
+                        >
+                          {row.Numero}
+                        </button>
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-slate-600 flex items-center">{row.OfComision ?? '—'}</td>
                       <td className="px-4 py-3 whitespace-normal break-words text-xs font-semibold text-slate-800 flex items-center" style={{ wordBreak: 'break-word' }}>{row.Nombre}</td>
@@ -507,6 +439,34 @@ export default function MisViaticos() {
           <p className="text-slate-500 font-semibold">Aplica los filtros y presiona <span className="font-black text-slate-700">Buscar</span> para ver los registros</p>
         </div>
       )}
+
+      {/* ── Document viewer modal ── */}
+      {docParams && (
+        <div
+          ref={modalRef}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setDocParams(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-slate-800">Documentos digitales</h3>
+              <button
+                onClick={() => setDocParams(null)}
+                className="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center transition-colors shrink-0"
+              >
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <VisorDocumentos documentos={documentosData ?? []} />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

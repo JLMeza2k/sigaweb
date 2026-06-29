@@ -69,4 +69,37 @@ routerVtc.post('/relviaticos', checkToken, async (req: AuthRequest, res: Respons
    }
 })
 
+
+routerVtc.get('/earchdata/:idFUC/:idOficio', checkToken, async (req: AuthRequest, res: Response) => {
+   try {
+      const { idFUC, idOficio } = req.params;
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT IdDocto, TipoArchivo, Referencia, Fecha, TipoDocto, Thumbnail FROM OPENQUERY([EARCH] , 'SELECT d.Id IdDocto, d.Tipo TipoArchivo, GETEXTENDENDREFERENCE(d.Id) Referencia, d.Fecha, td.Descripcion TipoDocto, d.Thumbnail FROM Documentos d INNER JOIN CtlTiposDocumento td ON td.Id=d.TipoReferencia WHERE d.Id IN (${idFUC}, ${idOficio})')`);
+
+      const records = result.recordset.map((row: any) => {
+         const thumbnail = row.Thumbnail && Buffer.isBuffer(row.Thumbnail)
+            ? row.Thumbnail.toString('base64')
+            : row.Thumbnail;
+         console.log(row)
+         return {
+            IdDocto: row.IdDocto,
+            TipoArchivo: row.TipoArchivo,
+            Referencia: row.Referencia,
+            Fecha: row.Fecha,
+            TipoDocto: row.TipoDocto,
+            thumbnail,
+         };
+      });
+
+      return res.status(200).json(records);
+   } catch (error) {
+      console.error('Error al obtener los documentos digtales: ', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener los documentos digitales.' });
+   }
+});
+
+
+
 export default routerVtc;

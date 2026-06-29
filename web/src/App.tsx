@@ -63,7 +63,7 @@ function App() {
       switch (activeView) {
          case 'dashboard': return 'Panel de Inicio';
          case 'comisiones': return 'Gestionar Comisiones';
-         case 'viaticos': return 'Mis Viáticos';
+         case 'viaticos': return 'Consultar Viáticos';
          case 'configuracion': return 'Configuración de Perfil';
          default: return 'Gestor de Comisiones';
       }
@@ -110,7 +110,7 @@ function App() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                            {[
                               { id: 'comisiones', title: 'Nueva Comisión', desc: 'Genere una orden de comisión oficial para registro.', color: 'bg-blue-600', text: 'text-blue-600', icon: 'M12 4v16m8-8H4' },
-                              { id: 'viaticos', title: 'Mis Viáticos', desc: 'Verifique depósitos y comprobación de gastos.', color: 'bg-slate-700', text: 'text-slate-700', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+                              { id: 'viaticos', title: 'Consultar Viáticos', desc: 'Consulte viáticos y su estatus actual.', color: 'bg-slate-700', text: 'text-slate-700', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
                               { id: 'configuracion', title: 'Preferencias', desc: 'Ajuste los parámetros de su perfil de usuario.', color: 'bg-slate-400', text: 'text-slate-600', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' }
                            ].map((card, i) => (
                               <div key={i} onClick={() => setActiveView(card.id)} className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200 hover:shadow-2xl hover:border-blue-200 transition-all duration-500 cursor-pointer group hover:-translate-y-2 flex flex-col items-center text-center">
