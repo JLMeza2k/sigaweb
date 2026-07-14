@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { useFetch, useLazyFetch } from '../hooks/useFetch';
-import VisorDocumentos from './VisorDocumentos';
-import type { DocumentoItem } from './VisorDocumentos';
+import { useFetch, useLazyFetch } from "../../hooks/useFetch";
+import VisorDocumentos from '../VisorDocumentos';
+import type { DocumentoItem } from '../VisorDocumentos';
 
 /* ─────────────────────────────────────────────
    Types
@@ -22,6 +22,8 @@ type RelViatico = {
   Comprobado: boolean | null;
   IdFUC: number | null;
   IdOficio: number | null;
+  IdFTV: number | null;
+  IdFacturas: number | null;
 };
 
 type FFItem = { Codigo: string; Descripcion: string };
@@ -43,8 +45,8 @@ interface Filters {
 /* ─────────────────────────────────────────────
    Helpers
 ───────────────────────────────────────────── */
-const CURRENT_YEAR = new Date().getFullYear();
-const START_YEAR = 2024;
+const CURRENT_YEAR = 2025 //new Date().getFullYear();
+const START_YEAR = 2025 // 2024;
 const YEARS = Array.from({ length: CURRENT_YEAR - START_YEAR + 1 }, (_, i) => START_YEAR + i);
 
 function defaultFromFecha(year: number) { return `${year}-01-01`; }
@@ -128,9 +130,19 @@ export default function MisViaticos() {
   const [searchText, setSearchText] = useState('');
 
   // Document viewer state
-  const [docParams, setDocParams] = useState<{ IdFUC: number | null; IdOficio: number | null } | null>(null);
-  const docUrl = docParams ? `earchdata/${docParams.IdFUC}/${docParams.IdOficio}` : null;
-  const { data: documentosData, loading: loadingDocs, error: errorDocs } = useFetch<DocumentoItem[]>(docUrl, [docUrl]);
+  const [docParams, setDocParams] = useState<{
+    IdFUC: number | null;
+    IdOficio: number | null;
+    IdFTV: number | null;
+    IdFacturas: number | null;
+  } | null>(null);
+  const docUrl = (() => {
+    if (!docParams) return null;
+    const parts = [docParams.IdFUC, docParams.IdOficio, docParams.IdFTV, docParams.IdFacturas]
+      .filter((id): id is number => id !== null && id !== 0 && id !== undefined);
+    return parts.length > 0 ? `earchdata/${parts.join('-')}` : null;
+  })();
+  const { data: documentosData } = useFetch<DocumentoItem[]>(docUrl, [docUrl]);
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -333,7 +345,7 @@ export default function MisViaticos() {
             <div className="overflow-auto max-h-[65vh]">
               {/* CSS Grid-based table layout to guarantee precise 1:1:2 ratio (25%/25%/50%) for flexible columns */}
               <table className="w-full text-sm block" style={{ minWidth: '980px' }}>
-                <thead className="block">
+                <thead className="sticky top-0 z-10 bg-slate-50 block">
                   <tr className="bg-slate-50 border-b border-slate-200 grid grid-cols-[48px_84px_1fr_1fr_108px_2fr_52px_90px_90px_120px_80px] items-stretch">
                     {[
                       { label: 'No.' }, { label: 'Oficio' }, { label: 'Empleado' }, { label: 'Comisionado a' }, { label: 'Periodo' },
@@ -348,8 +360,13 @@ export default function MisViaticos() {
                     <tr key={`${row.Numero}-${row.Año}-${idx}`} className="hover:bg-blue-50/40 transition-colors duration-100 grid grid-cols-[48px_84px_1fr_1fr_108px_2fr_52px_90px_90px_120px_80px] items-stretch">
                       <td className="px-4 py-3 text-center flex items-center justify-center">
                         <button
-                          onClick={() => row.IdFUC != null && row.IdOficio != null && setDocParams({ IdFUC: row.IdFUC, IdOficio: row.IdOficio })}
-                          disabled={row.IdFUC == null || row.IdOficio == null}
+                          onClick={() => setDocParams({
+                            IdFUC: row.IdFUC,
+                            IdOficio: row.IdOficio,
+                            IdFTV: row.IdFTV,
+                            IdFacturas: row.IdFacturas,
+                          })}
+                          disabled={![row.IdFUC, row.IdOficio, row.IdFTV, row.IdFacturas].some(id => id !== null && id !== 0 && id !== undefined)}
                           className="text-xs font-mono font-bold text-slate-400 hover:text-blue-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:hover:text-slate-400 cursor-pointer transition-colors"
                         >
                           {row.Numero}
@@ -448,7 +465,7 @@ export default function MisViaticos() {
           onClick={() => setDocParams(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 animate-in fade-in zoom-in-95 duration-200"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col p-6 animate-in fade-in zoom-in-95 duration-200"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -462,7 +479,9 @@ export default function MisViaticos() {
                 </svg>
               </button>
             </div>
-            <VisorDocumentos documentos={documentosData ?? []} />
+            <div className="flex-1 min-h-0 overflow-hidden rounded-b-2xl">
+              <VisorDocumentos documentos={documentosData ?? []} />
+            </div>
           </div>
         </div>
       )}

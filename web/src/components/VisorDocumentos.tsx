@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useBlobFetch } from '../hooks/useFetch';
+import { API_BASE } from '../utils/api';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
+import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
 /* ─────────────────────────────────────────────
    Types
@@ -42,6 +44,28 @@ export default function VisorDocumentos({ documentos }: Props) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const [zoom, setZoom] = useState(1);
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ isDragging: false, startX: 0, startY: 0, origX: 0, origY: 0 });
+  const [viewerSize, setViewerSize] = useState({ width: 0, height: 0 });
+  const [pageSize, setPageSize] = useState<{ width: number; height: number } | null>(null);
+  const baseScale = useMemo(() => {
+    if (viewerSize.width === 0 || viewerSize.height === 0) return undefined;
+    if (!pageSize) {
+      const estW = 595;
+      const estH = estW * Math.SQRT2;
+      return Math.min(viewerSize.width / estW, viewerSize.height / estH);
+    }
+    return Math.min(viewerSize.width / pageSize.width, viewerSize.height / pageSize.height);
+  }, [pageSize, viewerSize]);
+
+  const scale = useMemo(() => {
+    if (baseScale === undefined) return undefined;
+    return baseScale * zoom;
+  }, [baseScale, zoom]);
 
   const selected = documentos[selectedIdx] ?? null;
   const docId = selected?.IdDocto;
@@ -50,12 +74,62 @@ export default function VisorDocumentos({ documentos }: Props) {
     setSelectedIdx(0);
     setPageNumber(1);
     setNumPages(null);
+    setPageSize(null);
+    setZoom(1);
+    setTranslate({ x: 0, y: 0 });
   }, [documentos]);
 
   const { url: documentUrl, loading, error, setError } = useBlobFetch(
-    docId ? `/api/earch/documento/${docId}` : null,
+    docId ? `${API_BASE}/earch/documento/${docId}` : null,
     [docId]
   );
+
+  // ── Measure the PDF viewer container ──
+  useEffect(() => {
+    const el = viewerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setViewerSize({ width, height });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [documentUrl]);
+
+  const handlePageLoadSuccess = useCallback((page: any) => {
+    const viewport = page.getViewport({ scale: 1 });
+    setPageSize({ width: viewport.width, height: viewport.height });
+  }, []);
+
+  // ── Drag / pan handlers ──
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragRef.current = {
+      isDragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: translate.x,
+      origY: translate.y,
+    };
+    setIsDragging(true);
+  }, [translate]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const drag = dragRef.current;
+    if (!drag.isDragging) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    setTranslate({ x: drag.origX + dx, y: drag.origY + dy });
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    dragRef.current.isDragging = false;
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    setTranslate({ x: 0, y: 0 });
+  }, [zoom]);
 
   // ── Empty state ──
   if (documentos.length === 0) {
@@ -84,7 +158,7 @@ export default function VisorDocumentos({ documentos }: Props) {
   }
 
   return (
-    <div className="w-full flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 max-h-full">
+    <div className="w-full h-full flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 max-h-full">
       {/* ── Document header ── */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4 shrink-0">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -130,6 +204,33 @@ export default function VisorDocumentos({ documentos }: Props) {
           <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
             {selected!.TipoArchivo === 1 ? 'PDF' : 'JPEG'}
           </span>
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}
+              disabled={zoom <= 0.25}
+              className="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              −
+            </button>
+            <span className="text-xs font-semibold text-slate-600 min-w-[3rem] text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={() => setZoom((z) => Math.min(4, z + 0.25))}
+              disabled={zoom >= 4}
+              className="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              +
+            </button>
+            <button
+              onClick={() => setZoom(1)}
+              disabled={zoom === 1}
+              className="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              title="Restablecer zoom"
+            >
+              ⟲
+            </button>
+          </div>
         </div>
       </div>
 
@@ -178,75 +279,100 @@ export default function VisorDocumentos({ documentos }: Props) {
         </div>
 
         {/* ── Document viewer ── */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1">
-          <div className="flex items-center justify-center min-h-[400px] p-4 bg-slate-50/50">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
           {loading && (
-            <div className="flex flex-col items-center gap-3">
-              <svg
-                className="animate-spin w-8 h-8 text-blue-500"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8H4z"
-                />
-              </svg>
-              <p className="text-sm font-semibold text-slate-500">
-                Cargando documento…
-              </p>
+            <div className="flex items-center justify-center flex-1 p-4 bg-slate-50/50">
+              <div className="flex flex-col items-center gap-3">
+                <svg
+                  className="animate-spin w-8 h-8 text-blue-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
+                </svg>
+                <p className="text-sm font-semibold text-slate-500">
+                  Cargando documento…
+                </p>
+              </div>
             </div>
           )}
 
           {error && (
-            <div className="flex flex-col items-center gap-2 text-center">
-              <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-red-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+            <div className="flex items-center justify-center flex-1 p-4 bg-slate-50/50">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold text-red-600">{error}</p>
               </div>
-              <p className="text-sm font-semibold text-red-600">{error}</p>
             </div>
           )}
 
           {!loading && !error && selected!.TipoArchivo === 1 && documentUrl && (
-            <div className="flex flex-col items-center w-full">
-              <Document
-                key={documentUrl}
-                file={documentUrl}
-                onLoadSuccess={({ numPages: np }) => setNumPages(np)}
-                onLoadError={() => setError('Error al cargar el PDF')}
-                className="flex flex-col items-center"
+            <div className="flex flex-col flex-1">
+              <div
+                ref={viewerRef}
+                className="flex-1 relative overflow-hidden min-h-0 p-4 bg-slate-50/50"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
               >
-                <Page
-                  pageNumber={pageNumber}
-                  renderTextLayer
-                  renderAnnotationLayer
-                  className="shadow-xl rounded-lg overflow-hidden"
-                  width={Math.min(window.innerWidth - 80, 900)}
-                />
-              </Document>
+                {viewerSize.width > 0 ? (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center"
+                    style={{ transform: `translate(${translate.x}px, ${translate.y}px)` }}
+                  >
+                    <Document
+                      key={documentUrl}
+                      file={documentUrl}
+                      onLoadSuccess={({ numPages: np }) => setNumPages(np)}
+                      onLoadError={() => setError('Error al cargar el PDF')}
+                      className="flex flex-col items-center"
+                    >
+                      <Page
+                        pageNumber={pageNumber}
+                        scale={scale}
+                        onLoadSuccess={handlePageLoadSuccess}
+                        renderTextLayer
+                        renderAnnotationLayer
+                        className="shadow-xl rounded-lg overflow-hidden"
+                      />
+                    </Document>
+                  </div>
+                ) : (
+                  <div className="text-sm font-semibold text-slate-400">
+                    Preparando documento…
+                  </div>
+                )}
+              </div>
               {numPages && numPages > 1 && (
-                <div className="flex items-center gap-3 mt-4">
+                <div className="flex items-center justify-center gap-3 py-3 shrink-0">
                   <button
                     onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
                     disabled={pageNumber <= 1}
@@ -272,15 +398,28 @@ export default function VisorDocumentos({ documentos }: Props) {
           )}
 
           {!loading && !error && selected!.TipoArchivo === 0 && documentUrl && (
-            <img
-              src={documentUrl}
-              alt={selected!.Referencia}
-              className="max-w-full max-h-[65vh] object-contain rounded-lg shadow-xl"
-            />
+            <div
+              className="relative flex-1 bg-slate-50/50 rounded-2xl overflow-hidden"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+            >
+              <div
+                className="absolute inset-4 flex items-center justify-center"
+                style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${zoom})`, transformOrigin: 'center center' }}
+              >
+                <img
+                  src={documentUrl}
+                  alt={selected!.Referencia}
+                  className="max-w-full max-h-full rounded-lg shadow-xl"
+                  style={{ objectFit: 'contain' }}
+                />
+              </div>
+            </div>
           )}
         </div>
-      </div>
-
       </div>
     </div>
   );

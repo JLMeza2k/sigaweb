@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../utils/useAuth';
 import HttpClient from '../utils/HttpClient';
+import { API_BASE } from '../utils/api';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -18,7 +19,7 @@ interface UseFetchResult<T> {
   reset: () => void;
 }
 
-const httpClient = new HttpClient('/api');
+const httpClient = new HttpClient(API_BASE);
 
 async function extractErrorMessage(res: Response, fallback: string): Promise<string> {
   try {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import { useAuth } from '../utils/useAuth';
+import { useAuth } from "../../utils/useAuth";
+import { API_BASE } from "../../utils/api";
 
 interface Empleado {
   RFC: string;
@@ -70,7 +71,7 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
 
   // ── Catalogs ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/catalogos/entidades')
+    fetch(`${API_BASE}/catalogos/entidades`)
       .then(r => r.json())
       .then(d => setEntidades(Array.isArray(d?.recordset) ? d.recordset : []));
   }, []);
@@ -81,7 +82,7 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
     setLocalidadNombre('');
     if (!entidadSel) return;
     setFetchingLoc(true);
-    fetch('/api/catalogos/localidades')
+    fetch(`${API_BASE}/catalogos/localidades`)
       .then(r => r.json())
       .then(d => {
         const all: Localidad[] = Array.isArray(d?.recordset) ? d.recordset : [];
@@ -98,7 +99,7 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
     setEmpleado(null);
     setShowResults(false);
     try {
-      const r = await fetch(`/api/catalogos/buscar-empleados?searchPattern=${encodeURIComponent(searchInput.trim())}`);
+      const r = await fetch(`${API_BASE}/catalogos/buscar-empleados?searchPattern=${encodeURIComponent(searchInput.trim())}`);
       const d = await r.json();
       const rows: Empleado[] = d?.recordset ?? [];
       if (rows.length === 0) {
@@ -139,7 +140,7 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
         Motivo: motivo,
         Pasajes: fuera_bcs && pasajes !== '' ? Number(pasajes) : 0,
       };
-      const r = await fetch('/api/comision', {
+      const r = await fetch(`${API_BASE}/comision`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: token },
         body: JSON.stringify(body),

@@ -54,7 +54,7 @@ routerVtc.post('/relviaticos', checkToken, async (req: AuthRequest, res: Respons
          .request()
          .input('Año', sql.SmallInt, req.body.Año)
          .input('RFC', sql.VarChar(13), req.body.RFC)
-         .input('FF', sql.VarChar(3), req.body.FF)
+         .input('FF', sql.VarChar(5), req.body.FF)
          .input('Director', sql.VarChar(13), req.body.Director)
          .input('FromUA', sql.TinyInt, req.body.FromUA)
          .input('FromCentro', sql.TinyInt, req.body.FromCentro)
@@ -70,14 +70,16 @@ routerVtc.post('/relviaticos', checkToken, async (req: AuthRequest, res: Respons
 })
 
 
-routerVtc.get('/earchdata/:idFUC/:idOficio', checkToken, async (req: AuthRequest, res: Response) => {
+routerVtc.get('/earchdata/:idDoctos', checkToken, async (req: AuthRequest, res: Response) => {
    try {
-      const { idFUC, idOficio } = req.params;
+      const { idDoctos } = req.params;
+      if (!idDoctos)
+         return res.status(400).json({ message: 'No se especificaron los documentos' });
+      const IdsDoctos = idDoctos.toString().split('-').join(', ');
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
          .request()
-         .query(`SELECT IdDocto, TipoArchivo, Referencia, Fecha, TipoDocto, Thumbnail FROM OPENQUERY([EARCH] , 'SELECT d.Id IdDocto, d.Tipo TipoArchivo, GETEXTENDENDREFERENCE(d.Id) Referencia, d.Fecha, td.Descripcion TipoDocto, d.Thumbnail FROM Documentos d INNER JOIN CtlTiposDocumento td ON td.Id=d.TipoReferencia WHERE d.Id IN (${idFUC}, ${idOficio})')`);
-
+         .query(`SELECT IdDocto, TipoArchivo, Referencia, Fecha, TipoDocto, Thumbnail FROM OPENQUERY([EARCH] , 'SELECT d.Id IdDocto, d.Tipo TipoArchivo, GETEXTENDENDREFERENCE(d.Id) Referencia, d.Fecha, td.Descripcion TipoDocto, d.Thumbnail FROM Documentos d INNER JOIN CtlTiposDocumento td ON td.Id=d.TipoReferencia WHERE d.Id IN (${IdsDoctos})')`);
       const records = result.recordset.map((row: any) => {
          const thumbnail = row.Thumbnail && Buffer.isBuffer(row.Thumbnail)
             ? row.Thumbnail.toString('base64')

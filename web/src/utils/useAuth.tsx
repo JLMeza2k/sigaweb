@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from "react";
 import HttpClient from "../utils/HttpClient.ts";
 import type { UserType } from "./types";
+import { API_BASE } from "./api";
 import Swal from 'sweetalert2'
 
 function getErrorMessage(error: unknown): string {
@@ -27,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    const [token, setToken] = useState<string>(sessionStorage.getItem('token') || '');
    const [isLoading, setIsLoading] = useState(false);
 
-   const httpClient = useMemo(() => new HttpClient('/api'), []);
+   const httpClient = useMemo(() => new HttpClient(API_BASE), []);
 
    const dbGetUserData = async (currentToken?: string) => {
       const authHeader = currentToken || token;
