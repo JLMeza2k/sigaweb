@@ -1,0 +1,32 @@
+# Gradle / Android build artifacts
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+
+# Expo cache (se regenera)
+.expo/
+.expo-shared/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# TypeScript build cache
+*.tsbuildinfo
