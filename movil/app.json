@@ -5,7 +5,7 @@
     "scheme": "sigamovil",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/iconsiga.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
@@ -15,10 +15,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/iconsiga.png"
       },
       "permissions": [
         "android.permission.CAMERA"
@@ -27,10 +25,17 @@
       "package": "com.anonymous.sigamovil"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/iconsiga.png"
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ba073501-7697-4c9e-8aaa-2f8a2f9c4df4"
+      }
+    },
+    "owner": "jlmeza2k"
   }
 }
