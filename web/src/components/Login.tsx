@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Swal from 'sweetalert2';
-import { useAuth } from '../utils/useAuth';
+import { useAuth } from '../hooks/useAuth';
 import { API_BASE } from '../utils/api';
 
 type ViewState = 'LOGIN' | 'REGISTER' | 'FORGOT_PASS_1' | 'FORGOT_PASS_2' | 'FORGOT_PASS_3' | 'ACTIVATE';
@@ -22,7 +22,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  
+
   const [loading, setLoading] = useState(false);
   const [recoveryToken, setRecoveryToken] = useState('');
 
@@ -59,7 +59,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
     }
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/user`, {
+      const resp = await fetch(`${API_BASE}/users/user`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rfc, email, password }),
       });
@@ -83,7 +83,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
     }
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/send-reset-code`, {
+      const resp = await fetch(`${API_BASE}/users/send-reset-code`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier }),
       });
@@ -107,7 +107,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
     }
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/verify-reset-code`, {
+      const resp = await fetch(`${API_BASE}/users/verify-reset-code`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, code }),
       });
@@ -131,7 +131,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
     }
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/reset-password`, {
+      const resp = await fetch(`${API_BASE}/users/reset-password`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': recoveryToken },
         body: JSON.stringify({ newPassword }),
       });
@@ -281,7 +281,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
 
         {view === 'ACTIVATE' && (
           <form onSubmit={handleVerifyActivation} className="space-y-6">
-             <p className="text-blue-100 text-sm mb-4">Tu cuenta aún no está activa. Ingresa el código de activación que enviamos a tu correo al momento del registro.</p>
+            <p className="text-blue-100 text-sm mb-4">Tu cuenta aún no está activa. Ingresa el código de activación que enviamos a tu correo al momento del registro.</p>
             <div className="relative">
               <label className="text-sm font-medium text-blue-100 block mb-2">Código de Activación</label>
               <div className="relative">

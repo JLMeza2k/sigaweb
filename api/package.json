@@ -1,9 +1,9 @@
 {
-  "name": "vtcapi",
+  "name": "sigaweb",
   "version": "1.0.0",
-  "description": "API gestor de comisiones de trabajo",
+  "description": "API del sistema integral de gestión administrativa",
   "keywords": [
-    "viaticos",
+    "siga",
     "ssa"
   ],
   "license": "ISC",
@@ -16,13 +16,18 @@
     "start:prod": "node --env-file=.env dist/index.js"
   },
   "dependencies": {
-    "bcrypt": "^6.0.0",
+    "@types/adm-zip": "^0.5.8",
+    "adm-zip": "^0.6.0",
+    "bcrypt-ts": "^6.0.0",
     "consign": "^0.1.6",
     "cors": "^2.8.5",
     "express": "^5.2.1",
+    "fast-xml-parser": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
     "mssql": "^12.2.0",
-    "nodemailer": "^7.0.12"
+    "nodemailer": "^9.0.6",
+    "pdfkit": "^0.20.1",
+    "qr-image": "^3.2.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -32,6 +37,8 @@
     "@types/mssql": "^9.1.10",
     "@types/node": "^25.5.0",
     "@types/nodemailer": "^7.0.11",
+    "@types/pdfkit": "^0.17.6",
+    "@types/qr-image": "^3.2.11",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2"

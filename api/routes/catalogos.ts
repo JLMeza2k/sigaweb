@@ -3,7 +3,7 @@ import { poolPromise, sql } from '../config/db';
 
 const routerCatalogos = Router();
 
-routerCatalogos.get('/catalogos/empleado/:rfc', async (req: Request, res: Response) => {   // Obtener el catálogo de empleados
+routerCatalogos.get('/empleado/:rfc', async (req: Request, res: Response) => {   // Obtener el catálogo de empleados
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -16,7 +16,7 @@ routerCatalogos.get('/catalogos/empleado/:rfc', async (req: Request, res: Respon
    }
 });
 
-routerCatalogos.get('/catalogos/empleados', async (req: Request, res: Response) => {   // Obtener el catálogo de empleados
+routerCatalogos.get('/empleados', async (req: Request, res: Response) => {   // Obtener el catálogo de empleados
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -29,7 +29,7 @@ routerCatalogos.get('/catalogos/empleados', async (req: Request, res: Response) 
    }
 });
 
-routerCatalogos.get('/catalogos/buscar-empleados', async (req: Request, res: Response) => {   // Buscar empleados por RFC o nombre (patrón)
+routerCatalogos.get('/buscar-empleados', async (req: Request, res: Response) => {   // Buscar empleados por RFC o nombre (patrón)
    try {
       let searchPattern = (req.query.searchPattern as string) || '';
       searchPattern = '%' + searchPattern.trim().replace(/\s+/g, '%') + '%';
@@ -44,7 +44,7 @@ routerCatalogos.get('/catalogos/buscar-empleados', async (req: Request, res: Res
    }
 });
 
-routerCatalogos.get('/catalogos/clues/:clues', async (req: Request, res: Response) => {   // Obtener el catálogo de CLUES
+routerCatalogos.get('/clues/:clues', async (req: Request, res: Response) => {   // Obtener el catálogo de CLUES
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -57,7 +57,7 @@ routerCatalogos.get('/catalogos/clues/:clues', async (req: Request, res: Respons
    }
 });
 
-routerCatalogos.get('/catalogos/clues', async (req: Request, res: Response) => {   // Obtener el catálogo de CLUES
+routerCatalogos.get('/clues', async (req: Request, res: Response) => {   // Obtener el catálogo de CLUES
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -70,7 +70,7 @@ routerCatalogos.get('/catalogos/clues', async (req: Request, res: Response) => {
    }
 });
 
-routerCatalogos.get('/catalogos/entidades', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
+routerCatalogos.get('/entidades', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -83,7 +83,7 @@ routerCatalogos.get('/catalogos/entidades', async (req: Request, res: Response) 
    }
 });
 
-routerCatalogos.get('/catalogos/entidad/:id', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
+routerCatalogos.get('/entidad/:id', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -96,7 +96,7 @@ routerCatalogos.get('/catalogos/entidad/:id', async (req: Request, res: Response
    }
 });
 
-routerCatalogos.get('/catalogos/localidades', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
+routerCatalogos.get('/localidades', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -109,7 +109,7 @@ routerCatalogos.get('/catalogos/localidades', async (req: Request, res: Response
    }
 });
 
-routerCatalogos.get('/catalogos/localidad/:idLocalidad', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
+routerCatalogos.get('/localidad/:idLocalidad', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -122,7 +122,7 @@ routerCatalogos.get('/catalogos/localidad/:idLocalidad', async (req: Request, re
    }
 });
 
-routerCatalogos.get('/catalogos/ff/:ejercicio', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
+routerCatalogos.get('/ff/:ejercicio', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -135,7 +135,7 @@ routerCatalogos.get('/catalogos/ff/:ejercicio', async (req: Request, res: Respon
    }
 });
 
-routerCatalogos.get('/catalogos/unidades', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
+routerCatalogos.get('/unidades', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
@@ -148,7 +148,7 @@ routerCatalogos.get('/catalogos/unidades', async (req: Request, res: Response) =
    }
 });
 
-routerCatalogos.get('/catalogos/centros/:ua', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
+routerCatalogos.get('/centros/:ua', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
    try {
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)

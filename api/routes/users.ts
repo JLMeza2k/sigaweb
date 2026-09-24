@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { poolPromise, sql } from '../config/db';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt-ts';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 
@@ -15,7 +15,7 @@ routerUsers.get('/user', checkToken, async (req: AuthRequest, res: Response) => 
 		const pool = await poolPromise;
 		const userRow = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`SELECT vu.IdUser, vu.RFC, e.Nombre, vu.eMail, vu.Profile, vu.Activo FROM WebUsers vu INNER JOIN Empleados e ON e.RFC = vu.RFC WHERE vu.IdUser=${req.idUser}`);
+			.query(`SELECT wu.IdUser, wu.RFC, e.Nombre, wu.eMail, wu.Profile, wu.Activo, wu.sideBarOpcs FROM WebUsers wu INNER JOIN Empleados e ON e.RFC = wu.RFC WHERE wu.IdUser=${req.idUser}`);
 		if (userRow.recordset.length === 0)
 			return res.status(404).json({ message: 'No se encontró el usuario' })
 		console.log("Usuario obtenido", JSON.stringify(userRow.recordset[0]))

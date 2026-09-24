@@ -4,7 +4,8 @@ export type UserType = {
    Nombre: string;
    eMail: string;
    Profile: number,
-   Activo: boolean
+   Activo: boolean,
+   sideBarOpcs: number | null
 }
 
 export type LoginType = {

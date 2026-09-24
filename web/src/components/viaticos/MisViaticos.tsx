@@ -124,7 +124,7 @@ export default function MisViaticos() {
   const centroList = centroListData ?? [];
 
   // Result fetch
-  const { data: rowsData, loading, error, execute: searchRows } = useLazyFetch<RelViatico[]>('relviaticos');
+  const { data: rowsData, loading, error, execute: searchRows } = useLazyFetch<RelViatico[]>('viaticos/relviaticos');
   const rows = useMemo(() => rowsData ?? [], [rowsData]);
   const [searched, setSearched] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -140,7 +140,7 @@ export default function MisViaticos() {
     if (!docParams) return null;
     const parts = [docParams.IdFUC, docParams.IdOficio, docParams.IdFTV, docParams.IdFacturas]
       .filter((id): id is number => id !== null && id !== 0 && id !== undefined);
-    return parts.length > 0 ? `earchdata/${parts.join('-')}` : null;
+    return parts.length > 0 ? `viaticos/earchdata/${parts.join('-')}` : null;
   })();
   const { data: documentosData } = useFetch<DocumentoItem[]>(docUrl, [docUrl]);
 

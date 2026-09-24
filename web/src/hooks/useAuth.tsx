@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from "react";
 import HttpClient from "../utils/HttpClient.ts";
-import type { UserType } from "./types";
-import { API_BASE } from "./api";
+import type { UserType } from "../utils/types.ts";
+import { API_BASE } from "../utils/api.ts";
 import Swal from 'sweetalert2'
 
 function getErrorMessage(error: unknown): string {
@@ -9,7 +9,7 @@ function getErrorMessage(error: unknown): string {
    return String(error);
 }
 
-const NoUser: UserType = { IdUser: -1, RFC: '', Nombre: '', eMail: '', Profile: 0, Activo: false }
+const NoUser: UserType = { IdUser: -1, RFC: '', Nombre: '', eMail: '', Profile: 0, Activo: false, sideBarOpcs: null }
 
 interface AuthContextType {
    user: UserType;
@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!authHeader) return;
 
       try {
-         const response = await httpClient.get('user', authHeader);
+         const response = await httpClient.get('users/user', authHeader);
          const data = await response.json();
          if (response.ok) {
             const userData = Array.isArray(data) ? data[0] : (data.userRow ? data.userRow[0] : data);
@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    const dbLogin = async (identifier: string, password: string) => {
       setIsLoading(true);
       try {
-         const response = await httpClient.post('login', { identifier, password });
+         const response = await httpClient.post('users/login', { identifier, password });
          const data = await response.json();
          if (response.ok && 'token' in data) {
             setToken(data.token);
@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    const dbVerifyActivation = async (code: string) => {
       setIsLoading(true);
       try {
-         const response = await httpClient.post('verify-activation-code', { code }, token);
+         const response = await httpClient.post('users/verify-activation-code', { code }, token);
          if (response.ok) {
             Swal.fire({ icon: 'success', title: 'Éxito', text: 'Cuenta activada correctamente', timer: 2000, showConfirmButton: false });
             await dbGetUserData();

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '../utils/useAuth';
+import { useAuth } from './useAuth';
 import HttpClient from '../utils/HttpClient';
 import { API_BASE } from '../utils/api';
 
@@ -181,7 +181,7 @@ export function useBlobFetch(endpoint: string | null, deps: React.DependencyList
       cancelled = true;
       controller.abort();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   useEffect(() => {

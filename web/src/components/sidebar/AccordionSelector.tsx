@@ -1,7 +1,10 @@
+import { useState } from 'react';
+
 type AccordionItem = {
    id: string | number;
    Description: string;
-   icon?: string; // SVG path opcional para íconos
+   icon?: string;
+   children?: AccordionItem[];
 };
 
 type AddButtonConfig = {
@@ -12,7 +15,7 @@ type AddButtonConfig = {
 
 type AccordionSelectorProps = {
    label: string;
-   icon?: string; // Ícono SVG del grupo
+   icon?: string;
    items: AccordionItem[];
    selectedId: string | number | null;
    isOpen: boolean;
@@ -31,7 +34,41 @@ const AccordionSelector = ({
    onSelect,
    addButton,
 }: AccordionSelectorProps) => {
-   const isGroupActive = items.some(i => i.id === selectedId);
+   const initialParent = items.find(i => i.children?.some(c => c.id === selectedId));
+   const [openChildren, setOpenChildren] = useState<(string | number)[]>(
+      initialParent ? [initialParent.id] : []
+   );
+   const [prevSelectedId, setPrevSelectedId] = useState(selectedId);
+
+   if (selectedId !== prevSelectedId) {
+      setPrevSelectedId(selectedId);
+      const parentOfSelected = items.find(i =>
+         i.children?.some(c => c.id === selectedId)
+      );
+      setOpenChildren(prev => {
+         const stillValid = prev.filter(pid => {
+            const parent = items.find(i => i.id === pid);
+            return parent?.children?.some(c => c.id === selectedId);
+         });
+         if (parentOfSelected && !stillValid.includes(parentOfSelected.id)) {
+            return [...stillValid, parentOfSelected.id];
+         }
+         return stillValid;
+      });
+   }
+
+   const toggleChild = (id: string | number) => {
+      setOpenChildren(prev =>
+         prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      );
+   };
+
+   const isChildActive = (item: AccordionItem) =>
+      !!item.children?.some(c => c.id === selectedId);
+
+   const isGroupActive =
+      items.some(i => i.id === selectedId) ||
+      items.some(i => isChildActive(i));
 
    return (
       <div className='rounded-xl overflow-hidden'>
@@ -73,24 +110,79 @@ const AccordionSelector = ({
          </div>
          {isOpen && (
             <div className='mt-1 ml-4 pl-4 border-l border-slate-700 space-y-1'>
-               {items.map(item => (
-                  <button
-                     key={item.id}
-                     onClick={() => onSelect(item.id)}
-                     className={`w-full flex items-center gap-2.5 text-left px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
-                        selectedId === item.id
-                           ? 'bg-blue-600 text-white font-semibold shadow-lg shadow-blue-900/40'
-                           : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                     }`}
-                  >
-                     {item.icon && (
-                        <svg className='w-4 h-4 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d={item.icon} />
-                        </svg>
-                     )}
-                     {item.Description}
-                  </button>
-               ))}
+               {items.map(item => {
+                  if (item.children && item.children.length > 0) {
+                     const childOpen = openChildren.includes(item.id);
+                     return (
+                        <div key={item.id} className='space-y-1'>
+                           <button
+                              type='button'
+                              onClick={() => toggleChild(item.id)}
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+                                 isChildActive(item)
+                                    ? 'text-blue-300 font-semibold'
+                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                              }`}
+                           >
+                              <span className='flex items-center gap-2.5'>
+                                 {item.icon && (
+                                    <svg className='w-4 h-4 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d={item.icon} />
+                                    </svg>
+                                 )}
+                                 {item.Description}
+                              </span>
+                              <svg
+                                 className={`w-3.5 h-3.5 transition-transform duration-200 ${childOpen ? 'rotate-180' : ''}`}
+                                 fill='none' stroke='currentColor' viewBox='0 0 24 24'
+                              >
+                                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M19 9l-7 7-7-7' />
+                              </svg>
+                           </button>
+                           {childOpen && (
+                              <div className='ml-4 pl-4 border-l border-slate-700/60 space-y-1'>
+                                 {item.children.map(child => (
+                                    <button
+                                       key={child.id}
+                                       onClick={() => onSelect(child.id)}
+                                       className={`w-full flex items-center gap-2.5 text-left px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+                                          selectedId === child.id
+                                             ? 'bg-blue-600 text-white font-semibold shadow-lg shadow-blue-900/40'
+                                             : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                       }`}
+                                    >
+                                       {child.icon && (
+                                          <svg className='w-4 h-4 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d={child.icon} />
+                                          </svg>
+                                       )}
+                                       {child.Description}
+                                    </button>
+                                 ))}
+                              </div>
+                           )}
+                        </div>
+                     );
+                  }
+                  return (
+                     <button
+                        key={item.id}
+                        onClick={() => onSelect(item.id)}
+                        className={`w-full flex items-center gap-2.5 text-left px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+                           selectedId === item.id
+                              ? 'bg-blue-600 text-white font-semibold shadow-lg shadow-blue-900/40'
+                              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                     >
+                        {item.icon && (
+                           <svg className='w-4 h-4 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d={item.icon} />
+                           </svg>
+                        )}
+                        {item.Description}
+                     </button>
+                  );
+               })}
             </div>
          )}
       </div>
