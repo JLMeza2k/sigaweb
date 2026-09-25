@@ -28,7 +28,15 @@
       "favicon": "./assets/iconsiga.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "networkSecurityConfig": "./network_security_config.xml"
+          }
+        }
+      ]
     ],
     "extra": {
       "router": {},
