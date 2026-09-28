@@ -27,6 +27,7 @@ export default function AppLayout() {
 				options={{ presentation: 'fullScreenModal', headerShown: false }}
 			/>
 			<Stack.Screen name="bm/[nuibm]" options={{ title: 'Detalle' }} />
+			<Stack.Screen name="bm/list" options={{ title: 'Resultados' }} />
 		</Stack>
 	);
 }

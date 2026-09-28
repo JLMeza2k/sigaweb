@@ -11,11 +11,11 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useAuth, useTheme } from '../../../context/ContextProvider';
 import { BmFieldRow } from '../../../components/BmFieldRow';
 import { BmFieldRowPair } from '../../../components/BmFieldRowPair';
-import { BmStatusChips } from '../../../components/BmStatusChips';
+import { BmCard } from '../../../components/BmCard';
+import { BmVerificarModal } from '../../../components/BmVerificarModal';
 import {
 	formatCurrency,
 	formatDate,
-	formatEntrada,
 	isValidNuibm,
 } from '../../../utils/format';
 import type { BienMueble } from '../../../types/bm';
@@ -60,10 +60,12 @@ export default function BmDetail() {
 }
 
 function BmDetailContent({ nuibm }: { nuibm: string }) {
-	const { authedFetch } = useAuth();
+	const { authedFetch, user } = useAuth();
 	const { colors } = useTheme();
 	const styles = useMemo(() => createContentStyles(colors), [colors]);
 	const [state, setState] = useState<State>({ kind: 'loading' });
+	const [reloadKey, setReloadKey] = useState(0);
+	const [verificarOpen, setVerificarOpen] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -103,7 +105,7 @@ function BmDetailContent({ nuibm }: { nuibm: string }) {
 		return () => {
 			cancelled = true;
 		};
-	}, [nuibm, authedFetch]);
+	}, [nuibm, authedFetch, reloadKey]);
 
 	return (
 		<View style={styles.root}>
@@ -138,92 +140,219 @@ function BmDetailContent({ nuibm }: { nuibm: string }) {
 					contentContainerStyle={styles.scroll}
 					showsVerticalScrollIndicator={false}
 				>
-					<View style={styles.heroCard}>
-						<View style={styles.heroTop}>
-							<View style={styles.heroNuibmBlock}>
-								<Text style={styles.heroLabel}>NUIBM</Text>
-								<Text style={styles.heroNuibm}>{String(state.data.NUIBM)}</Text>
-							</View>
-							<View style={styles.heroDividerV} />
-							<View style={styles.heroCveBlock}>
-								<Text style={styles.heroLabel}>Cve. CABMS</Text>
-								<Text style={styles.heroCve} numberOfLines={2}>
-									{state.data.CveCABMS || '—'}
+					<BmCard
+						titulo={String(state.data.NUIBM)}
+						contenido={state.data.FullDescripcion || 'Sin descripción'}
+						footer1={state.data.NameArea}
+						footer2={state.data.Resguardatarios}
+					/>
+
+					<AdqCard data={state.data} styles={styles} />
+
+					<StatusCard data={state.data} styles={styles} />
+
+					{state.data.Verificado ? (
+						<VerifiedCard data={state.data} styles={styles} />
+					) : null}
+
+					{state.data.Baja ? <BajaCard data={state.data} styles={styles} /> : null}
+
+					{canRevalidate(state.data) ? (
+						<View style={styles.section}>
+							<Pressable
+								onPress={() => setVerificarOpen(true)}
+								style={({ pressed }) => [
+									styles.verifyBtn,
+									pressed && styles.verifyBtnPressed,
+								]}
+							>
+								<Text style={styles.verifyBtnText}>
+									{state.data.Verificado
+										? '🔁 Reverificar'
+										: '✓ Verificar este bien'}
 								</Text>
-							</View>
+							</Pressable>
 						</View>
-						<View style={styles.heroDividerH} />
-						<Text style={styles.heroDesc} numberOfLines={3}>
-							{state.data.DescCABMS || state.data.CveCABMS || 'Sin descripción'}
-						</Text>
-						{state.data.Complementaria ? (
-							<>
-								<View style={styles.heroDividerH} />
-								<Text style={styles.heroLabel}>Complementaria</Text>
-								<Text style={styles.heroComp} numberOfLines={2}>
-									{state.data.Complementaria}
-								</Text>
-							</>
-						) : null}
-					</View>
-
-					<Section title="Características" styles={styles}>
-						<BmFieldRowPair
-							left={{ label: 'Marca', value: state.data.Marca }}
-							right={{ label: 'Modelo', value: state.data.Modelo }}
-						/>
-						<BmFieldRow label="Serie" value={state.data.Serie} />
-						<BmFieldRowPair
-							left={{ label: 'Color', value: state.data.Color }}
-							right={{ label: 'Condiciones', value: state.data.Condiciones }}
-						/>
-					</Section>
-
-					<Section title="Adquisición" styles={styles}>
-						<BmFieldRow label="Valor" value={formatCurrency(state.data.Valor)} />
-						<BmFieldRow label="Proveedor" value={state.data.NameProv} />
-						<BmFieldRow label="RFC Proveedor" value={state.data.RFCProveedor} mono />
-						<BmFieldRowPair
-							left={{ label: 'Factura', value: state.data.Factura }}
-							right={{
-								label: 'Fecha Factura',
-								value: formatDate(state.data.FechaFactura),
-							}}
-						/>
-						<BmFieldRow label="Referencia" value={state.data.Referencia} />
-						<BmFieldRow
-							label="Entrada"
-							value={formatEntrada(state.data.Entrada, state.data.AñoEntr)}
-						/>
-					</Section>
-
-					<Section title="Estado" styles={styles}>
-						<BmStatusChips
-							firmado={state.data.Firmado}
-							etiquetado={state.data.Etiquetado}
-							baja={state.data.Baja}
-							blackList={state.data.BlackList}
-						/>
-					</Section>
+					) : null}
 				</ScrollView>
 			)}
+
+			{state.kind === 'ok' && user?.IdUser != null ? (
+				<BmVerificarModal
+					visible={verificarOpen}
+					nuibm={state.data.NUIBM}
+					userId={user.IdUser}
+					defaults={{
+						Unidad: Number(state.data.Unidad),
+						Centro: Number(state.data.Centro),
+						Area: state.data.Area,
+					}}
+					onClose={() => setVerificarOpen(false)}
+					onSuccess={() => {
+						setVerificarOpen(false);
+						setReloadKey((k) => k + 1);
+					}}
+				/>
+			) : null}
 		</View>
 	);
 }
 
-function Section({
-	title,
-	children,
+function canRevalidate(data: BienMueble): boolean {
+	if (!data.Verificado) return true;
+	if (!data.VerifiedAt) return true;
+	const verifiedDate = new Date(data.VerifiedAt);
+	if (Number.isNaN(verifiedDate.getTime())) return true;
+	const oneMonthAgoMs = Date.now() - 30 * 24 * 60 * 60 * 1000;
+	return verifiedDate.getTime() < oneMonthAgoMs;
+}
+
+function AdqCard({
+	data,
 	styles,
 }: {
-	title: string;
-	children: React.ReactNode;
+	data: BienMueble;
 	styles: ReturnType<typeof createContentStyles>;
 }) {
 	return (
 		<View style={styles.section}>
-			<Text style={styles.sectionTitle}>{title}</Text>
-			<View style={styles.sectionCard}>{children}</View>
+			<Text style={styles.sectionTitle}>Adquisición</Text>
+			<View style={styles.sectionCard}>
+				<BmFieldRowPair
+					left={{ label: 'Condiciones', value: data.Condiciones }}
+					right={{ label: 'Valor', value: formatCurrency(data.Valor) }}
+				/>
+				<BmFieldRow label="Proveedor" value={data.nameProveedor} />
+				<BmFieldRowPair
+					left={{ label: 'Factura', value: data.Factura }}
+					right={{
+						label: 'Fecha Factura',
+						value: formatDate(data.FechaFactura),
+					}}
+				/>
+				<BmFieldRow label="Referencia" value={data.Referencia} />
+			</View>
+		</View>
+	);
+}
+
+function StatusCard({
+	data,
+	styles,
+}: {
+	data: BienMueble;
+	styles: ReturnType<typeof createContentStyles>;
+}) {
+	const items: { label: string; value: boolean }[] = [
+		{ label: 'Etiquetado', value: data.Etiquetado },
+		{ label: 'Firmado', value: data.Firmado },
+		{ label: 'Baja', value: data.Baja },
+		{ label: 'EF', value: data.EF },
+	];
+
+	return (
+		<View style={styles.section}>
+			<Text style={styles.sectionTitle}>Estado</Text>
+			<View style={styles.statusCard}>
+				<View style={styles.statusRow}>
+					<StatusCell
+						label="Etiquetado"
+						active={items[0].value}
+						styles={styles}
+					/>
+					<View style={styles.statusDivider} />
+					<StatusCell
+						label="Firmado"
+						active={items[1].value}
+						styles={styles}
+					/>
+				</View>
+				<View style={styles.statusDividerH} />
+				<View style={styles.statusRow}>
+					<StatusCell
+						label="Baja"
+						active={items[2].value}
+						styles={styles}
+					/>
+					<View style={styles.statusDivider} />
+					<StatusCell label="EF" active={items[3].value} styles={styles} />
+				</View>
+			</View>
+		</View>
+	);
+}
+
+function StatusCell({
+	label,
+	active,
+	styles,
+}: {
+	label: string;
+	active: boolean;
+	styles: ReturnType<typeof createContentStyles>;
+}) {
+	return (
+		<View style={styles.statusCell}>
+			<View
+				style={[
+					styles.statusDot,
+					{ backgroundColor: active ? styles.statusOkBg.backgroundColor : styles.statusOffBg.backgroundColor },
+				]}
+			>
+				<Text
+					style={[
+						styles.statusDotText,
+						{ color: active ? styles.statusOkFg.color : styles.statusOffFg.color },
+					]}
+				>
+					{active ? '✓' : '✗'}
+				</Text>
+			</View>
+			<Text style={styles.statusCellLabel}>{label}</Text>
+		</View>
+	);
+}
+
+function BajaCard({
+	data,
+	styles,
+}: {
+	data: BienMueble;
+	styles: ReturnType<typeof createContentStyles>;
+}) {
+	return (
+		<View style={styles.section}>
+			<Text style={styles.sectionTitle}>Detalles de Baja</Text>
+			<View style={styles.sectionCard}>
+				<BmFieldRow label="Fecha de Baja" value={formatDate(data.FechaBaja)} />
+				<BmFieldRow label="Causa" value={data.dscCausaBaja} />
+				<BmFieldRow label="Observaciones" value={data.obsBaja} />
+			</View>
+		</View>
+	);
+}
+
+function VerifiedCard({
+	data,
+	styles,
+}: {
+	data: BienMueble;
+	styles: ReturnType<typeof createContentStyles>;
+}) {
+	return (
+		<View style={styles.section}>
+			<Text style={styles.sectionTitle}>Verificación</Text>
+			<View style={styles.sectionCard}>
+				<BmFieldRow
+					label="Fecha de Verificación"
+					value={formatDate(data.VerifiedAt)}
+				/>
+				<BmFieldRow label="Verificador" value={data.NameVerifiedBy} />
+				<BmFieldRow
+					label="Área donde se encontró"
+					value={data.FoundIn}
+				/>
+			</View>
 		</View>
 	);
 }
@@ -268,8 +397,13 @@ const createInvalidStyles = (c: ReturnType<typeof useTheme>['colors']) =>
 		},
 	});
 
-const createContentStyles = (c: ReturnType<typeof useTheme>['colors']) =>
-	StyleSheet.create({
+const createContentStyles = (c: ReturnType<typeof useTheme>['colors']) => {
+	const statusOkBg = '#dcfce7';
+	const statusOkFg = '#166534';
+	const statusOffBg = '#1e293b';
+	const statusOffFg = '#94a3b8';
+
+	return StyleSheet.create({
 		root: {
 			flex: 1,
 			backgroundColor: c.bg,
@@ -331,75 +465,10 @@ const createContentStyles = (c: ReturnType<typeof useTheme>['colors']) =>
 		scroll: {
 			padding: 20,
 			paddingBottom: 40,
-		},
-		heroCard: {
-			backgroundColor: c.heroBg,
-			borderRadius: 20,
-			padding: 24,
-			marginBottom: 16,
-			shadowColor: c.heroBg,
-			shadowOpacity: 0.25,
-			shadowRadius: 12,
-			shadowOffset: { width: 0, height: 6 },
-			elevation: 4,
-		},
-		heroTop: {
-			flexDirection: 'row',
-			alignItems: 'flex-start',
-		},
-		heroNuibmBlock: {
-			flex: 3,
-		},
-		heroCveBlock: {
-			flex: 2,
-			paddingLeft: 12,
-		},
-		heroDividerV: {
-			width: 1,
-			backgroundColor: c.heroDivider,
-			alignSelf: 'stretch',
-			marginHorizontal: 12,
-		},
-		heroDividerH: {
-			height: 1,
-			backgroundColor: c.heroDivider,
-			marginVertical: 14,
-		},
-		heroLabel: {
-			color: c.heroSubtle,
-			fontSize: 11,
-			fontWeight: '700',
-			textTransform: 'uppercase',
-			letterSpacing: 1,
-		},
-		heroNuibm: {
-			color: c.heroFg,
-			fontSize: 40,
-			fontWeight: '800',
-			letterSpacing: 4,
-			marginTop: 4,
-			fontVariant: ['tabular-nums'],
-		},
-		heroCve: {
-			color: c.heroFg,
-			fontSize: 15,
-			fontWeight: '600',
-			marginTop: 6,
-			fontVariant: ['tabular-nums'],
-		},
-		heroDesc: {
-			color: c.heroDesc,
-			fontSize: 14,
-			fontWeight: '500',
-		},
-		heroComp: {
-			color: c.heroFg,
-			fontSize: 14,
-			fontWeight: '500',
-			marginTop: 4,
+			gap: 16,
 		},
 		section: {
-			marginBottom: 16,
+			marginBottom: 0,
 		},
 		sectionTitle: {
 			fontSize: 12,
@@ -416,10 +485,87 @@ const createContentStyles = (c: ReturnType<typeof useTheme>['colors']) =>
 			paddingHorizontal: 16,
 			paddingTop: 4,
 			paddingBottom: 4,
+			borderWidth: 1,
+			borderColor: c.border,
 			shadowColor: c.shadow,
 			shadowOpacity: 0.05,
 			shadowRadius: 8,
 			shadowOffset: { width: 0, height: 2 },
 			elevation: 2,
 		},
+		statusCard: {
+			backgroundColor: c.bgElevated,
+			borderRadius: 16,
+			borderWidth: 1,
+			borderColor: c.border,
+			paddingVertical: 8,
+			paddingHorizontal: 8,
+			shadowColor: c.shadow,
+			shadowOpacity: 0.05,
+			shadowRadius: 8,
+			shadowOffset: { width: 0, height: 2 },
+			elevation: 2,
+		},
+		statusRow: {
+			flexDirection: 'row',
+			alignItems: 'center',
+			paddingVertical: 10,
+		},
+		statusDivider: {
+			width: 1,
+			alignSelf: 'stretch',
+			backgroundColor: c.divider,
+			marginHorizontal: 4,
+		},
+		statusDividerH: {
+			height: 1,
+			backgroundColor: c.divider,
+		},
+		statusCell: {
+			flex: 1,
+			flexDirection: 'row',
+			alignItems: 'center',
+			paddingHorizontal: 8,
+			gap: 8,
+		},
+		statusDot: {
+			width: 28,
+			height: 28,
+			borderRadius: 14,
+			alignItems: 'center',
+			justifyContent: 'center',
+		},
+		statusDotText: {
+			fontSize: 14,
+			fontWeight: '700',
+		},
+		statusCellLabel: {
+			fontSize: 13,
+			fontWeight: '600',
+			color: c.text,
+			flexShrink: 1,
+		},
+		statusOkBg: { backgroundColor: statusOkBg },
+		statusOkFg: { color: statusOkFg },
+		statusOffBg: { backgroundColor: statusOffBg },
+		statusOffFg: { color: statusOffFg },
+		verifyBtn: {
+			backgroundColor: statusOkBg,
+			borderRadius: 14,
+			paddingVertical: 14,
+			alignItems: 'center',
+			borderWidth: 1,
+			borderColor: statusOkFg,
+		},
+		verifyBtnPressed: {
+			opacity: 0.85,
+			transform: [{ scale: 0.99 }],
+		},
+		verifyBtnText: {
+			color: statusOkFg,
+			fontSize: 15,
+			fontWeight: '700',
+			letterSpacing: 0.4,
+		},
 	});
+};

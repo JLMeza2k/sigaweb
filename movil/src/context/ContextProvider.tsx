@@ -48,8 +48,8 @@ export type AppState = {
 
 const TOKEN_KEY = '@sigamovil/token';
 const THEME_KEY = '@sigamovil/theme-mode';
-//const DEFAULT_API_URL = 'http://10.3.0.200:772/api';
-const DEFAULT_API_URL = 'https://sigaweb-delta.vercel.app/api';
+const DEFAULT_API_URL = 'http://192.168.68.101:3000/api';
+//const DEFAULT_API_URL = 'https://sigaweb-delta.vercel.app/api';
 
 const AppContext = createContext<AppState | null>(null);
 

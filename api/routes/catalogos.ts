@@ -161,4 +161,20 @@ routerCatalogos.get('/centros/:ua', async (req: Request, res: Response) => {   /
    }
 });
 
+routerCatalogos.get('/areas/:ua/:ct', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
+   try {
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT Unidad, Centro, Area, Descripcion FROM Areas WHERE Unidad=${req.params.ua} AND Centro=${req.params.ct} AND Area<>'000'`);
+      if (result.recordset.length === 0) {
+         return res.status(404).json({ message: 'Áreas no encontradas' });
+      }
+      res.status(200).json(result)
+   } catch (error) {
+      console.error('Error en la consulta a la base de datos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener las áreas de trabajo.' });
+   }
+});
+
 export default routerCatalogos;
