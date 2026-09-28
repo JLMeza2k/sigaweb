@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { poolPromise, sql } from '../config/db';
-import bcrypt from 'bcrypt-ts';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 
