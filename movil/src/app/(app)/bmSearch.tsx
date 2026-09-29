@@ -16,9 +16,31 @@ import { useAuth, useTheme } from '../../context/ContextProvider';
 import { BmCard } from '../../components/BmCard';
 import { BmComboBox, type ComboOption } from '../../components/BmComboBox';
 import { BmEmpleadoPicker } from '../../components/BmEmpleadoPicker';
-import { isValidNuibm } from '../../utils/format';
+import {
+	formatElapsed,
+	isValidNuibm,
+	verificationAge,
+	verificationColor,
+} from '../../utils/format';
 import type { BienMueble } from '../../types/bm';
 import type { Area, Centro, Unidad } from '../../types/catalogos';
+
+function getVerificationBadge(verifiedAt: string | null | undefined): {
+	rightLabel: string | null;
+	rightColor: string;
+} {
+	const label = formatElapsed(verifiedAt);
+	if (label) {
+		return {
+			rightLabel: label,
+			rightColor: verificationColor(verificationAge(verifiedAt)),
+		};
+	}
+	return {
+		rightLabel: null,
+		rightColor: verificationColor('unverified'),
+	};
+}
 
 export default function BmSearch() {
 	const { colors } = useTheme();
@@ -451,14 +473,15 @@ export default function BmSearch() {
 				<Pressable style={styles.overlay} onPress={closeModal}>
 					<Pressable style={styles.modalSheet} onPress={() => { }}>
 						<View style={styles.modalHandle} />
-						{result && (
-							<BmCard
-								titulo={String(result.NUIBM)}
-								contenido={result.FullDescripcion || 'Sin descripción'}
-								footer1={result.NameArea}
-								footer2={result.Resguardatarios}
-							/>
-						)}
+					{result && (
+						<BmCard
+							titulo={String(result.NUIBM)}
+							contenido={result.FullDescripcion || 'Sin descripción'}
+							footer1={result.NameArea}
+							footer2={result.Resguardatarios}
+							{...(getVerificationBadge(result.VerifiedAt) ?? {})}
+						/>
+					)}
 						<Pressable
 							onPress={() => {
 								if (!result) return;

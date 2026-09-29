@@ -55,7 +55,7 @@ bmRouter.get("/:rfc/:ua/:ct/:area", checkToken, async (req: AuthRequest, res: Re
             conditions.push("Area = @area");
         }
 
-        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+        const whereClause = conditions.length > 0 ? `WHERE blacklist=0 AND ${conditions.join(' AND ')}` : '';
 
         const query = `
             SELECT NUIBM, FullDescripcion, Condiciones, Valor, nameProveedor, Factura, FechaFactura, 

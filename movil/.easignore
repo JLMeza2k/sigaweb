@@ -1,13 +1,24 @@
-# Gradle / Android build artifacts
+# Dependencies (EAS Build installs dependencies on the cloud)
+node_modules/
+
+# Gradle / Android build artifacts & caches
+.gradle/
 android/.gradle/
 android/build/
 android/app/build/
 android/app/.cxx/
 android/local.properties
+android/.kotlin/
 
-# Expo cache (se regenera)
+# Expo / Web cache
 .expo/
 .expo-shared/
+dist/
+web-build/
+
+# iOS artifacts (if any)
+ios/Pods/
+ios/build/
 
 # OS / IDE
 .DS_Store
@@ -30,3 +41,4 @@ yarn-error.log*
 
 # TypeScript build cache
 *.tsbuildinfo
+

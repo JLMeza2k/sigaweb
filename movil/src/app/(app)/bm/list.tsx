@@ -10,12 +10,34 @@ import {
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useAuth, useTheme } from '../../../context/ContextProvider';
 import { BmCard } from '../../../components/BmCard';
+import {
+	formatElapsed,
+	verificationAge,
+	verificationColor,
+} from '../../../utils/format';
 import type { BienMueble } from '../../../types/bm';
 
 type State =
 	| { kind: 'loading' }
 	| { kind: 'error'; message: string }
 	| { kind: 'ok'; data: BienMueble[] };
+
+function getVerificationBadge(verifiedAt: string | null | undefined): {
+	rightLabel: string | null;
+	rightColor: string;
+} {
+	const label = formatElapsed(verifiedAt);
+	if (label) {
+		return {
+			rightLabel: label,
+			rightColor: verificationColor(verificationAge(verifiedAt)),
+		};
+	}
+	return {
+		rightLabel: null,
+		rightColor: verificationColor('unverified'),
+	};
+}
 
 export default function BmList() {
 	const params = useLocalSearchParams<{
@@ -140,6 +162,7 @@ export default function BmList() {
 									contenido={item.FullDescripcion || 'Sin descripción'}
 									footer1={item.NameArea}
 									footer2={item.Resguardatarios}
+									{...(getVerificationBadge(item.VerifiedAt) ?? {})}
 								/>
 							</Pressable>
 						)}

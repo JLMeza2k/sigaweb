@@ -7,18 +7,43 @@ export interface BmCardProps {
 	contenido: string;
 	footer1: string;
 	footer2: string;
+	rightLabel?: string | null;
+	rightColor?: string | null;
 }
 
-export function BmCard({ titulo, contenido, footer1, footer2 }: BmCardProps) {
+export function BmCard({
+	titulo,
+	contenido,
+	footer1,
+	footer2,
+	rightLabel,
+	rightColor,
+}: BmCardProps) {
 	const { colors } = useTheme();
 	const styles = useMemo(() => createStyles(colors), [colors]);
 
 	return (
 		<View style={styles.card}>
 			<View style={styles.titleBox}>
-				<Text style={styles.title} numberOfLines={1}>
-					{titulo}
-				</Text>
+				<View style={styles.titleLeft} />
+				<View style={styles.titleCenter}>
+					<Text style={styles.title} numberOfLines={1}>
+						{titulo}
+					</Text>
+				</View>
+				<View style={styles.titleRight}>
+					{rightColor ? (
+						rightLabel ? (
+							<View style={[styles.badge, { backgroundColor: rightColor }]}>
+								<Text style={styles.badgeText} numberOfLines={1}>
+									{rightLabel}
+								</Text>
+							</View>
+						) : (
+							<View style={[styles.dot, { backgroundColor: rightColor }]} />
+						)
+					) : null}
+				</View>
 			</View>
 			<View style={styles.contentBox}>
 				<Text style={styles.content} numberOfLines={5} ellipsizeMode="tail">
@@ -59,6 +84,20 @@ const createStyles = (c: ReturnType<typeof useTheme>['colors']) =>
 		},
 		titleBox: {
 			flex: 0.15,
+			flexDirection: 'row',
+			alignItems: 'center',
+		},
+		titleLeft: {
+			flex: 0.15,
+		},
+		titleCenter: {
+			flex: 0.7,
+			alignItems: 'center',
+			justifyContent: 'center',
+		},
+		titleRight: {
+			flex: 0.15,
+			alignItems: 'flex-end',
 			justifyContent: 'center',
 		},
 		title: {
@@ -68,6 +107,25 @@ const createStyles = (c: ReturnType<typeof useTheme>['colors']) =>
 			letterSpacing: 4.8,
 			textAlign: 'center',
 			color: c.text,
+		},
+		badge: {
+			borderRadius: 999,
+			paddingHorizontal: 8,
+			paddingVertical: 2,
+			minHeight: 18,
+			justifyContent: 'center',
+			alignItems: 'center',
+		},
+		badgeText: {
+			color: '#ffffff',
+			fontSize: 10,
+			fontWeight: '700',
+			letterSpacing: 0.3,
+		},
+		dot: {
+			width: 12,
+			height: 12,
+			borderRadius: 6,
 		},
 		contentBox: {
 			flex: 0.7,
