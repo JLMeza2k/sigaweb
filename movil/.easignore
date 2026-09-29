@@ -1,24 +1,18 @@
 # Dependencies (EAS Build installs dependencies on the cloud)
 node_modules/
 
-# Gradle / Android build artifacts & caches
+# Native generated directories (EAS Build performs prebuild in cloud)
+android/
+ios/
+/android
+/ios
 .gradle/
-android/.gradle/
-android/build/
-android/app/build/
-android/app/.cxx/
-android/local.properties
-android/.kotlin/
 
 # Expo / Web cache
 .expo/
 .expo-shared/
 dist/
 web-build/
-
-# iOS artifacts (if any)
-ios/Pods/
-ios/build/
 
 # OS / IDE
 .DS_Store
