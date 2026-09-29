@@ -1,5 +1,8 @@
 export function extractNuibmFromQr(text: string): string | null {
-	const firstField = text.split('|')[0]?.trim();
+	const firstField = text
+		.split('|')
+		.map((field) => field.trim())
+		.find((field) => field.length > 0);
 	if (!firstField) return null;
 	if (!/^\d{6}$/.test(firstField)) return null;
 	return firstField;
