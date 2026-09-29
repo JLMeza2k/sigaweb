@@ -11,7 +11,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "SIGA Movil necesita la cámara para escanear los códigos QR de las etiquetas de los bienes muebles."
-      }
+      },
+      "bundleIdentifier": "com.anonymous.sigamovil"
     },
     "android": {
       "adaptiveIcon": {
