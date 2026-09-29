@@ -29,25 +29,76 @@ routerUsers.post('/user', async (req: Request, res: Response) => {  // Crear nue
 	try {
 		const saltRounds = 10;
 		const { rfc, email, password } = req.body;
+		const code = makeCode();
 		const hashPassword = bcrypt.hashSync(password, saltRounds);
+		const hashedCode = bcrypt.hashSync(code, saltRounds);
 		const pool = await poolPromise;
 		const userRow = await (pool as sql.ConnectionPool)
 			.request()
 			.input("RFC", sql.VarChar(13), rfc)
 			.input("pwd", sql.VarChar(1000), hashPassword)
 			.input("eMail", sql.VarChar(100), email)
-			.input("ActivationCode", sql.VarChar(5), makeCode())
+			.input("ActivationCode", sql.VarChar(200), hashedCode)
 			.execute('webCreateUser');
 		console.log(userRow);
 		if (userRow.returnValue === 0)
-			res.status(409).json({ message: "El usuario ya existe" })
+			return res.status(409).json({ message: "El usuario ya existe" });
 		if (userRow.returnValue === -1)
-			res.status(409).json({ message: "El empleado no existe" })
+			return res.status(409).json({ message: "El empleado no existe" });
 		if (userRow.returnValue === -2)
-			res.status(400).json({ message: "Faltan datos obligatorios" })
-		res.status(200).json(userRow.recordset)
+			return res.status(400).json({ message: "Faltan datos obligatorios" });
+
+		// Obtener nombre del empleado para personalizar el correo
+		const empQuery = await (pool as sql.ConnectionPool)
+			.request()
+			.input("RFC", sql.VarChar(13), rfc)
+			.query("SELECT Nombre FROM Empleados WHERE RFC = @RFC");
+		const nombreEmpleado = empQuery.recordset.length > 0 ? empQuery.recordset[0].Nombre : '';
+
+		// Create a transporter object to send mail
+		const transporter = nodemailer.createTransport({
+			host: process.env.MAIL_SERVER,
+			port: Number(process.env.MAIL_OUTPORT) || 587,
+			secure: false, // false para STARTTLS (puerto 587)
+			auth: {
+				user: process.env.MAIL_ACCOUNT,
+				pass: process.env.MAIL_PASSWORD,
+			},
+			tls: {
+				rejectUnauthorized: false, // Aceptar todos los certificados (autofirmados, etc.)
+			}
+		});
+
+		// Configure the mailoptions object
+		const mailOptions = {
+			from: process.env.MAIL_ACCOUNT ? `"SIGAweb" <${process.env.MAIL_ACCOUNT}>` : '<sigaweb@saludbcs.gob.mx>',
+			to: email,
+			subject: 'Activación de Cuenta - SIGAweb',
+			html: `
+				<p>Estimado(a) ${nombreEmpleado || 'Usuario'}:</p>
+				<p></p>
+				<p>Ha recibido este correo, ya que se ha registrado una cuenta en nuestra aplicación 
+						<strong>SIGAweb</strong>
+				</p>
+				<p></p>
+				<p>A continuación, le proporcionamos el código que deberá ingresar en la aplicación en la sección de activación de cuenta:</p>
+				<p></p>
+				<h1><strong><center>${code}</center></strong></h1>
+				<p></p>
+				<p>Luego de introducir el código, su cuenta quedará activada.</p>
+				<p></p>
+				<p>Saludos cordiales!</p>
+				<p></p>
+				<p><strong>La Dirección de Administración del Instituto de Servicios de Salud de B.C.S.</strong></p>
+				`,
+		};
+
+		// Send the email
+		await transporter.sendMail(mailOptions);
+
+		return res.status(200).json(userRow.recordset);
 	} catch (err: any) {
-		res.status(500).json({ message: err.message || 'Error desconocido' })
+		return res.status(500).json({ message: err.message || 'Error desconocido' });
 	}
 });
 
@@ -94,25 +145,28 @@ routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {  /
 			const code = makeCode()
 			// Create a transporter object to send mail
 			const transporter = nodemailer.createTransport({
-				host: 'smtp.gmail.com',
-				port: 587,
-				secure: false, // use false for STARTTLS; true for SSL on port 465
+				host: process.env.MAIL_SERVER,
+				port: Number(process.env.MAIL_OUTPORT) || 587,
+				secure: false, // false para STARTTLS (puerto 587)
 				auth: {
 					user: process.env.MAIL_ACCOUNT,
-					pass: process.env.MAIL_APIKEY,
+					pass: process.env.MAIL_PASSWORD,
+				},
+				tls: {
+					rejectUnauthorized: false, // Aceptar todos los certificados (autofirmados, etc.)
 				}
 			});
 
 			// Configure the mailoptions object
 			const mailOptions = {
-				from: '<viaticos@saludbcs.gob.mx>',
+				from: process.env.MAIL_ACCOUNT ? `"SIGAweb" <${process.env.MAIL_ACCOUNT}>` : '<sigaweb@saludbcs.gob.mx>',
 				to: email,
-				subject: 'Recuperación de Contraseña - Gestor de Comisiones de Trabajo',
+				subject: 'Recuperación de Contraseña - SIGAweb',
 				html: `
 					<p>Estimado(a) ${rowUser.recordset[0].Nombre}:</p>
 					<p></p>
 					<p>Ha recibido este correo, ya que solicitó recuperar la contraseña de nuestra aplicación 
-							<strong>Gestor de Comisiones de Trabajo</strong>
+							<strong>SIGAweb</strong>
 					</p>
 					<p></p>
 					<p>A continuación, le proporcionamos el código que deberá ingresar en la aplicación en la sección de recuperación de contraseña:</p>
@@ -128,14 +182,7 @@ routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {  /
 			};
 
 			// Send the email
-			transporter.sendMail(mailOptions, function (error, info) {
-				if (error) {
-					console.log('Error:', error);
-					return res.status(400).json({ message: 'Error al enviar el correo electrónico' })
-				} else {
-					console.log('Email sent: ', info.response);
-				}
-			});
+			await transporter.sendMail(mailOptions);
 			const hashedCode = bcrypt.hashSync(code, saltRounds);
 			await (pool as sql.ConnectionPool)
 				.request()
