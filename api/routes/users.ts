@@ -70,25 +70,18 @@ routerUsers.post('/user', async (req: Request, res: Response) => {  // Crear nue
 		});
 
 		// Configure the mailoptions object
+		const mailFrom = process.env.MAIL_FROM || (process.env.MAIL_ACCOUNT?.includes('@') ? process.env.MAIL_ACCOUNT : `${process.env.MAIL_ACCOUNT || 'sigaweb'}@saludbcs.gob.mx`);
 		const mailOptions = {
-			from: process.env.MAIL_ACCOUNT ? `"SIGAweb" <${process.env.MAIL_ACCOUNT}>` : '<sigaweb@saludbcs.gob.mx>',
+			from: `"SIGAweb" <${mailFrom}>`,
 			to: email,
 			subject: 'Activación de Cuenta - SIGAweb',
 			html: `
-				<p>Estimado(a) ${nombreEmpleado || 'Usuario'}:</p>
-				<p></p>
-				<p>Ha recibido este correo, ya que se ha registrado una cuenta en nuestra aplicación 
-						<strong>SIGAweb</strong>
-				</p>
-				<p></p>
-				<p>A continuación, le proporcionamos el código que deberá ingresar en la aplicación en la sección de activación de cuenta:</p>
-				<p></p>
-				<h1><strong><center>${code}</center></strong></h1>
-				<p></p>
-				<p>Luego de introducir el código, su cuenta quedará activada.</p>
-				<p></p>
-				<p>Saludos cordiales!</p>
-				<p></p>
+				<p>Estimado(a) ${nombreEmpleado || 'Usuario'}:</p><p></p>
+				<p>Ha recibido este correo, ya que se ha registrado una cuenta en nuestra aplicación<strong>SIGAweb</strong></p><p></p>
+				<p>A continuación, le proporcionamos el código que deberá ingresar en la aplicación en la sección de activación de cuenta:</p><p></p>
+				<h1><strong><center>${code}</center></strong></h1><p></p>
+				<p>Luego de introducir el código, su cuenta quedará activada.</p><p></p>
+				<p>Saludos cordiales!</p><p></p>
 				<p><strong>La Dirección de Administración del Instituto de Servicios de Salud de B.C.S.</strong></p>
 				`,
 		};
@@ -138,11 +131,12 @@ routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {  /
 		const pool = await poolPromise;
 		const rowUser = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`SELECT vu.IdUser, vu.email, e.Nombre FROM WebUsers vu INNER JOIN Empleados e ON e.RFC=vu.RFC WHERE vu.Activo=1 AND rfc='${identifier}' OR email='${identifier}'`);
+			.query(`SELECT vu.IdUser, vu.email, e.Nombre FROM WebUsers vu INNER JOIN Empleados e ON e.RFC=vu.RFC WHERE vu.Activo=1 AND vu.RFC='${identifier}' OR vu.email='${identifier}'`);
 		if (rowUser.recordset.length > 0) {
-			idUser = rowUser.recordset[0].idUser
+			idUser = rowUser.recordset[0].IdUser
 			email = rowUser.recordset[0].email
 			const code = makeCode()
+			console.log(`Código de recuperación para el usuario ${idUser} (${email}): ${code}`)
 			// Create a transporter object to send mail
 			const transporter = nodemailer.createTransport({
 				host: process.env.MAIL_SERVER,
@@ -158,25 +152,19 @@ routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {  /
 			});
 
 			// Configure the mailoptions object
+			const mailFrom = process.env.MAIL_FROM || (process.env.MAIL_ACCOUNT?.includes('@') ? process.env.MAIL_ACCOUNT : `${process.env.MAIL_ACCOUNT || 'sigaweb'}@saludbcs.gob.mx`);
 			const mailOptions = {
-				from: process.env.MAIL_ACCOUNT ? `"SIGAweb" <${process.env.MAIL_ACCOUNT}>` : '<sigaweb@saludbcs.gob.mx>',
+				from: `"SIGAweb" <${mailFrom}>`,
 				to: email,
 				subject: 'Recuperación de Contraseña - SIGAweb',
 				html: `
 					<p>Estimado(a) ${rowUser.recordset[0].Nombre}:</p>
 					<p></p>
-					<p>Ha recibido este correo, ya que solicitó recuperar la contraseña de nuestra aplicación 
-							<strong>SIGAweb</strong>
-					</p>
-					<p></p>
-					<p>A continuación, le proporcionamos el código que deberá ingresar en la aplicación en la sección de recuperación de contraseña:</p>
-					<p></p>
-					<h1><strong><center>${code}</center></strong></h1>
-					<p></p>
-					<p>Luego de introducir el código, podrá establecer una nueva contraseña.</p>
-					<p></p>
-					<p>Saludos cordiales!</p>
-					<p></p>
+					<p>Ha recibido este correo, ya que solicitó recuperar la contraseña de nuestra aplicación <strong>SIGAweb</strong></p><p></p>
+					<p>A continuación, le proporcionamos el código que deberá ingresar en la aplicación en la sección de recuperación de contraseña:</p><p></p>
+					<h1><strong><center>${code}</center></strong></h1><p></p>
+					<p>Luego de introducir el código, podrá establecer una nueva contraseña.</p><p></p>
+					<p>Saludos cordiales!</p><p></p>
 					<p><strong>La Dirección de Administración del Instituto de Servicios de Salud de B.C.S.</strong></p>
 					`,
 			};
@@ -204,7 +192,7 @@ routerUsers.post('/verify-reset-code', async (req: Request, res: Response) => { 
 		const pool = await poolPromise;
 		const result = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`SELECT idUser, ISNULL(CodePassRecover,'') CodePassRecover FROM WebUsers WHERE rfc='${identifier}' OR email='${identifier}'`);
+			.query(`SELECT idUser, ISNULL(CodePassRecover,'') CodePassRecover FROM WebUsers WHERE RFC='${identifier}' OR email='${identifier}'`);
 		if (result.recordset.length > 0) {
 			if (!bcrypt.compareSync(code, result.recordset[0].CodePassRecover))
 				return res.status(401).json({ message: 'Código de recuperación incorrecto' })
@@ -229,7 +217,7 @@ routerUsers.post('/reset-password', checkToken, async (req: AuthRequest, res: Re
 		const hashPassword = bcrypt.hashSync(newPassword, saltRounds);
 		const result = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`UPDATE WebUsers SET CodePassRecover=NULL password='${hashPassword}' WHERE idUser=${req.idUser}`);
+			.query(`UPDATE WebUsers SET CodePassRecover=NULL, password='${hashPassword}' WHERE IdUser=${req.idUser}`);
 		res.status(200).json(result)
 	} catch (error) {
 		console.error('Error en la consulta a la base de datos:', error);

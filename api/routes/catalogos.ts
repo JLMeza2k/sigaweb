@@ -177,4 +177,38 @@ routerCatalogos.get('/areas/:ua/:ct', async (req: Request, res: Response) => {  
    }
 });
 
+routerCatalogos.get('/areas', async (req: Request, res: Response) => {   // Obtener el catálogo completo de áreas (todas las filas: unidades, centros y áreas)
+   try {
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT Unidad, Centro, Area, Descripcion, ShortName FROM Areas ORDER BY Unidad, Centro, Area`);
+      if (result.recordset.length === 0) {
+         return res.status(404).json({ message: 'Lista de áreas no encontrada' });
+      }
+      res.status(200).json(result.recordset);
+   } catch (error) {
+      console.error('Error en la consulta a la base de datos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener la lista de áreas.' });
+   }
+});
+
+
+routerCatalogos.get('/bm-verif-required-actions', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
+   try {
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT Id, Descripcion FROM CtlBMVerificActions ORDER BY Id`);
+      if (result.recordset.length === 0) {
+         return res.status(404).json({ message: 'Acciones requeridas no encontradas' });
+      }
+      res.status(200).json(result.recordset);
+   } catch (error) {
+      console.error('Error en la consulta a la base de datos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener las acciones requeridas.' });
+   }
+});
+
+
 export default routerCatalogos;

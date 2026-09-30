@@ -13,7 +13,7 @@ bmRouter.get("/:nuibm", checkToken, async (req: AuthRequest, res: Response) => {
         const pool = await poolPromise;
         const result = await (pool as sql.ConnectionPool)
             .request()
-            .query(`SELECT NUIBM, FullDescripcion, Condiciones, Valor, nameProveedor, Factura, FechaFactura, Referencia, Etiquetado, EF, BlackList, Resguardatarios, Unidad, Centro, Area, Firmado, IdResguardo, dbo.GetNameArea(Unidad, Centro, Area, 0, 0, '') NameArea, Baja, FechaBaja, dscCausaBaja, obsBaja, Verificado, NameVerifiedBy, FoundIn, VerifiedAt FROM vwBienesMuebles_CG_Current WHERE NUIBM=${nuibm}`);
+            .query(`SELECT NUIBM, FullDescripcion, Condiciones, Valor, nameProveedor, Factura, FechaFactura, Referencia, Etiquetado, EF, BlackList, Resguardatarios, Unidad, Centro, Area, Firmado, IdResguardo, dbo.GetNameArea(Unidad, Centro, Area, 0, 0, '') NameArea, Baja, FechaBaja, dscCausaBaja, obsBaja, Verificado, NameVerifiedBy, FoundIn, VerifiedAt, IdRequiredAction, VerifObs FROM vwBienesMuebles_CG_Current WHERE NUIBM=${nuibm}`);
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: 'Bien Mueble no encontrado' });
         }
@@ -55,13 +55,12 @@ bmRouter.get("/:rfc/:ua/:ct/:area", checkToken, async (req: AuthRequest, res: Re
             conditions.push("Area = @area");
         }
 
-        const whereClause = conditions.length > 0 ? `WHERE blacklist=0 AND ${conditions.join(' AND ')}` : '';
+        const whereClause = conditions.length > 0 ? `WHERE baja=0 AND Blacklist=0 AND ${conditions.join(' AND ')}` : '';
 
         const query = `
-            SELECT NUIBM, FullDescripcion, Condiciones, Valor, nameProveedor, Factura, FechaFactura, 
-                   Referencia, Etiquetado, EF, BlackList, Resguardatarios, Unidad, Centro, Area, 
+            SELECT NUIBM, FullDescripcion, Condiciones, Valor, nameProveedor, Factura, FechaFactura, Referencia, Etiquetado, EF, BlackList, Resguardatarios, Unidad, Centro, Area, 
                    Firmado, IdResguardo, dbo.GetNameArea(Unidad, Centro, Area, 0, 0, '') NameArea, 
-                   Baja, FechaBaja, dscCausaBaja, obsBaja, Verificado, NameVerifiedBy, FoundIn, VerifiedAt
+                   Baja, FechaBaja, dscCausaBaja, obsBaja, Verificado, NameVerifiedBy, FoundIn, VerifiedAt, IdRequiredAction, VerifObs
             FROM vwBienesMuebles_CG_Current 
             ${whereClause}
         `;
@@ -89,8 +88,10 @@ bmRouter.post("/verificar/:nuibm", checkToken, async (req: AuthRequest, res: Res
             foundUA?: number | null;
             foundCt?: number | null;
             foundArea?: string;
+            idRequiredAction?: number | null;
+            verifObs?: string | null;
         };
-        const { fecha, verifiedBy, foundUA, foundCt, foundArea } = body;
+        const { fecha, verifiedBy, foundUA, foundCt, foundArea, idRequiredAction, verifObs } = body;
         if (!fecha || !verifiedBy) {
             return res.status(400).json({ message: 'Faltan datos requeridos (fecha, verifiedBy).' });
         }
@@ -114,7 +115,10 @@ bmRouter.post("/verificar/:nuibm", checkToken, async (req: AuthRequest, res: Res
             .input('foundUA', sql.TinyInt, foundUA ?? null)
             .input('foundCt', sql.TinyInt, foundCt ?? null)
             .input('foundArea', sql.VarChar, foundArea)
-            .query(`INSERT INTO Bienes_Muebles_Verificacion (NUIBM, Id, Fecha, VerifiedBy, FoundUA, FoundCt, FoundArea) VALUES (@nuibm, @id, @fecha, @verifiedBy, @foundUA, @foundCt, @foundArea)`);
+            .input('idRequiredAction', sql.TinyInt, idRequiredAction ?? null)
+            .input('verifObs', sql.VarChar(500), verifObs?.trim() || null)
+            .query(`INSERT INTO Bienes_Muebles_Verificacion (NUIBM, Id, Fecha, VerifiedBy, FoundUA, FoundCt, FoundArea, IdRequiredAction, Observaciones)
+                    VALUES (@nuibm, @id, @fecha, @verifiedBy, @foundUA, @foundCt, @foundArea, @idRequiredAction, @verifObs)`);
 
         res.status(201).json({ ok: true, id: nextId });
     } catch (error) {
@@ -122,5 +126,6 @@ bmRouter.post("/verificar/:nuibm", checkToken, async (req: AuthRequest, res: Res
         return res.status(500).json({ message: 'Error en el servidor al registrar la verificación.' });
     }
 });
+
 
 export default bmRouter;
