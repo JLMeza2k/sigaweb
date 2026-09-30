@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+dist-ssr/
+web-build/
+api/dist/
+web/dist/
+movil/android/
+movil/ios/
+
+# Expo and native caches
+.expo/
+.expo-shared/
+expo-env.d.ts
+.kotlin/
+.gradle/
+.metro-health-check*
+
+# Local environment files and secrets
+.env*
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+pnpm-debug.*
+lerna-debug.*
+
+# Native credentials
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# TypeScript and editor files
+*.tsbuildinfo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
