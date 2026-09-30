@@ -189,7 +189,7 @@ routerCatalogos.get('/areas', async (req: Request, res: Response) => {   // Obte
       res.status(200).json(result.recordset);
    } catch (error) {
       console.error('Error en la consulta a la base de datos:', error);
-      return res.status(500).json({ message: `Error en el servidor al obtener la lista de áreas. ${error}` });
+      return res.status(500).json({ message: `Error en el servidor al obtener la lista de áreas. ${error}, ${process.env.DB_USER} ${process.env.DB_PASSWORD} ${process.env.DB_SERVER} ${process.env.DB_PORT} ${process.env.DB_NAME}` });
    }
 });
 
