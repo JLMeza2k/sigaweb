@@ -1,13 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-	darkColors,
-	lightColors,
-	type Colors,
-	type ColorScheme,
-	type ThemeMode,
-} from './theme';
+import { darkColors, lightColors, type Colors, type ColorScheme, type ThemeMode } from './theme';
+import type { RequiredAction, Area } from '../types/catalogos';
+
 
 export interface User {
 	IdUser: number;
@@ -40,15 +36,26 @@ export interface ThemeSlice {
 	setMode(mode: ThemeMode): Promise<void>;
 }
 
+export interface CatalogosSlice {
+	requiredActions: RequiredAction[];
+	allAreas: Area[];
+	loadingRequiredActions: boolean;
+	loadingAreas: boolean;
+	loadRequiredActions: () => Promise<RequiredAction[]>;
+	loadAreas: () => Promise<Area[]>;
+}
+
 export type AppState = {
 	auth: AuthSlice;
 	api: ApiSlice;
 	theme: ThemeSlice;
+	catalogos: CatalogosSlice;
 };
 
 const TOKEN_KEY = '@sigamovil/token';
 const THEME_KEY = '@sigamovil/theme-mode';
 //const DEFAULT_API_URL = 'http://192.168.68.101:3000/api';
+//const DEFAULT_API_URL = 'http://10.3.1.228:3000/api';
 const DEFAULT_API_URL = 'https://sigaweb-delta.vercel.app/api';
 
 const AppContext = createContext<AppState | null>(null);
@@ -173,13 +180,86 @@ export function ContextProvider({ children }: ContextProviderProps) {
 		return fetch(`${apiUrl}${path}`, { ...init, headers });
 	}, [apiUrl, token]);
 
+	// ── Catálogos globales (Carga perezosa / bajo demanda) ───────────────────
+	const [requiredActions, setRequiredActions] = useState<RequiredAction[]>([]);
+	const [allAreas, setAllAreas] = useState<Area[]>([]);
+	const [loadingRequiredActions, setLoadingRequiredActions] = useState(false);
+	const [loadingAreas, setLoadingAreas] = useState(false);
+
+	const loadRequiredActions = useCallback(async (): Promise<RequiredAction[]> => {
+		if (requiredActions.length > 0) return requiredActions;
+		if (!token) return [];
+		setLoadingRequiredActions(true);
+		try {
+			const res = await authedFetch('/catalogos/bm-verif-required-actions');
+			if (res.ok) {
+				const data = (await res.json()) as { recordset?: RequiredAction[] } | RequiredAction[];
+				const list = Array.isArray(data) ? data : (data.recordset ?? []);
+				setRequiredActions(list);
+				return list;
+			}
+		} catch {
+			// ignore
+		} finally {
+			setLoadingRequiredActions(false);
+		}
+		return [];
+	}, [token, authedFetch, requiredActions]);
+
+	const loadAreas = useCallback(async (): Promise<Area[]> => {
+		if (allAreas.length > 0) return allAreas;
+		if (!token) return [];
+		setLoadingAreas(true);
+		try {
+			const res = await authedFetch('/catalogos/areas');
+			if (res.ok) {
+				const data = (await res.json()) as { recordset?: Area[] } | Area[];
+				const list = Array.isArray(data) ? data : (data.recordset ?? []);
+				setAllAreas(list);
+				return list;
+			}
+		} catch {
+			// ignore
+		} finally {
+			setLoadingAreas(false);
+		}
+		return [];
+	}, [token, authedFetch, allAreas]);
+	// ────────────────────────────────────────────────────────────────────────
+
 	const value = useMemo<AppState>(
 		() => ({
 			auth: { token, user, isHydrated, login, logout, authedFetch },
 			api: { API_URL: apiUrl, setApiUrl },
 			theme: { mode, scheme, colors, setMode },
+			catalogos: {
+				requiredActions,
+				allAreas,
+				loadingRequiredActions,
+				loadingAreas,
+				loadRequiredActions,
+				loadAreas,
+			},
 		}),
-		[token, user, isHydrated, login, logout, authedFetch, apiUrl, mode, scheme, colors, setMode],
+		[
+			token,
+			user,
+			isHydrated,
+			login,
+			logout,
+			authedFetch,
+			apiUrl,
+			mode,
+			scheme,
+			colors,
+			setMode,
+			requiredActions,
+			allAreas,
+			loadingRequiredActions,
+			loadingAreas,
+			loadRequiredActions,
+			loadAreas,
+		],
 	);
 
 	return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -202,3 +282,8 @@ export function useApi(): ApiSlice {
 export function useTheme(): ThemeSlice {
 	return useAppContext().theme;
 }
+
+export function useCatalogos(): CatalogosSlice {
+	return useAppContext().catalogos;
+}
+

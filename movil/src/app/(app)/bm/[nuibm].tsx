@@ -8,7 +8,7 @@ import {
 	View,
 } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useAuth, useTheme } from '../../../context/ContextProvider';
+import { useAuth, useCatalogos, useTheme } from '../../../context/ContextProvider';
 import { BmFieldRow } from '../../../components/BmFieldRow';
 import { BmFieldRowPair } from '../../../components/BmFieldRowPair';
 import { BmCard } from '../../../components/BmCard';
@@ -339,6 +339,26 @@ function VerifiedCard({
 	data: BienMueble;
 	styles: ReturnType<typeof createContentStyles>;
 }) {
+	const { requiredActions, loadRequiredActions } = useCatalogos();
+
+	useEffect(() => {
+		if (data.IdRequiredAction != null) {
+			loadRequiredActions();
+		}
+	}, [data.IdRequiredAction, loadRequiredActions]);
+
+	const matchedAction = data.IdRequiredAction != null
+		? requiredActions.find(ra => Number(ra.Id) === Number(data.IdRequiredAction))
+		: null;
+
+	const actionDesc = matchedAction
+		? matchedAction.Descripcion
+		: (data.IdRequiredAction != null && Number(data.IdRequiredAction) === 0
+			? 'Ninguna'
+			: (data.IdRequiredAction != null && Number(data.IdRequiredAction) > 0
+				? `Acción #${data.IdRequiredAction}`
+				: null));
+
 	return (
 		<View style={styles.section}>
 			<Text style={styles.sectionTitle}>Verificación</Text>
@@ -352,10 +372,17 @@ function VerifiedCard({
 					label="Área donde se encontró"
 					value={data.FoundIn}
 				/>
+				{actionDesc ? (
+					<BmFieldRow label="Acción Requerida" value={actionDesc} />
+				) : null}
+				{data.VerifObs ? (
+					<BmFieldRow label="Observaciones" value={data.VerifObs} />
+				) : null}
 			</View>
 		</View>
 	);
 }
+
 
 const createInvalidStyles = (c: ReturnType<typeof useTheme>['colors']) =>
 	StyleSheet.create({

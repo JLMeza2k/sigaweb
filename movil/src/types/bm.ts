@@ -25,4 +25,6 @@ export interface BienMueble {
 	NameVerifiedBy: string;
 	FoundIn: string;
 	VerifiedAt: string;
+	IdRequiredAction: number | null;
+	VerifObs: string | null;
 }

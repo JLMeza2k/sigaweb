@@ -6,9 +6,10 @@ import {
 	ScrollView,
 	StyleSheet,
 	Text,
+	TextInput,
 	View,
 } from 'react-native';
-import { useAuth, useTheme } from '../context/ContextProvider';
+import { useAuth, useCatalogos, useTheme } from '../context/ContextProvider';
 import { BmComboBox, type ComboOption } from './BmComboBox';
 import type { Area, Centro, Unidad } from '../types/catalogos';
 
@@ -38,10 +39,13 @@ export function BmVerificarModal({
 	const { colors } = useTheme();
 	const styles = useMemo(() => createStyles(colors), [colors]);
 	const { authedFetch } = useAuth();
+	const { requiredActions, loadRequiredActions } = useCatalogos();
 
 	const [unidad, setUnidad] = useState<number>(defaults.Unidad);
 	const [centro, setCentro] = useState<number>(defaults.Centro);
 	const [area, setArea] = useState<string>(defaults.Area);
+	const [idRequiredAction, setIdRequiredAction] = useState<number | null>(0);
+	const [verifObs, setVerifObs] = useState<string>('');
 
 	const [unidades, setUnidades] = useState<Unidad[]>([]);
 	const [centros, setCentros] = useState<Centro[]>([]);
@@ -54,15 +58,25 @@ export function BmVerificarModal({
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	useEffect(() => {
-		if (!visible) return;
-		(async () => {
+	const [prevVisible, setPrevVisible] = useState(visible);
+
+	if (visible !== prevVisible) {
+		setPrevVisible(visible);
+		if (visible) {
 			setUnidad(defaults.Unidad);
 			setCentro(defaults.Centro);
 			setArea(defaults.Area);
+			setIdRequiredAction(0);
+			setVerifObs('');
 			setError(null);
-		})();
-	}, [visible, defaults.Unidad, defaults.Centro, defaults.Area]);
+		}
+	}
+
+	useEffect(() => {
+		if (visible) {
+			loadRequiredActions();
+		}
+	}, [visible, loadRequiredActions]);
 
 	useEffect(() => {
 		if (!visible) return;
@@ -199,6 +213,14 @@ export function BmVerificarModal({
 		[areas],
 	);
 
+	const requiredActionOptions: ComboOption<number>[] = useMemo(() => {
+		const options = requiredActions.map((ra) => ({ value: ra.Id, label: ra.Descripcion }));
+		if (!options.some((opt) => opt.value === 0)) {
+			options.unshift({ value: 0, label: 'Ninguna' });
+		}
+		return options;
+	}, [requiredActions]);
+
 	const canSubmit =
 		unidad > 0 && centro > 0 && area.trim() !== '' && !submitting;
 
@@ -215,6 +237,8 @@ export function BmVerificarModal({
 					foundUA: unidad,
 					foundCt: centro,
 					foundArea: area,
+					idRequiredAction: idRequiredAction ?? 0,
+					verifObs: verifObs.trim() || null,
 				}),
 			});
 			if (!res.ok) {
@@ -299,6 +323,30 @@ export function BmVerificarModal({
 							emptyText="Sin áreas disponibles"
 						/>
 
+						<BmComboBox<number>
+							label="Acción Requerida"
+							value={idRequiredAction}
+							options={requiredActionOptions}
+							onChange={setIdRequiredAction}
+							placeholder="Selecciona (opcional)"
+							disabled={requiredActionOptions.length === 0}
+							emptyText="Sin acciones disponibles"
+						/>
+
+						<View style={styles.obsField}>
+							<Text style={styles.obsLabel}>Observaciones</Text>
+							<TextInput
+								style={styles.obsInput}
+								value={verifObs}
+								onChangeText={setVerifObs}
+								placeholder="Escribe observaciones (opcional)"
+								placeholderTextColor={colors.textMuted}
+								multiline
+								numberOfLines={3}
+								textAlignVertical="top"
+							/>
+						</View>
+
 						{error ? (
 							<Text style={styles.errorText}>{error}</Text>
 						) : null}
@@ -340,7 +388,7 @@ const createStyles = (c: ReturnType<typeof useTheme>['colors']) =>
 			borderTopRightRadius: 24,
 			padding: 20,
 			paddingBottom: 32,
-			maxHeight: '85%',
+			maxHeight: '90%',
 			shadowColor: c.shadow,
 			shadowOpacity: 0.2,
 			shadowRadius: 16,
@@ -366,6 +414,30 @@ const createStyles = (c: ReturnType<typeof useTheme>['colors']) =>
 			color: c.textMuted,
 			textAlign: 'center',
 			marginBottom: 16,
+		},
+		obsField: {
+			marginTop: 4,
+			marginBottom: 4,
+		},
+		obsLabel: {
+			fontSize: 11,
+			fontWeight: '700',
+			color: c.textMuted,
+			letterSpacing: 0.8,
+			textTransform: 'uppercase',
+			marginBottom: 6,
+			marginLeft: 2,
+		},
+		obsInput: {
+			backgroundColor: c.bgInput,
+			borderRadius: 12,
+			borderWidth: 1,
+			borderColor: c.inputBorder,
+			paddingHorizontal: 14,
+			paddingVertical: 10,
+			fontSize: 14,
+			color: c.text,
+			minHeight: 72,
 		},
 		errorText: {
 			color: c.danger,

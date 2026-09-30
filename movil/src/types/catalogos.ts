@@ -14,6 +14,7 @@ export interface Area {
 	Centro: number;
 	Area: string;
 	Descripcion: string;
+	ShortName?: string;
 }
 
 export interface Empleado {
@@ -22,3 +23,9 @@ export interface Empleado {
 	CLUES: string;
 	Unidad: string;
 }
+
+export interface RequiredAction {
+	Id: number;
+	Descripcion: string;
+}
+

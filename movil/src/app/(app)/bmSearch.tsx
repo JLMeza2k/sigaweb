@@ -12,7 +12,7 @@ import {
 	View,
 } from 'react-native';
 import { router, Stack } from 'expo-router';
-import { useAuth, useTheme } from '../../context/ContextProvider';
+import { useAuth, useCatalogos, useTheme } from '../../context/ContextProvider';
 import { BmCard } from '../../components/BmCard';
 import { BmComboBox, type ComboOption } from '../../components/BmComboBox';
 import { BmEmpleadoPicker } from '../../components/BmEmpleadoPicker';
@@ -23,7 +23,6 @@ import {
 	verificationColor,
 } from '../../utils/format';
 import type { BienMueble } from '../../types/bm';
-import type { Area, Centro, Unidad } from '../../types/catalogos';
 
 function getVerificationBadge(verifiedAt: string | null | undefined): {
 	rightLabel: string | null;
@@ -46,6 +45,7 @@ export default function BmSearch() {
 	const { colors } = useTheme();
 	const styles = useMemo(() => createStyles(colors), [colors]);
 	const { authedFetch } = useAuth();
+	const { allAreas, loadingAreas, loadAreas } = useCatalogos();
 
 	const [nuibm, setNuibm] = useState('');
 	const [error, setError] = useState<string | null>(null);
@@ -58,13 +58,6 @@ export default function BmSearch() {
 	const [centro, setCentro] = useState<number>(255);
 	const [area, setArea] = useState<string>('000');
 
-	const [unidades, setUnidades] = useState<Unidad[]>([]);
-	const [centros, setCentros] = useState<Centro[]>([]);
-	const [areas, setAreas] = useState<Area[]>([]);
-
-	const [loadingUnidades, setLoadingUnidades] = useState(false);
-	const [loadingCentros, setLoadingCentros] = useState(false);
-	const [loadingAreas, setLoadingAreas] = useState(false);
 	const [loadingRelacion, setLoadingRelacion] = useState(false);
 	const [errorRelacion, setErrorRelacion] = useState<string | null>(null);
 	const [empleadoPickerOpen, setEmpleadoPickerOpen] = useState(false);
@@ -72,126 +65,61 @@ export default function BmSearch() {
 	const valid = isValidNuibm(nuibm);
 
 	useEffect(() => {
-		let cancelled = false;
-		(async () => {
-			setLoadingUnidades(true);
-			try {
-				const res = await authedFetch('/catalogos/unidades');
-				if (cancelled) return;
-				if (!res.ok) return;
-				const data = (await res.json()) as { recordset?: Unidad[] } | Unidad[];
-				const list = Array.isArray(data) ? data : (data.recordset ?? []);
-				setUnidades(list);
-			} catch {
-				if (!cancelled) setUnidades([]);
-			} finally {
-				if (!cancelled) setLoadingUnidades(false);
-			}
-		})();
-		return () => {
-			cancelled = true;
-		};
-	}, [authedFetch]);
-
-	useEffect(() => {
-		if (unidad === 0) return;
-		let cancelled = false;
-		(async () => {
-			setLoadingCentros(true);
-			try {
-				const res = await authedFetch(`/catalogos/centros/${unidad}`);
-				if (cancelled) return;
-				if (!res.ok) {
-					setCentros([]);
-					return;
-				}
-				const data = (await res.json()) as { recordset?: Centro[] } | Centro[];
-				const list = Array.isArray(data) ? data : (data.recordset ?? []);
-				setCentros(list);
-			} catch {
-				if (!cancelled) setCentros([]);
-			} finally {
-				if (!cancelled) setLoadingCentros(false);
-			}
-		})();
-		return () => {
-			cancelled = true;
-		};
-	}, [unidad, authedFetch]);
-
-	useEffect(() => {
-		if (unidad === 0 || centro === 255) return;
-		let cancelled = false;
-		(async () => {
-			setLoadingAreas(true);
-			try {
-				const res = await authedFetch(
-					`/catalogos/areas/${unidad}/${centro}`,
-				);
-				if (cancelled) return;
-				if (!res.ok) {
-					setAreas([]);
-					return;
-				}
-				const data = (await res.json()) as { recordset?: Area[] } | Area[];
-				const list = Array.isArray(data) ? data : (data.recordset ?? []);
-				setAreas(list);
-			} catch {
-				if (!cancelled) setAreas([]);
-			} finally {
-				if (!cancelled) setLoadingAreas(false);
-			}
-		})();
-		return () => {
-			cancelled = true;
-		};
-	}, [unidad, centro, authedFetch]);
+		loadAreas();
+	}, [loadAreas]);
 
 	const handleUnidadChange = (v: number) => {
 		setUnidad(v);
 		setCentro(255);
 		setArea('000');
-		setCentros([]);
-		setAreas([]);
 	};
 
 	const handleCentroChange = (v: number) => {
 		setCentro(v);
 		setArea('000');
-		setAreas([]);
 	};
 
 	const unidadOptions: ComboOption<number>[] = useMemo(
 		() => [
 			{ value: 0, label: 'Todas' },
-			...unidades.map((u) => ({
-				value: u.Unidad,
-				label: `${u.ShortName}`,
-			})),
+			...allAreas
+				.filter((a) => a.Centro === 0 && a.Area === '000')
+				.map((u) => ({
+					value: u.Unidad,
+					label: `${u.ShortName || u.Descripcion}`,
+				})),
 		],
-		[unidades],
+		[allAreas],
 	);
 
 	const centroOptions: ComboOption<number>[] = useMemo(
 		() => [
 			{ value: 255, label: 'Todos' },
-			...centros.map((c) => ({
-				value: c.Centro,
-				label: `${c.ShortName}`,
-			})),
+			...(unidad === 0
+				? []
+				: allAreas
+						.filter((a) => a.Unidad === unidad && a.Area === '000')
+						.map((c) => ({
+							value: c.Centro,
+							label: `${c.ShortName || c.Descripcion}`,
+						}))),
 		],
-		[centros],
+		[allAreas, unidad],
 	);
 
 	const areaOptions: ComboOption<string>[] = useMemo(
 		() => [
 			{ value: '000', label: 'Todas las Áreas' },
-			...areas.map((a) => ({
-				value: a.Area,
-				label: `${a.Descripcion}`,
-			})),
+			...(unidad === 0 || centro === 255
+				? []
+				: allAreas
+						.filter((a) => a.Unidad === unidad && a.Centro === centro && a.Area !== '000')
+						.map((a) => ({
+							value: a.Area,
+							label: `${a.Descripcion}`,
+						}))),
 		],
-		[areas],
+		[allAreas, unidad, centro],
 	);
 
 	const closeModal = useCallback(() => {
@@ -400,8 +328,8 @@ export default function BmSearch() {
 									value={unidad}
 									options={unidadOptions}
 									onChange={handleUnidadChange}
-									placeholder={loadingUnidades ? 'Cargando…' : 'Selecciona'}
-									disabled={loadingUnidades}
+									placeholder={loadingAreas ? 'Cargando…' : 'Selecciona'}
+									disabled={loadingAreas}
 									emptyText="Sin unidades disponibles"
 									containerStyle={styles.comboCell}
 								/>
@@ -414,11 +342,11 @@ export default function BmSearch() {
 									placeholder={
 										unidad === 0
 											? 'Selecciona una unidad'
-											: loadingCentros
+											: loadingAreas
 												? 'Cargando…'
 												: 'Selecciona'
 									}
-									disabled={unidad === 0 || loadingCentros}
+									disabled={unidad === 0 || loadingAreas}
 									emptyText="Sin centros disponibles"
 									containerStyle={styles.comboCell}
 								/>
