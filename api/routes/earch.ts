@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { poolPromise, sql } from '../config/db';
+import { getPool, sql } from '../config/db';
 import { checkToken, AuthRequest } from '../routes/users';
 
 const routerEarch = Router();
@@ -12,7 +12,7 @@ routerEarch.get('/earch/documento/:idDocto', checkToken, async (req: AuthRequest
       if (!Number.isInteger(id) || id <= 0) {
          return res.status(400).json({ message: 'IdDocto inválido' });
       }
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Tipo, ImgData FROM OPENQUERY([EARCH] , 'SELECT Tipo, ImgData FROM Documentos WHERE Id=${id}')`);

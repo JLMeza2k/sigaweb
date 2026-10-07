@@ -12,12 +12,35 @@ const config: sql.config = {
   }
 };
 
-export const poolPromise = new sql.ConnectionPool(config)
-  .connect()
-  .then(pool => {
-    console.log('Connected to SQLServer...');
-    return pool;
-  })
-  .catch(err => console.log('Database Connection Failed! Bad Config: ', err));
+let pool: sql.ConnectionPool | undefined;
+let pendingConnection: Promise<sql.ConnectionPool> | undefined;
+
+export const getPool = (): Promise<sql.ConnectionPool> => {
+  if (pool?.connected) {
+    return Promise.resolve(pool);
+  }
+
+  if (!pendingConnection) {
+    const connection = new sql.ConnectionPool(config);
+    const connectionPromise = connection.connect()
+      .then(connectedPool => {
+        pool = connectedPool;
+        pendingConnection = undefined;
+        console.log('Connected to SQLServer...');
+        return connectedPool;
+      })
+      .catch(error => {
+        console.error('Database Connection Failed!', error);
+        if (pendingConnection === connectionPromise) {
+          pendingConnection = undefined;
+        }
+        throw error;
+      });
+
+    pendingConnection = connectionPromise;
+  }
+
+  return pendingConnection;
+};
   
 export { sql };

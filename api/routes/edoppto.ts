@@ -1,5 +1,5 @@
 import { Router, Response, Request } from 'express';
-import { poolPromise, sql } from '../config/db';
+import { getPool, sql } from '../config/db';
 
 const edoPptoRouter = Router();
 
@@ -9,7 +9,7 @@ edoPptoRouter.get("/cog/:ejercicio/:ff/:onlyConsolid/:byCapConcPart", async (req
         const ff = req.params.ff;
         const onlyConsolid = req.params.onlyConsolid;
         const byCapConcPart = req.params.byCapConcPart;
-        const pool = await poolPromise;
+        const pool = await getPool();
         const result = await (pool as sql.ConnectionPool)
             .request()
             .input('Año', sql.SmallInt, ejercicio)

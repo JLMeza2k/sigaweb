@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { poolPromise, sql } from '../config/db';
+import { getPool, sql } from '../config/db';
 import AdmZip from 'adm-zip';
 import { parseCfdi } from '../services/cfdiPdfParser';
 import { buildCfdiPdf } from '../services/cfdiPdfBuilder';
@@ -62,7 +62,7 @@ const SOLICITUD_CAMPOS_VALIDOS = new Set([
 
 routerCfdis.get('/solicitud', async (_req: Request, res: Response) => {
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool).request().query('SELECT * FROM cfdirepo.dbo.cfdi_sat_solicitudes ORDER BY id DESC');
       const parsed = (result.recordset as any[]).map(row => ({
          ...row,
@@ -79,7 +79,7 @@ routerCfdis.get('/solicitud', async (_req: Request, res: Response) => {
 routerCfdis.post('/solicitud', async (req: Request, res: Response) => {
    const { del, al, rfc, status, metadata, emitidos, idSolicitud } = req.body;
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const metadataBit = metadata ? 1 : 0;
       const emitidosBit = emitidos ? 1 : 0;
       const request = (pool as sql.ConnectionPool).request()
@@ -106,7 +106,7 @@ routerCfdis.put('/solicitud/:id', async (req: Request, res: Response) => {
       if (!SOLICITUD_CAMPOS_VALIDOS.has(field)) {
          return res.status(400).json({ message: 'Campo no permitido para actualización' });
       }
-      const pool = await poolPromise;
+      const pool = await getPool();
       const request = (pool as sql.ConnectionPool).request()
          .input('value', value)
          .input('id', sql.Int, id);
@@ -123,7 +123,7 @@ routerCfdis.put('/solicitud/:id', async (req: Request, res: Response) => {
 routerCfdis.delete('/solicitud/:id', async (req: Request, res: Response) => {
    const { id } = req.params;
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const request = (pool as sql.ConnectionPool).request().input('id', sql.Int, id);
       const result = await request.query(`DELETE FROM cfdirepo.dbo.cfdi_sat_solicitudes WHERE id = @id`);
       if (result.rowsAffected[0] === 0)
@@ -222,7 +222,7 @@ routerCfdis.post('/descargar', async (req: Request, res: Response) => {
          txtBuffers = [buffer];
       }
 
-      const pool = await poolPromise;
+      const pool = await getPool();
       let importados = 0;
 
       for (const entry of xmlEntries) {
@@ -295,7 +295,7 @@ routerCfdis.get('/cfdis', async (req: Request, res: Response) => {
    const offset = (page - 1) * limit;
 
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const { whereSql, params } = buildWhere(tipo, del, al, rfc, tipoComprobante);
       const table = `cfdi_${tipo}`;
       const request = (pool as sql.ConnectionPool).request().input('limit', sql.Int, limit).input('offset', sql.Int, offset);
@@ -319,7 +319,7 @@ routerCfdis.get('/cfdis/count', async (req: Request, res: Response) => {
    const tipoComprobante = req.query.tipoComprobante ? String(req.query.tipoComprobante).toUpperCase() : undefined;
 
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const { whereSql, params } = buildWhere(tipo, del, al, rfc, tipoComprobante);
       const table = `cfdi_${tipo}`;
       const rfcCol = tipo === 'emitidos' ? 'rfcReceptor' : 'rfcEmisor';
@@ -348,7 +348,7 @@ routerCfdis.get('/cfdis/:tipo/:uuid', async (req: Request, res: Response) => {
    }
 
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const mainTable = `cfdi_${tipo}`;
       const request = (pool as sql.ConnectionPool).request().input('uuid', sql.UniqueIdentifier, uuid);
       const mainResult = await request.query(`SELECT * FROM cfdirepo.dbo.${mainTable} WHERE UUID = @uuid`);
@@ -396,7 +396,7 @@ routerCfdis.get('/cfdis/:tipo/:uuid/xml', async (req: Request, res: Response) =>
    }
 
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const request = (pool as sql.ConnectionPool).request().input('uuid', sql.UniqueIdentifier, uuid);
       const result = await request.query(
          `SELECT xmlRawData FROM cfdirepo.dbo.cfdi_${tipo}_raw WHERE UUID = @uuid`,
@@ -423,7 +423,7 @@ routerCfdis.get('/cfdis/:tipo/:uuid/pdf', async (req: Request, res: Response) =>
    }
 
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const request = (pool as sql.ConnectionPool).request().input('uuid', sql.UniqueIdentifier, uuid);
       const result = await request.query(
          `SELECT xmlRawData FROM cfdirepo.dbo.cfdi_${tipo}_raw WHERE UUID = @uuid`,

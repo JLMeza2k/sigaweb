@@ -1,12 +1,12 @@
 import { Router, Response } from 'express';
-import { poolPromise, sql } from '../config/db';
+import { getPool, sql } from '../config/db';
 import { checkToken, AuthRequest } from '../routes/users';
 
 const routerVtc = Router();
 
 routerVtc.get('/comision', checkToken, async (req: AuthRequest, res: Response) => {
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Nombre, Adscripcion, FechaSalida, FechaRegreso, Localidad, Motivo, NumOficio, Status FROM vwComisionTrabajo WHERE CreatedBy=${req.idUser}`);
@@ -19,7 +19,7 @@ routerVtc.get('/comision', checkToken, async (req: AuthRequest, res: Response) =
 
 routerVtc.post('/comision', checkToken, async (req: AuthRequest, res: Response) => {
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .input('RFC', sql.VarChar(13), req.body.RFC)
@@ -49,7 +49,7 @@ routerVtc.post('/comision', checkToken, async (req: AuthRequest, res: Response) 
 
 routerVtc.post('/relviaticos', checkToken, async (req: AuthRequest, res: Response) => {
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .input('Año', sql.SmallInt, req.body.Año)
@@ -76,7 +76,7 @@ routerVtc.get('/earchdata/:idDoctos', checkToken, async (req: AuthRequest, res: 
       if (!idDoctos)
          return res.status(400).json({ message: 'No se especificaron los documentos' });
       const IdsDoctos = idDoctos.toString().split('-').join(', ');
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT IdDocto, TipoArchivo, Referencia, Fecha, TipoDocto, Thumbnail FROM OPENQUERY([EARCH] , 'SELECT d.Id IdDocto, d.Tipo TipoArchivo, GETEXTENDENDREFERENCE(d.Id) Referencia, d.Fecha, td.Descripcion TipoDocto, d.Thumbnail FROM Documentos d INNER JOIN CtlTiposDocumento td ON td.Id=d.TipoReferencia WHERE d.Id IN (${IdsDoctos})')`);
