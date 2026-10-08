@@ -1,12 +1,12 @@
 import { Router, Response, Request } from 'express';
-import { poolPromise, sql } from '../config/db';
+import { getPool, sql } from '../config/db';
 
 const routerDashboard = Router();
 
 routerDashboard.get("/earch/clc/:ejercicio", async (req: Request, res: Response) => {
    try {
       const ejercicio = req.params.ejercicio;
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .input('ejercicio', sql.SmallInt, ejercicio)
@@ -23,7 +23,7 @@ routerDashboard.get("/earch/clc/:ejercicio/:ff/:status", async (req: Request, re
       const ejercicio = req.params.ejercicio;
       const ff = req.params.ff;
       const status = req.params.status;
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .input('ejercicio', sql.SmallInt, ejercicio)
@@ -42,7 +42,7 @@ routerDashboard.get("/earch/conciliaciones/:añoRecurso/:añoConcilia/:ubicacion
       const añoRecurso = req.params.añoRecurso;
       const añoConcilia = req.params.añoConcilia;
       const ubicacion = req.params.ubicacion
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .input('añoRecurso', sql.SmallInt, añoRecurso)
@@ -60,7 +60,7 @@ routerDashboard.get("/earch/viaticos/:ejercicio/:ubicacion", async (req: Request
    try {
       const ejercicio = req.params.ejercicio;
       const ubicacion = req.params.ubicacion
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .input('ejercicio', sql.SmallInt, ejercicio)
@@ -76,7 +76,7 @@ routerDashboard.get("/earch/viaticos/:ejercicio/:ubicacion", async (req: Request
 routerDashboard.get("/earch/suficiencias/:ejercicio", async (req: Request, res: Response) => {
    try {
       const ejercicio = req.params.ejercicio;
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .input('ejercicio', sql.SmallInt, ejercicio)
@@ -92,7 +92,7 @@ routerDashboard.get("/earch/suficiencias/:ejercicio/:status", async (req: Reques
    try {
       const ejercicio = req.params.ejercicio;
       const status = req.params.status;
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .input('ejercicio', sql.SmallInt, ejercicio)

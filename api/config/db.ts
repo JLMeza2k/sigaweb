@@ -4,7 +4,7 @@ const config: sql.config = {
   user: process.env.DB_USER!,
   password: process.env.DB_PASSWORD!,
   server: process.env.DB_HOST!,
-  port:  parseInt(process.env.DB_PORT!),
+  port: parseInt(process.env.DB_PORT!),
   database: process.env.DB_NAME!,
   options: {
     encrypt: false, // Deshabilitar encriptación para conexiones locales/de confianza
@@ -42,5 +42,5 @@ export const getPool = (): Promise<sql.ConnectionPool> => {
 
   return pendingConnection;
 };
-  
+
 export { sql };

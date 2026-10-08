@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { poolPromise, sql } from '../config/db';
+import { getPool, sql } from '../config/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
@@ -12,7 +12,7 @@ export interface AuthRequest extends Request {
 
 routerUsers.get('/user', checkToken, async (req: AuthRequest, res: Response) => { // Obtener datos del usuario logueado
 	try {
-		const pool = await poolPromise;
+		const pool = await getPool();
 		const userRow = await (pool as sql.ConnectionPool)
 			.request()
 			.query(`SELECT wu.IdUser, wu.RFC, e.Nombre, wu.eMail, wu.Profile, wu.Activo, wu.sideBarOpcs FROM WebUsers wu INNER JOIN Empleados e ON e.RFC = wu.RFC WHERE wu.IdUser=${req.idUser}`);
@@ -32,7 +32,7 @@ routerUsers.post('/user', async (req: Request, res: Response) => {  // Crear nue
 		const code = makeCode();
 		const hashPassword = bcrypt.hashSync(password, saltRounds);
 		const hashedCode = bcrypt.hashSync(code, saltRounds);
-		const pool = await poolPromise;
+		const pool = await getPool();
 		const userRow = await (pool as sql.ConnectionPool)
 			.request()
 			.input("RFC", sql.VarChar(13), rfc)
@@ -99,7 +99,7 @@ routerUsers.post('/login', async (req: Request, res: Response) => {   // Acceso 
 	try {
 		const { identifier, password } = req.body
 		let idUser: number = 0;
-		const pool = await poolPromise;
+		const pool = await getPool();
 		const result = await (pool as sql.ConnectionPool)
 			.request()
 			.query(`SELECT idUser, password FROM WebUsers WHERE rfc='${identifier}' OR email='${identifier}'`);
@@ -128,7 +128,7 @@ routerUsers.post('/send-reset-code', async (req: Request, res: Response) => {  /
 		const saltRounds = 10;
 		const { identifier } = req.body
 		let idUser = 0, email = '';
-		const pool = await poolPromise;
+		const pool = await getPool();
 		const rowUser = await (pool as sql.ConnectionPool)
 			.request()
 			.query(`SELECT vu.IdUser, vu.email, e.Nombre FROM WebUsers vu INNER JOIN Empleados e ON e.RFC=vu.RFC WHERE vu.Activo=1 AND vu.RFC='${identifier}' OR vu.email='${identifier}'`);
@@ -189,7 +189,7 @@ routerUsers.post('/verify-reset-code', async (req: Request, res: Response) => { 
 	try {
 		const { identifier, code } = req.body
 		let idUser: number = 0;
-		const pool = await poolPromise;
+		const pool = await getPool();
 		const result = await (pool as sql.ConnectionPool)
 			.request()
 			.query(`SELECT idUser, ISNULL(CodePassRecover,'') CodePassRecover FROM WebUsers WHERE RFC='${identifier}' OR email='${identifier}'`);
@@ -212,7 +212,7 @@ routerUsers.post('/verify-reset-code', async (req: Request, res: Response) => { 
 routerUsers.post('/reset-password', checkToken, async (req: AuthRequest, res: Response) => {   // Restablecer la contraseña del usuario después de verificar el código de recuperación
 	try {
 		const saltRounds = 10;
-		const pool = await poolPromise;
+		const pool = await getPool();
 		const { newPassword } = req.body;
 		const hashPassword = bcrypt.hashSync(newPassword, saltRounds);
 		const result = await (pool as sql.ConnectionPool)
@@ -228,7 +228,7 @@ routerUsers.post('/reset-password', checkToken, async (req: AuthRequest, res: Re
 routerUsers.post('/verify-activation-code', checkToken, async (req: AuthRequest, res: Response) => {   // Verificar que el código de activación sea correcto
 	try {
 		const { code } = req.body
-		const pool = await poolPromise;
+		const pool = await getPool();
 		const result = await (pool as sql.ConnectionPool)
 			.request()
 			.query(`SELECT idUser, ISNULL(ActivationCode,'') ActivationCode FROM WebUsers WHERE IdUser=${req.idUser}`);
@@ -251,7 +251,7 @@ routerUsers.post('/verify-activation-code', checkToken, async (req: AuthRequest,
 routerUsers.post("/add-employee-to-user", checkToken, async (req: AuthRequest, res: Response) => {   // Agregar un empleado para su gestión a un usuario
 	try {
 		const { RFC, eMail } = req.body
-		const pool = await poolPromise;
+		const pool = await getPool();
 		const result = await (pool as sql.ConnectionPool)
 			.request()
 			.input("IdUser", req.idUser)

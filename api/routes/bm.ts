@@ -1,5 +1,5 @@
 import { Router, Response, Request } from 'express';
-import { poolPromise, sql } from '../config/db';
+import { getPool, sql } from '../config/db';
 import { checkToken, AuthRequest } from '../routes/users';
 
 const bmRouter = Router();
@@ -106,7 +106,7 @@ bmRouter.get("/issues/:ua/:ct/:area", checkToken, async (req: AuthRequest, res: 
         return res.status(400).json({ message: 'Área inválida.' });
     }
     try {
-        const pool = await poolPromise;
+        const pool = await getPool();
         const result = await (pool as sql.ConnectionPool)
             .request()
             .input('unidad', sql.TinyInt, unidad)
@@ -131,7 +131,7 @@ bmRouter.get("/issues/:ua/:ct/:area", checkToken, async (req: AuthRequest, res: 
 // Relaciones de bienes encontrados sin registro. Estas rutas deben estar antes de GET /:nuibm.
 bmRouter.get('/sin-registro', checkToken, async (req: AuthRequest, res: Response) => {
     try {
-        const pool = await poolPromise;
+        const pool = await getPool();
         const request = (pool as sql.ConnectionPool).request();
         const conditions: string[] = [];
         const unidad = req.query.unidad;
@@ -176,7 +176,7 @@ bmRouter.get('/sin-registro/:folio', checkToken, async (req: AuthRequest, res: R
     const folio = Number(req.params.folio);
     if (!Number.isInteger(folio) || folio <= 0) return res.status(400).json({ message: 'Folio inválido.' });
     try {
-        const pool = await poolPromise;
+        const pool = await getPool();
         const header = await (pool as sql.ConnectionPool).request()
             .input('folio', sql.Int, folio)
             .query(`SELECT Folio, Fecha, Unidad, Centro, Area, Observaciones
@@ -199,7 +199,7 @@ bmRouter.post('/sin-registro', checkToken, async (req: AuthRequest, res: Respons
     if (validationError) return res.status(400).json({ message: validationError });
     let transaction: sql.Transaction | undefined;
     try {
-        const pool = await poolPromise;
+        const pool = await getPool();
         transaction = new sql.Transaction(pool as sql.ConnectionPool);
         await transaction.begin();
         const result = await transaction.request()
@@ -230,7 +230,7 @@ bmRouter.put('/sin-registro/:folio', checkToken, async (req: AuthRequest, res: R
     if (validationError) return res.status(400).json({ message: validationError });
     let transaction: sql.Transaction | undefined;
     try {
-        const pool = await poolPromise;
+        const pool = await getPool();
         transaction = new sql.Transaction(pool as sql.ConnectionPool);
         await transaction.begin();
         const update = await transaction.request()
@@ -264,7 +264,7 @@ bmRouter.delete('/sin-registro/:folio', checkToken, async (req: AuthRequest, res
     if (!Number.isInteger(folio) || folio <= 0) return res.status(400).json({ message: 'Folio inválido.' });
     let transaction: sql.Transaction | undefined;
     try {
-        const pool = await poolPromise;
+        const pool = await getPool();
         transaction = new sql.Transaction(pool as sql.ConnectionPool);
         await transaction.begin();
         const exists = await transaction.request().input('folio', sql.Int, folio)
@@ -292,7 +292,7 @@ bmRouter.get("/:nuibm", checkToken, async (req: AuthRequest, res: Response) => {
         if (!Number.isInteger(nuibm) || nuibm <= 0) {
             return res.status(400).json({ message: 'Nuibm inválido' });
         }
-        const pool = await poolPromise;
+        const pool = await getPool();
         const result = await (pool as sql.ConnectionPool)
             .request()
             .query(`SELECT NUIBM, FullDescripcion, Condiciones, Valor, nameProveedor, Factura, FechaFactura, Referencia, Etiquetado, EF, BlackList, Resguardatarios, Unidad, Centro, Area, Firmado, IdResguardo, dbo.GetNameArea(Unidad, Centro, Area, 0, 0, '') NameArea, Baja, FechaBaja, dscCausaBaja, obsBaja, Verificado, NameVerifiedBy, FoundIn, VerifiedAt, IdRequiredAction, VerifObs FROM vwBienesMuebles_CG_Current WHERE NUIBM=${nuibm}`);
@@ -313,7 +313,7 @@ bmRouter.get("/:rfc/:ua/:ct/:area", checkToken, async (req: AuthRequest, res: Re
         const ct = String(req.params.ct ?? '').trim();
         const area = String(req.params.area ?? '').trim();
 
-        const pool = await poolPromise;
+        const pool = await getPool();
         const request = (pool as sql.ConnectionPool).request();
         const conditions: string[] = [];
 
@@ -381,7 +381,7 @@ bmRouter.post("/verificar/:nuibm", checkToken, async (req: AuthRequest, res: Res
             return res.status(400).json({ message: 'El área es obligatoria.' });
         }
 
-        const pool = await poolPromise;
+        const pool = await getPool();
         const request = (pool as sql.ConnectionPool).request();
 
         const maxResult = await request
@@ -411,7 +411,7 @@ bmRouter.post("/verificar/:nuibm", checkToken, async (req: AuthRequest, res: Res
 
 bmRouter.get("/resumen/:ua/:ct", checkToken, async (req: AuthRequest, res: Response) => {
     try {
-        const pool = await poolPromise;
+        const pool = await getPool();
         const result = await (pool as sql.ConnectionPool)
             .request()
             .query(`SELECT Unidad, Centro, Descripcion, Direccion, Baja, CountBienes, Verificados FROM vwResumenBMxUA WHERE (Unidad=${req.params.ua} OR ${req.params.ua}=0) AND (Centro=${req.params.ct} OR ${req.params.ct}=255)`);
@@ -424,7 +424,5 @@ bmRouter.get("/resumen/:ua/:ct", checkToken, async (req: AuthRequest, res: Respo
         return res.status(500).json({ message: 'Error en el servidor al obtener el resumen de Bienes Muebles.' });
     }
 });
-
-
 
 export default bmRouter;

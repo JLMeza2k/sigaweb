@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { poolPromise, sql } from '../config/db';
+import { getPool, sql } from '../config/db';
 
 const routerCatalogos = Router();
 
 routerCatalogos.get('/empleado/:rfc', async (req: Request, res: Response) => {   // Obtener el catálogo de empleados
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT RFC, Nombre, CLUES, Unidad FROM vwEmplLastClUES WHERE RFC='${req.params.rfc}'`);
@@ -18,7 +18,7 @@ routerCatalogos.get('/empleado/:rfc', async (req: Request, res: Response) => {  
 
 routerCatalogos.get('/empleados', async (req: Request, res: Response) => {   // Obtener el catálogo de empleados
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT RFC, Nombre, CLUES, Unidad FROM vwEmplLastClUES`);
@@ -33,7 +33,7 @@ routerCatalogos.get('/buscar-empleados', async (req: Request, res: Response) => 
    try {
       const rawPattern = typeof req.query.searchPattern === 'string' ? req.query.searchPattern : '';
       const searchPattern = `%${rawPattern.trim().replace(/\s+/g, '%')}%`;
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .input('searchPattern', sql.VarChar(200), searchPattern)
@@ -47,7 +47,7 @@ routerCatalogos.get('/buscar-empleados', async (req: Request, res: Response) => 
 
 routerCatalogos.get('/clues/:clues', async (req: Request, res: Response) => {   // Obtener el catálogo de CLUES
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT CLUES, [NOMBRE DE LA UNIDAD] Unidad, [NOMBRE DE LA LOCALIDAD] Localidad, [NOMBRE DE LA ENTIDAD] Entidad FROM SIGA.dbo.CLUES WHERE [CLAVE DE LA INSTITUCION] IN ('SSA', 'IMB') AND [CLAVE ULTIMO MOVIMIENTO] <> 'B' AND CLUES='${req.params.clues}'`);
@@ -60,7 +60,7 @@ routerCatalogos.get('/clues/:clues', async (req: Request, res: Response) => {   
 
 routerCatalogos.get('/clues', async (req: Request, res: Response) => {   // Obtener el catálogo de CLUES
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT CLUES, [NOMBRE DE LA UNIDAD] Unidad, [NOMBRE DE LA LOCALIDAD] Localidad, [NOMBRE DE LA ENTIDAD] Entidad FROM SIGA.dbo.CLUES WHERE [CLAVE DE LA INSTITUCION] IN ('SSA', 'IMB') AND [CLAVE ULTIMO MOVIMIENTO] <> 'B'`);
@@ -73,7 +73,7 @@ routerCatalogos.get('/clues', async (req: Request, res: Response) => {   // Obte
 
 routerCatalogos.get('/entidades', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Id, Estado FROM CtlEstados`);
@@ -86,7 +86,7 @@ routerCatalogos.get('/entidades', async (req: Request, res: Response) => {   // 
 
 routerCatalogos.get('/entidad/:id', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Id, Estado FROM CtlEstados WHERE Id=${req.params.id}`);
@@ -99,7 +99,7 @@ routerCatalogos.get('/entidad/:id', async (req: Request, res: Response) => {   /
 
 routerCatalogos.get('/localidades', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT idEdo, idLocalidad, Municipio, Localidad FROM CtlLocalidades`);
@@ -112,7 +112,7 @@ routerCatalogos.get('/localidades', async (req: Request, res: Response) => {   /
 
 routerCatalogos.get('/localidad/:idLocalidad', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT idEdo, idLocalidad, Municipio, Localidad FROM CtlLocalidades WHERE idLocalidad=${req.params.idLocalidad}`);
@@ -125,7 +125,7 @@ routerCatalogos.get('/localidad/:idLocalidad', async (req: Request, res: Respons
 
 routerCatalogos.get('/ff/:ejercicio', async (req: Request, res: Response) => {   // Obtener el catálogo de entidades federativas
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Codigo, Descripcion FROM Fuentes_Financiamiento WHERE Consolidable=1 AND MomentosEgreso=63 AND Año=${req.params.ejercicio}`);
@@ -138,7 +138,7 @@ routerCatalogos.get('/ff/:ejercicio', async (req: Request, res: Response) => {  
 
 routerCatalogos.get('/unidades', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Unidad, ShortName FROM Areas WHERE Centro=0 AND Area='000'`);
@@ -151,7 +151,7 @@ routerCatalogos.get('/unidades', async (req: Request, res: Response) => {   // O
 
 routerCatalogos.get('/centros/:ua', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Unidad, Centro, ShortName FROM Areas WHERE Area='000' AND Unidad=${req.params.ua}`);
@@ -164,7 +164,7 @@ routerCatalogos.get('/centros/:ua', async (req: Request, res: Response) => {   /
 
 routerCatalogos.get('/areas/:ua/:ct', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Unidad, Centro, Area, Descripcion FROM Areas WHERE Unidad=${req.params.ua} AND Centro=${req.params.ct} AND Area<>'000'`);
@@ -180,7 +180,7 @@ routerCatalogos.get('/areas/:ua/:ct', async (req: Request, res: Response) => {  
 
 routerCatalogos.get('/areas', async (req: Request, res: Response) => {   // Obtener el catálogo completo de áreas (todas las filas: unidades, centros y áreas)
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Unidad, Centro, Area, Descripcion, ShortName FROM Areas ORDER BY Unidad, Centro, Area`);
@@ -197,7 +197,7 @@ routerCatalogos.get('/areas', async (req: Request, res: Response) => {   // Obte
 
 routerCatalogos.get('/bm-verif-required-actions', async (req: Request, res: Response) => {   // Obtener el catálogo de unidades administrativas
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Id, Descripcion FROM CtlBMVerificActions ORDER BY Id`);
@@ -213,11 +213,11 @@ routerCatalogos.get('/bm-verif-required-actions', async (req: Request, res: Resp
 
 routerCatalogos.get('/estados-fisicos', async (req: Request, res: Response) => {   // Obtener el catálogo de estados físicos
    try {
-      const pool = await poolPromise;
+      const pool = await getPool();
       const result = await (pool as sql.ConnectionPool)
          .request()
          .query(`SELECT Codigo, Descripcion FROM catEdoFisico ORDER BY Codigo`);
-      if(result.recordset.length === 0) {
+      if (result.recordset.length === 0) {
          return res.status(404).json({ message: 'Estados físicos no encontrados' });
       }
       res.status(200).json(result.recordset);
