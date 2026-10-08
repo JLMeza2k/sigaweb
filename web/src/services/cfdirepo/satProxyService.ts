@@ -1,6 +1,7 @@
 // ── SAT SOAP Proxy Service ──────────────────────────────────────────────
 // Llamadas SAT vía proxy backend para evitar CORS.
 
+import { API_BASE } from "../../utils/api";
 import type { CertificateInfo } from "../../utils/cfdirepo/DescargaMasivaSAT";
 import { makeXMLAutenticacion, makeXMLSolicitud, makeXMLValidacion, makeXMLDescargar } from "../../utils/cfdirepo/DescargaMasivaSAT";
 
@@ -11,7 +12,7 @@ const SAT_VERIFICAR_URL = "https://cfdidescargamasivasolicitud.clouda.sat.gob.mx
 const SAT_DESCARGAR_URL = "https://cfdidescargamasiva.clouda.sat.gob.mx/DescargaMasivaService.svc";
 
 async function satProxy(url: string, soapAction: string, xmlBody: string, authorization?: string): Promise<Document> {
-  const res = await fetch("/api/cfdirepo/sat-proxy", {
+  const res = await fetch(`${API_BASE}/cfdirepo/sat-proxy`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url, soapAction, xmlBody, authorization }),

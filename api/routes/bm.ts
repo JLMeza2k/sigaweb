@@ -4,6 +4,288 @@ import { checkToken, AuthRequest } from '../routes/users';
 
 const bmRouter = Router();
 
+type BienSinRegistroDetalle = {
+    Descripcion?: unknown;
+    Marca?: unknown;
+    Modelo?: unknown;
+    Serie?: unknown;
+    EdoFisico?: unknown;
+    RFCResponsable?: unknown;
+};
+
+type BienSinRegistroBody = {
+    Fecha?: unknown;
+    Unidad?: unknown;
+    Centro?: unknown;
+    Area?: unknown;
+    Observaciones?: unknown;
+    Detalles?: unknown;
+};
+
+function validarBienSinRegistro(body: BienSinRegistroBody): string | null {
+    const fecha = typeof body.Fecha === 'string' ? body.Fecha : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || Number.isNaN(Date.parse(`${fecha}T12:00:00`))) {
+        return 'La fecha es obligatoria y debe ser válida.';
+    }
+    for (const [nombre, value] of [['Unidad', body.Unidad], ['Centro', body.Centro]] as const) {
+        if (value === '' || value == null || !Number.isInteger(Number(value)) || Number(value) < 0 || Number(value) > 255) {
+            return `${nombre} debe ser un número entre 0 y 255.`;
+        }
+    }
+    if (typeof body.Area !== 'string' || body.Area.trim().length !== 3) {
+        return 'El área debe tener exactamente 3 caracteres.';
+    }
+    if (body.Observaciones != null && (typeof body.Observaciones !== 'string' || body.Observaciones.length > 255)) {
+        return 'Las observaciones no pueden exceder 255 caracteres.';
+    }
+    if (!Array.isArray(body.Detalles) || body.Detalles.length === 0 || body.Detalles.length > 32767) {
+        return 'Debe capturar al menos un bien.';
+    }
+    for (const [index, detalle] of (body.Detalles as BienSinRegistroDetalle[]).entries()) {
+        if (typeof detalle.Descripcion !== 'string' || !detalle.Descripcion.trim() || detalle.Descripcion.trim().length > 255) {
+            return `La descripción del bien ${index + 1} es obligatoria (máximo 255 caracteres).`;
+        }
+        for (const [nombre, value, max] of [
+            ['Marca', detalle.Marca, 50], ['Modelo', detalle.Modelo, 50], ['Serie', detalle.Serie, 50],
+        ] as const) {
+            if (value != null && (typeof value !== 'string' || value.length > max)) {
+                return `${nombre} del bien ${index + 1} no puede exceder ${max} caracteres.`;
+            }
+        }
+        if (detalle.EdoFisico === '' || detalle.EdoFisico == null || !Number.isInteger(Number(detalle.EdoFisico)) || Number(detalle.EdoFisico) < 0 || Number(detalle.EdoFisico) > 255) {
+            return `Seleccione un estado físico para el bien ${index + 1}.`;
+        }
+        if (typeof detalle.RFCResponsable !== 'string' || !detalle.RFCResponsable.trim() || detalle.RFCResponsable.trim().length > 13) {
+            return `El RFC responsable del bien ${index + 1} es obligatorio (máximo 13 caracteres).`;
+        }
+    }
+    return null;
+}
+
+async function insertarDetalles(
+    transaction: sql.Transaction,
+    folio: number,
+    detalles: BienSinRegistroDetalle[],
+) {
+    for (const [index, detalle] of detalles.entries()) {
+        await transaction.request()
+            .input('folio', sql.Int, folio)
+            .input('id', sql.SmallInt, index + 1)
+            .input('descripcion', sql.VarChar(255), String(detalle.Descripcion).trim())
+            .input('marca', sql.VarChar(50), typeof detalle.Marca === 'string' ? detalle.Marca.trim() || null : null)
+            .input('modelo', sql.VarChar(50), typeof detalle.Modelo === 'string' ? detalle.Modelo.trim() || null : null)
+            .input('serie', sql.VarChar(50), typeof detalle.Serie === 'string' ? detalle.Serie.trim() || null : null)
+            .input('edoFisico', sql.TinyInt, Number(detalle.EdoFisico))
+            .input('rfcResponsable', sql.VarChar(13), String(detalle.RFCResponsable).trim().toUpperCase())
+            .query(`INSERT INTO Bienes_Muebles_SinReg_Detalle
+                    (Folio, id, Descripcion, Marca, Modelo, Serie, EdoFisico, RFCResponsable)
+                    VALUES (@folio, @id, @descripcion, @marca, @modelo, @serie, @edoFisico, @rfcResponsable)`);
+    }
+}
+
+
+bmRouter.get("/issues/:ua/:ct/:area", checkToken, async (req: AuthRequest, res: Response) => {
+    const uaParam = req.params.ua;
+    const ctParam = req.params.ct;
+    const area = req.params.area;
+    if (typeof uaParam !== 'string' || !/^\d+$/.test(uaParam)) {
+        return res.status(400).json({ message: 'Unidad inválida.' });
+    }
+    const unidad = Number(uaParam);
+    if (!Number.isInteger(unidad) || unidad < 0 || unidad > 255) {
+        return res.status(400).json({ message: 'Unidad inválida.' });
+    }
+    if (typeof ctParam !== 'string' || !/^\d+$/.test(ctParam)) {
+        return res.status(400).json({ message: 'Centro inválido.' });
+    }
+    const centro = Number(ctParam);
+    if (!Number.isInteger(centro) || centro < 0 || centro > 255) {
+        return res.status(400).json({ message: 'Centro inválido.' });
+    }
+    if (typeof area !== 'string' || area.length !== 3) {
+        return res.status(400).json({ message: 'Área inválida.' });
+    }
+    try {
+        const pool = await poolPromise;
+        const result = await (pool as sql.ConnectionPool)
+            .request()
+            .input('unidad', sql.TinyInt, unidad)
+            .input('centro', sql.TinyInt, centro)
+            .input('area', sql.VarChar(3), area)
+            .query(`SELECT Descripcion, SUM(Pendientes) Pendientes, SUM(Resueltas) Resueltos
+                    FROM vwBienesMuebles_Problems
+                    WHERE (@unidad = 0 OR Unidad = @unidad)
+                      AND (@centro = 255 OR Centro = @centro)
+                      AND (@area = '000' OR Area = @area)
+                    GROUP BY Descripcion`);
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: 'Resumen de Bienes Muebles con problemas no encontrado' });
+        }
+        res.status(200).json(result.recordset);
+    } catch (error) {
+        console.error('Error en la consulta a la base de datos:', error);
+        return res.status(500).json({ message: 'Error en el servidor al obtener el resumen de Bienes Muebles con problemas.' });
+    }
+});
+
+// Relaciones de bienes encontrados sin registro. Estas rutas deben estar antes de GET /:nuibm.
+bmRouter.get('/sin-registro', checkToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const pool = await poolPromise;
+        const request = (pool as sql.ConnectionPool).request();
+        const conditions: string[] = [];
+        const unidad = req.query.unidad;
+        const centro = req.query.centro;
+        const area = req.query.area;
+
+        if (typeof unidad === 'string' && unidad !== '') {
+            const value = Number(unidad);
+            if (!Number.isInteger(value) || value < 0 || value > 255) return res.status(400).json({ message: 'Unidad inválida.' });
+            request.input('unidad', sql.TinyInt, value);
+            conditions.push('r.Unidad = @unidad');
+        }
+        if (typeof centro === 'string' && centro !== '') {
+            const value = Number(centro);
+            if (!Number.isInteger(value) || value < 0 || value > 255) return res.status(400).json({ message: 'Centro inválido.' });
+            request.input('centro', sql.TinyInt, value);
+            conditions.push('r.Centro = @centro');
+        }
+        if (typeof area === 'string' && area !== '') {
+            if (area.length !== 3) return res.status(400).json({ message: 'Área inválida.' });
+            request.input('area', sql.VarChar(3), area);
+            conditions.push('r.Area = @area');
+        }
+
+        const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+        const result = await request.query(`
+            SELECT r.Folio, r.Fecha, r.Unidad, r.Centro, r.Area, r.Observaciones,
+                   a.Descripcion AS AreaDescripcion,
+                   (SELECT COUNT(*) FROM Bienes_Muebles_SinReg_Detalle d WHERE d.Folio = r.Folio) AS CantidadBienes
+            FROM Bienes_Muebles_SinReg r
+            LEFT JOIN Areas a ON a.Unidad = r.Unidad AND a.Centro = r.Centro AND a.Area = r.Area
+            ${where}
+            ORDER BY r.Fecha DESC, r.Folio DESC`);
+        return res.status(200).json(result.recordset);
+    } catch (error) {
+        console.error('Error al consultar bienes sin registro:', error);
+        return res.status(500).json({ message: 'Error del servidor al consultar las relaciones.' });
+    }
+});
+
+bmRouter.get('/sin-registro/:folio', checkToken, async (req: AuthRequest, res: Response) => {
+    const folio = Number(req.params.folio);
+    if (!Number.isInteger(folio) || folio <= 0) return res.status(400).json({ message: 'Folio inválido.' });
+    try {
+        const pool = await poolPromise;
+        const header = await (pool as sql.ConnectionPool).request()
+            .input('folio', sql.Int, folio)
+            .query(`SELECT Folio, Fecha, Unidad, Centro, Area, Observaciones
+                    FROM Bienes_Muebles_SinReg WHERE Folio = @folio`);
+        if (header.recordset.length === 0) return res.status(404).json({ message: 'Relación no encontrada.' });
+        const details = await (pool as sql.ConnectionPool).request()
+            .input('folio', sql.Int, folio)
+            .query(`SELECT id, Descripcion, Marca, Modelo, Serie, EdoFisico, RFCResponsable
+                    FROM Bienes_Muebles_SinReg_Detalle WHERE Folio = @folio ORDER BY id`);
+        return res.status(200).json({ ...header.recordset[0], Detalles: details.recordset });
+    } catch (error) {
+        console.error('Error al consultar la relación de bienes sin registro:', error);
+        return res.status(500).json({ message: 'Error del servidor al consultar la relación.' });
+    }
+});
+
+bmRouter.post('/sin-registro', checkToken, async (req: AuthRequest, res: Response) => {
+    const body = (req.body ?? {}) as BienSinRegistroBody;
+    const validationError = validarBienSinRegistro(body);
+    if (validationError) return res.status(400).json({ message: validationError });
+    let transaction: sql.Transaction | undefined;
+    try {
+        const pool = await poolPromise;
+        transaction = new sql.Transaction(pool as sql.ConnectionPool);
+        await transaction.begin();
+        const result = await transaction.request()
+            .input('fecha', sql.SmallDateTime, new Date(`${String(body.Fecha)}T12:00:00`))
+            .input('unidad', sql.TinyInt, Number(body.Unidad))
+            .input('centro', sql.TinyInt, Number(body.Centro))
+            .input('area', sql.VarChar(3), String(body.Area).trim())
+            .input('observaciones', sql.VarChar(255), typeof body.Observaciones === 'string' ? body.Observaciones.trim() || null : null)
+            .query(`INSERT INTO Bienes_Muebles_SinReg (Fecha, Unidad, Centro, Area, Observaciones)
+                    OUTPUT INSERTED.Folio
+                    VALUES (@fecha, @unidad, @centro, @area, @observaciones)`);
+        const folio = Number(result.recordset[0].Folio);
+        await insertarDetalles(transaction, folio, body.Detalles as BienSinRegistroDetalle[]);
+        await transaction.commit();
+        return res.status(201).json({ Folio: folio, message: 'Relación registrada correctamente.' });
+    } catch (error) {
+        if (transaction) await transaction.rollback().catch(() => undefined);
+        console.error('Error al registrar bienes sin registro:', error);
+        return res.status(500).json({ message: 'Error del servidor al registrar la relación.' });
+    }
+});
+
+bmRouter.put('/sin-registro/:folio', checkToken, async (req: AuthRequest, res: Response) => {
+    const folio = Number(req.params.folio);
+    if (!Number.isInteger(folio) || folio <= 0) return res.status(400).json({ message: 'Folio inválido.' });
+    const body = (req.body ?? {}) as BienSinRegistroBody;
+    const validationError = validarBienSinRegistro(body);
+    if (validationError) return res.status(400).json({ message: validationError });
+    let transaction: sql.Transaction | undefined;
+    try {
+        const pool = await poolPromise;
+        transaction = new sql.Transaction(pool as sql.ConnectionPool);
+        await transaction.begin();
+        const update = await transaction.request()
+            .input('folio', sql.Int, folio)
+            .input('fecha', sql.SmallDateTime, new Date(`${String(body.Fecha)}T12:00:00`))
+            .input('unidad', sql.TinyInt, Number(body.Unidad))
+            .input('centro', sql.TinyInt, Number(body.Centro))
+            .input('area', sql.VarChar(3), String(body.Area).trim())
+            .input('observaciones', sql.VarChar(255), typeof body.Observaciones === 'string' ? body.Observaciones.trim() || null : null)
+            .query(`UPDATE Bienes_Muebles_SinReg
+                    SET Fecha = @fecha, Unidad = @unidad, Centro = @centro, Area = @area, Observaciones = @observaciones
+                    WHERE Folio = @folio`);
+        if (update.rowsAffected[0] === 0) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'Relación no encontrada.' });
+        }
+        await transaction.request().input('folio', sql.Int, folio)
+            .query('DELETE FROM Bienes_Muebles_SinReg_Detalle WHERE Folio = @folio');
+        await insertarDetalles(transaction, folio, body.Detalles as BienSinRegistroDetalle[]);
+        await transaction.commit();
+        return res.status(200).json({ Folio: folio, message: 'Relación actualizada correctamente.' });
+    } catch (error) {
+        if (transaction) await transaction.rollback().catch(() => undefined);
+        console.error('Error al actualizar bienes sin registro:', error);
+        return res.status(500).json({ message: 'Error del servidor al actualizar la relación.' });
+    }
+});
+
+bmRouter.delete('/sin-registro/:folio', checkToken, async (req: AuthRequest, res: Response) => {
+    const folio = Number(req.params.folio);
+    if (!Number.isInteger(folio) || folio <= 0) return res.status(400).json({ message: 'Folio inválido.' });
+    let transaction: sql.Transaction | undefined;
+    try {
+        const pool = await poolPromise;
+        transaction = new sql.Transaction(pool as sql.ConnectionPool);
+        await transaction.begin();
+        const exists = await transaction.request().input('folio', sql.Int, folio)
+            .query('SELECT Folio FROM Bienes_Muebles_SinReg WHERE Folio = @folio');
+        if (exists.recordset.length === 0) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'Relación no encontrada.' });
+        }
+        await transaction.request().input('folio', sql.Int, folio)
+            .query('DELETE FROM Bienes_Muebles_SinReg_Detalle WHERE Folio = @folio');
+        await transaction.request().input('folio', sql.Int, folio)
+            .query('DELETE FROM Bienes_Muebles_SinReg WHERE Folio = @folio');
+        await transaction.commit();
+        return res.status(200).json({ message: 'Relación eliminada correctamente.' });
+    } catch (error) {
+        if (transaction) await transaction.rollback().catch(() => undefined);
+        console.error('Error al eliminar bienes sin registro:', error);
+        return res.status(500).json({ message: 'Error del servidor al eliminar la relación.' });
+    }
+});
+
 bmRouter.get("/:nuibm", checkToken, async (req: AuthRequest, res: Response) => {
     try {
         const nuibm = Number(req.params.nuibm);
@@ -126,6 +408,23 @@ bmRouter.post("/verificar/:nuibm", checkToken, async (req: AuthRequest, res: Res
         return res.status(500).json({ message: 'Error en el servidor al registrar la verificación.' });
     }
 });
+
+bmRouter.get("/resumen/:ua/:ct", checkToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const pool = await poolPromise;
+        const result = await (pool as sql.ConnectionPool)
+            .request()
+            .query(`SELECT Unidad, Centro, Descripcion, Direccion, Baja, CountBienes, Verificados FROM vwResumenBMxUA WHERE (Unidad=${req.params.ua} OR ${req.params.ua}=0) AND (Centro=${req.params.ct} OR ${req.params.ct}=255)`);
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: 'Resumen de Bienes Muebles no encontrado' });
+        }
+        res.status(200).json(result.recordset);
+    } catch (error) {
+        console.error('Error en la consulta a la base de datos:', error);
+        return res.status(500).json({ message: 'Error en el servidor al obtener el resumen de Bienes Muebles.' });
+    }
+});
+
 
 
 export default bmRouter;

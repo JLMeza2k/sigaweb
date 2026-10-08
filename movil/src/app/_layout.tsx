@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, router, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { ContextProvider, useAuth, useTheme } from '../context/ContextProvider';
 
 function AuthGate() {
@@ -40,8 +41,10 @@ function ThemedShell() {
 
 export default function RootLayout() {
 	return (
-		<ContextProvider>
-			<ThemedShell />
-		</ContextProvider>
+		<KeyboardProvider>
+			<ContextProvider>
+				<ThemedShell />
+			</ContextProvider>
+		</KeyboardProvider>
 	);
 }

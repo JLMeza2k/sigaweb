@@ -9,6 +9,8 @@ import MisViaticos from './components/viaticos/MisViaticos';
 import FinancierosDashboard from './components/archivo-electronico/FinancierosDashboard';
 import EstadoPresupuesto from './components/presupuesto/EstadoPresupuesto';
 import CfdiModule from './components/cfdirepo/CfdiModule';
+import ResumenBienesMuebles from './components/bienes-muebles/ResumenBienesMuebles';
+import BienesSinRegistro from './components/bienes-muebles/BienesSinRegistro';
 
 function App() {
    const { user, token, logout, isLoading } = useAuth();
@@ -82,6 +84,8 @@ function App() {
          if (view === 'materiales') return 'Materiales';
       }
       if (group === 'contabilidad' && view === 'cfdis') return 'CFDIs';
+      if (group === 'bienes-muebles' && view === 'resumen') return 'Resumen de Bienes Muebles';
+      if (group === 'bienes-muebles' && view === 'sin-registro') return 'Bienes Muebles sin registro';
       return 'Portal ISSBCS';
    };
 
@@ -97,15 +101,20 @@ function App() {
       && !is('archivo-electronico', 'financieros')
       && !is('archivo-electronico', 'materiales')
       && !is('presupuesto', 'estado-presupuesto')
-      && !is('contabilidad', 'cfdis');
+      && !is('contabilidad', 'cfdis')
+      && !is('bienes-muebles', 'resumen')
+      && !is('bienes-muebles', 'sin-registro');
 
    // ── Full-screen dashboards ───────────────────────────────
    if (is('archivo-electronico', 'financieros')) {
       return <FinancierosDashboard onBack={() => navigate('home', 'inicio')} />;
    }
-   if (is('presupuesto', 'estado-presupuesto')) {
-      return <EstadoPresupuesto onBack={() => navigate('home', 'inicio')} />;
-   }
+if (is('presupuesto', 'estado-presupuesto')) {
+       return <EstadoPresupuesto onBack={() => navigate('home', 'inicio')} />;
+    }
+    if (is('bienes-muebles', 'resumen')) {
+       return <ResumenBienesMuebles onBack={() => navigate('home', 'inicio')} />;
+    }
 
    // ── Authenticated layout ──────────────────────────────────
    return (
@@ -151,9 +160,13 @@ function App() {
                )}
 
                {/* ── Contabilidad: CFDIs ──────────────────── */}
-               {is('contabilidad', 'cfdis') && (
-                  <CfdiModule />
-               )}
+                {is('contabilidad', 'cfdis') && (
+                   <CfdiModule />
+                )}
+
+                {is('bienes-muebles', 'sin-registro') && (
+                   <BienesSinRegistro />
+                )}
 
 
                   {/* ── Módulo en desarrollo ─────────────────── */}

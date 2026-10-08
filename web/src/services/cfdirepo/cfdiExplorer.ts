@@ -1,5 +1,7 @@
 // ── CFDI Explorer (read-only) ───────────────────────────────────────────
 
+import { API_BASE } from '../../utils/api';
+
 export type TipoCfdi = 'emitidos' | 'recibidos';
 
 export interface CfdiRecibido {
@@ -111,7 +113,7 @@ function buildQuery(f: ExplorerFilters): string {
 }
 
 export async function listCfdis(f: ExplorerFilters, signal?: AbortSignal): Promise<Cfdi[]> {
-  const res = await fetch(`/api/cfdirepo/cfdis?${buildQuery(f)}`, { signal });
+  const res = await fetch(`${API_BASE}/cfdirepo/cfdis?${buildQuery(f)}`, { signal });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.message || 'Error al listar CFDis');
@@ -130,7 +132,7 @@ export async function countCfdis(
   if (f.rfc) params.set('rfc', f.rfc);
   if (f.tipoComprobante) params.set('tipoComprobante', f.tipoComprobante);
 
-  const res = await fetch(`/api/cfdirepo/cfdis/count?${params.toString()}`, { signal });
+  const res = await fetch(`${API_BASE}/cfdirepo/cfdis/count?${params.toString()}`, { signal });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.message || 'Error al contar CFDis');
@@ -139,7 +141,7 @@ export async function countCfdis(
 }
 
 export async function getCfdiDetalle(tipo: TipoCfdi, uuid: string): Promise<CfdiDetalle> {
-  const res = await fetch(`/api/cfdirepo/cfdis/${tipo}/${uuid}`);
+  const res = await fetch(`${API_BASE}/cfdirepo/cfdis/${tipo}/${uuid}`);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.message || 'Error al obtener detalle');
@@ -156,7 +158,7 @@ export interface CfdiConcepto {
 }
 
 export function getCfdiXmlUrl(tipo: TipoCfdi, uuid: string): string {
-  return `/api/cfdirepo/cfdis/${tipo}/${uuid}/xml`;
+  return `${API_BASE}/cfdirepo/cfdis/${tipo}/${uuid}/xml`;
 }
 
 export async function fetchCfdiXml(tipo: TipoCfdi, uuid: string): Promise<string> {
@@ -173,5 +175,5 @@ export async function fetchCfdiXml(tipo: TipoCfdi, uuid: string): Promise<string
 }
 
 export function getCfdiPdfUrl(tipo: TipoCfdi, uuid: string): string {
-  return `/api/cfdirepo/cfdis/${tipo}/${uuid}/pdf`;
+  return `${API_BASE}/cfdirepo/cfdis/${tipo}/${uuid}/pdf`;
 }

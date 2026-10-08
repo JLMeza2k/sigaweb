@@ -31,12 +31,13 @@ routerCatalogos.get('/empleados', async (req: Request, res: Response) => {   // 
 
 routerCatalogos.get('/buscar-empleados', async (req: Request, res: Response) => {   // Buscar empleados por RFC o nombre (patrón)
    try {
-      let searchPattern = (req.query.searchPattern as string) || '';
-      searchPattern = '%' + searchPattern.trim().replace(/\s+/g, '%') + '%';
+      const rawPattern = typeof req.query.searchPattern === 'string' ? req.query.searchPattern : '';
+      const searchPattern = `%${rawPattern.trim().replace(/\s+/g, '%')}%`;
       const pool = await poolPromise;
       const result = await (pool as sql.ConnectionPool)
          .request()
-         .query(`SELECT TOP 50 RFC, Nombre, CLUES, Unidad FROM vwEmplLastClUES WHERE Nombre LIKE '${searchPattern}' OR RFC LIKE '${searchPattern}'`);
+         .input('searchPattern', sql.VarChar(200), searchPattern)
+         .query(`SELECT TOP 50 RFC, Nombre, CLUES, Unidad FROM vwEmplLastClUES WHERE Nombre LIKE @searchPattern OR RFC LIKE @searchPattern`);
       res.status(200).json(result)
    } catch (error) {
       console.error('Error en la consulta a la base de datos:', error);
@@ -189,7 +190,7 @@ routerCatalogos.get('/areas', async (req: Request, res: Response) => {   // Obte
       res.status(200).json(result.recordset);
    } catch (error) {
       console.error('Error en la consulta a la base de datos:', error);
-      return res.status(500).json({ message: `Error en el servidor al obtener la lista de áreas. ${error}, ${process.env.DB_USER} ${process.env.DB_PASSWORD} ${process.env.DB_HOST} ${process.env.DB_PORT} ${process.env.DB_NAME}` });
+      return res.status(500).json({ message: `Error en el servidor al obtener la lista de áreas. ${error}` });
    }
 });
 
@@ -210,5 +211,20 @@ routerCatalogos.get('/bm-verif-required-actions', async (req: Request, res: Resp
    }
 });
 
+routerCatalogos.get('/estados-fisicos', async (req: Request, res: Response) => {   // Obtener el catálogo de estados físicos
+   try {
+      const pool = await poolPromise;
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT Codigo, Descripcion FROM catEdoFisico ORDER BY Codigo`);
+      if(result.recordset.length === 0) {
+         return res.status(404).json({ message: 'Estados físicos no encontrados' });
+      }
+      res.status(200).json(result.recordset);
+   } catch (error) {
+      console.error('Error en la consulta a la base de datos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener los estados físicos.' });
+   }
+});
 
 export default routerCatalogos;

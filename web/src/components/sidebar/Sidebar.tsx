@@ -67,10 +67,21 @@ const NAV_GROUPS: NavGroup[] = [
    },
    {
       id: 'bienes-muebles',
-      label: 'Bienes Muebles',
+label: 'Bienes Muebles',
       icon: 'm21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9',
-      items: [],
-   },
+      items: [
+         {
+            id: 'sin-registro',
+            Description: 'Bienes sin registro',
+            icon: 'M4 5h16M4 10h16M4 15h10m-10 5h10M18 15v6m3-3h-6',
+         },
+         {
+            id: 'resumen',
+            Description: 'Resumen',
+            icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
+         },
+      ],
+    },
    {
       id: 'adquisiciones',
       label: 'Adquisiciones',

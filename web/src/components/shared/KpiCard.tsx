@@ -8,6 +8,7 @@ interface KpiCardProps {
   color: 'blue' | 'green' | 'amber' | 'purple';
   loading?: boolean;
   delay?: number;
+  compact?: boolean;
 }
 
 const colorMap = {
@@ -41,7 +42,7 @@ const colorMap = {
   },
 };
 
-export default function KpiCard({ title, value, subtitle, icon, color, loading = false, delay = 0 }: KpiCardProps) {
+export default function KpiCard({ title, value, subtitle, icon, color, loading = false, delay = 0, compact = false }: KpiCardProps) {
   const c = colorMap[color];
 
   return (
@@ -54,12 +55,12 @@ export default function KpiCard({ title, value, subtitle, icon, color, loading =
 
       <div className="flex items-start justify-between relative z-10">
         <div className="flex-1 min-w-0">
-          <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest">{title}</p>
+          <p className={`text-slate-400 text-xs font-semibold uppercase ${compact ? 'tracking-normal leading-tight' : 'tracking-widest'}`}>{title}</p>
 
           {loading ? (
-            <div className="h-10 w-28 bg-slate-700/60 animate-pulse rounded-xl" />
+            <div className={`${compact ? 'h-8 w-16' : 'h-10 w-28'} bg-slate-700/60 animate-pulse rounded-xl`} />
           ) : (
-            <p className={`text-4xl font-black ${c.value} tracking-tight leading-none`}>{value}</p>
+            <p className={`${compact ? 'text-2xl xl:text-3xl' : 'text-4xl'} font-black ${c.value} tracking-tight leading-none`}>{value}</p>
           )}
 
           {subtitle && !loading && (
@@ -67,7 +68,7 @@ export default function KpiCard({ title, value, subtitle, icon, color, loading =
           )}
         </div>
 
-        <div className={`w-11 h-11 rounded-xl ${c.icon} hidden sm:flex items-center justify-center shadow-lg flex-shrink-0 ml-3`}>
+        <div className={`${compact ? 'hidden 2xl:flex w-8 h-8 ml-1' : 'w-11 h-11 hidden sm:flex ml-3'} rounded-xl ${c.icon} items-center justify-center shadow-lg flex-shrink-0`}>
           {icon}
         </div>
       </div>

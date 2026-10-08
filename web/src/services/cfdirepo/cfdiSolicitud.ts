@@ -1,5 +1,7 @@
 // ── CFDI Solicitudes CRUD ───────────────────────────────────────────────
 
+import { API_BASE } from '../../utils/api';
+
 export interface Solicitud {
   id: number;
   del: string;
@@ -14,7 +16,7 @@ export interface Solicitud {
   updated_at: string;
 }
 
-const BASE = "/api/cfdirepo/solicitud";
+const BASE = `${API_BASE}/cfdirepo/solicitud`;
 
 export async function listSolicitudes(): Promise<Solicitud[]> {
   const res = await fetch(BASE);
@@ -70,7 +72,7 @@ export async function descargarCFDis(
   base64Zip: string,
   rfc: string,
 ): Promise<{ message: string; importados: number; total: number; cancelados: number }> {
-  const res = await fetch("/api/cfdirepo/descargar", {
+  const res = await fetch(`${API_BASE}/cfdirepo/descargar`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ base64Zip, rfc }),
