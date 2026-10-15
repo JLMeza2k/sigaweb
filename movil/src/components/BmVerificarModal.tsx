@@ -41,8 +41,14 @@ export function BmVerificarModal({
 	const { authedFetch } = useAuth();
 	const { requiredActions, loadRequiredActions } = useCatalogos();
 
-	const [unidad, setUnidad] = useState<number>(defaults.Unidad);
-	const [centro, setCentro] = useState<number>(defaults.Centro);
+	const [unidad, setUnidad] = useState<number | null>(
+		defaults.Unidad > 0 ? defaults.Unidad : null,
+	);
+	const [centro, setCentro] = useState<number | null>(
+		defaults.Centro != null && defaults.Centro !== 255
+			? defaults.Centro
+			: null,
+	);
 	const [area, setArea] = useState<string>(defaults.Area);
 	const [idRequiredAction, setIdRequiredAction] = useState<number | null>(0);
 	const [verifObs, setVerifObs] = useState<string>('');
@@ -63,8 +69,12 @@ export function BmVerificarModal({
 	if (visible !== prevVisible) {
 		setPrevVisible(visible);
 		if (visible) {
-			setUnidad(defaults.Unidad);
-			setCentro(defaults.Centro);
+			setUnidad(defaults.Unidad > 0 ? defaults.Unidad : null);
+			setCentro(
+				defaults.Centro != null && defaults.Centro !== 255
+					? defaults.Centro
+					: null,
+			);
 			setArea(defaults.Area);
 			setIdRequiredAction(0);
 			setVerifObs('');
@@ -107,7 +117,7 @@ export function BmVerificarModal({
 		if (!visible) return;
 		let cancelled = false;
 		(async () => {
-			if (!unidad) {
+			if (!unidad || unidad <= 0) {
 				setCentros([]);
 				return;
 			}
@@ -139,7 +149,12 @@ export function BmVerificarModal({
 		if (!visible) return;
 		let cancelled = false;
 		(async () => {
-			if (!unidad || !centro) {
+			if (
+				!unidad ||
+				unidad <= 0 ||
+				centro == null ||
+				centro === 255
+			) {
 				setAreas([]);
 				return;
 			}
@@ -171,7 +186,7 @@ export function BmVerificarModal({
 
 	const handleUnidadChange = (v: number) => {
 		setUnidad(v);
-		setCentro(0);
+		setCentro(null);
 		setArea('');
 		setCentros([]);
 		setAreas([]);
@@ -222,7 +237,12 @@ export function BmVerificarModal({
 	}, [requiredActions]);
 
 	const canSubmit =
-		unidad > 0 && centro > 0 && area.trim() !== '' && !submitting;
+		unidad != null &&
+		unidad > 0 &&
+		centro != null &&
+		centro !== 255 &&
+		area.trim() !== '' &&
+		!submitting;
 
 	const onSubmit = async () => {
 		if (!canSubmit) return;
@@ -281,7 +301,7 @@ export function BmVerificarModal({
 
 						<BmComboBox<number>
 							label="Unidad"
-							value={unidad || null}
+							value={unidad}
 							options={unidadOptions}
 							onChange={handleUnidadChange}
 							placeholder={
@@ -293,17 +313,17 @@ export function BmVerificarModal({
 
 						<BmComboBox<number>
 							label="Centro"
-							value={centro || null}
+							value={centro}
 							options={centroOptions}
 							onChange={handleCentroChange}
 							placeholder={
-								!unidad
+								!unidad || unidad <= 0
 									? 'Selecciona una unidad'
 									: loadingCentros
 										? 'Cargando…'
 										: 'Selecciona'
 							}
-							disabled={!unidad || loadingCentros}
+							disabled={!unidad || unidad <= 0 || loadingCentros}
 							emptyText="Sin centros disponibles"
 						/>
 
@@ -313,13 +333,22 @@ export function BmVerificarModal({
 							options={areaOptions}
 							onChange={setArea}
 							placeholder={
-								!unidad || !centro
+								!unidad ||
+								unidad <= 0 ||
+								centro == null ||
+								centro === 255
 									? 'Selecciona un centro'
 									: loadingAreas
 										? 'Cargando…'
 										: 'Selecciona'
 							}
-							disabled={!unidad || !centro || loadingAreas}
+							disabled={
+								!unidad ||
+								unidad <= 0 ||
+								centro == null ||
+								centro === 255 ||
+								loadingAreas
+							}
 							emptyText="Sin áreas disponibles"
 						/>
 

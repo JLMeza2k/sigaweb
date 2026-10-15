@@ -4,6 +4,8 @@ interface Props {
   filas: ResumenFila[];
   loading: boolean;
   error: string | null;
+  onRowClick?: (fila: ResumenFila) => void;
+  isAreaMode?: boolean;
 }
 
 function StatusBox({ children, spin = false }: { children: React.ReactNode; spin?: boolean }) {
@@ -17,14 +19,14 @@ function StatusBox({ children, spin = false }: { children: React.ReactNode; spin
 
 const pctColor = (pct: number) => (pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-red-400');
 
-export default function BmResumenChart({ filas, loading, error }: Props) {
+export default function BmResumenChart({ filas, loading, error, onRowClick, isAreaMode }: Props) {
   return (
     <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 h-full flex flex-col min-h-0 animate-fade-in" style={{ opacity: 0, animationDelay: '150ms' }}>
       <div className="flex items-center gap-3 mb-4 shrink-0">
         <div className="w-1 h-8 bg-linear-to-b from-blue-400 to-blue-600 rounded-full" />
         <div>
-          <h3 className="text-white font-bold text-base">Bienes Muebles por Centro de Trabajo</h3>
-          <p className="text-slate-500 text-xs">Bienes registrados contra bienes verificados en resguardo</p>
+          <h3 className="text-white font-bold text-base">{isAreaMode ? 'Bienes Muebles por Area' : 'Bienes Muebles por Centro de Trabajo'}</h3>
+          <p className="text-slate-500 text-xs">{isAreaMode ? 'Bienes registrados contra bienes verificados por área' : 'Bienes registrados contra bienes verificados en resguardo'}</p>
         </div>
       </div>
 
@@ -43,16 +45,22 @@ export default function BmResumenChart({ filas, loading, error }: Props) {
       {!loading && !error && filas.length > 0 && (
         <div className="flex-1 min-h-0 overflow-y-auto scroll-slim pr-1">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 px-1 pb-2 sticky top-0 bg-slate-950/95 backdrop-blur-sm z-10 border-b border-slate-800/80">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Centro de trabajo</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">{isAreaMode ? 'Area' : 'Centro de trabajo'}</span>
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Verificados / Total</span>
           </div>
 
           {filas.map(f => {
             const pctBarra = f.total > 0 ? (f.verificados / f.total) * 100 : 0;
+            const rowProps = onRowClick ? {
+              onClick: () => onRowClick(f),
+              className: 'grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 items-center py-2.5 px-1 border-b border-slate-800/70 last:border-b-0 cursor-pointer hover:bg-slate-800/40 transition-colors',
+            } : {
+              className: 'grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 items-center py-2.5 px-1 border-b border-slate-800/70 last:border-b-0',
+            };
             return (
               <div
                 key={f.key}
-                className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 items-center py-2.5 px-1 border-b border-slate-800/70 last:border-b-0"
+                {...rowProps}
               >
                 {/* Descripción + Dirección */}
                 <div className="min-w-0">
@@ -66,7 +74,7 @@ export default function BmResumenChart({ filas, loading, error }: Props) {
                       </span>
                     )}
                   </div>
-                  {f.direccion !== '' && (
+                  {!isAreaMode && f.direccion !== '' && (
                     <p className="text-xs text-slate-500 truncate mt-0.5">{f.direccion}</p>
                   )}
                 </div>

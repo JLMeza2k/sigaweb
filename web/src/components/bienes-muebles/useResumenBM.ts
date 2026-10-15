@@ -4,6 +4,7 @@ import { useFetch } from '../../hooks/useFetch';
 export interface ResumenFilaRaw {
   Unidad?: number | string | null;
   Centro?: number | string | null;
+  Area?: string | null;
   Descripcion?: string | null;
   Direccion?: string | null;
   Baja?: number | string | boolean | null;
@@ -15,6 +16,7 @@ export interface ResumenFila {
   key: string;
   unidad: number;
   centro: number;
+  area: string;
   descripcion: string;
   direccion: string;
   baja: boolean;
@@ -50,6 +52,7 @@ function normalize(rows: ResumenFilaRaw[]): ResumenFila[] {
       key: `${toNum(r.Unidad)}-${toNum(r.Centro)}-${i}`,
       unidad: toNum(r.Unidad),
       centro: toNum(r.Centro),
+      area: String(r.Area ?? '').trim(),
       descripcion: String(r.Descripcion ?? '').trim() || 'Sin descripción',
       direccion: String(r.Direccion ?? '').trim(),
       baja: isBaja(r.Baja),
@@ -70,8 +73,9 @@ function sortRows(rows: ResumenFila[]): ResumenFila[] {
   });
 }
 
-export function useResumenBM() {
-  const { data, loading, error, execute } = useFetch<ResumenFilaRaw[]>('bm/resumen/0/255');
+export function useResumenBM(ua?: number, ct?: number) {
+  const url = ua !== undefined && ct !== undefined ? `bm/resumen/${ua}/${ct}` : 'bm/resumen/0/255';
+  const { data, loading, error, execute } = useFetch<ResumenFilaRaw[]>(url, [ua, ct]);
 
   const filas = useMemo(() => sortRows(normalize(Array.isArray(data) ? data : [])), [data]);
 

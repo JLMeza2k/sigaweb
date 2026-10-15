@@ -33,11 +33,18 @@ const IconRefresh = () => (
 
 interface DashboardProps {
   onBack?: () => void;
+  ua?: number;
+  ct?: number;
+  descripcion?: string;
+  onRowClick?: (fila: import('./useResumenBM').ResumenFila) => void;
+  onAreaClick?: (fila: import('./useResumenBM').ResumenFila) => void;
 }
 
-export default function ResumenBienesMuebles({ onBack }: DashboardProps) {
-  const { filas, totales, loading, error, refetch } = useResumenBM();
-  const { filas: problemas, loading: problemasLoading, error: problemasError, refetch: refetchProblemas } = useBMProblems();
+export default function ResumenBienesMuebles({ onBack, ua, ct, descripcion, onRowClick, onAreaClick }: DashboardProps) {
+  const { filas, totales, loading, error, refetch } = useResumenBM(ua, ct);
+  const { filas: problemas, loading: problemasLoading, error: problemasError, refetch: refetchProblemas } = useBMProblems(ua, ct);
+  const isDetailMode = ua !== undefined && ct !== undefined;
+  const isAreaMode = isDetailMode && ua !== undefined && ua > 0 && ct !== 255;
 
   const pct = totales.pctVerificado;
   const pctColor = pct >= 80 ? 'green' : 'amber';
@@ -62,7 +69,7 @@ export default function ResumenBienesMuebles({ onBack }: DashboardProps) {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Portal
+                {isAreaMode ? 'Centros de trabajo' : 'Portal'}
               </button>
             )}
             <div className="w-10 h-10 flex items-center justify-center">
@@ -70,12 +77,14 @@ export default function ResumenBienesMuebles({ onBack }: DashboardProps) {
             </div>
             <div>
               <h1 className="text-white font-black text-xl tracking-tight leading-none">SIGABM</h1>
-              <p className="text-slate-500 text-xs mt-0.5">Sistema de Gestión Administrativa</p>
+              <p className="text-slate-500 text-xs mt-0.5">
+                {isDetailMode && descripcion ? descripcion : 'Sistema de Gestión Administrativa'}
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <SectionBadge color="blue" label="Bienes Muebles" />
+            <SectionBadge color="blue" label={isDetailMode ? 'Detalle por Centro' : 'Bienes Muebles'} />
             <button
               id="btn-refetch-bm"
               onClick={() => { void Promise.all([refetch(), refetchProblemas()]); }}
@@ -95,7 +104,7 @@ export default function ResumenBienesMuebles({ onBack }: DashboardProps) {
 
         {/* ━━━━ Lista por centro de trabajo (60%) ━━━━ */}
         <section id="section-bm-lista" className="w-full lg:w-3/5 h-auto lg:h-full flex flex-col">
-          <BmResumenChart filas={filas} loading={loading} error={error} />
+          <BmResumenChart filas={filas} loading={loading} error={error} onRowClick={!isDetailMode ? onRowClick : isAreaMode ? onAreaClick : undefined} isAreaMode={isAreaMode} />
         </section>
 
         {/* ━━━━ KPIs (40%) ━━━━ */}

@@ -414,7 +414,9 @@ bmRouter.get("/resumen/:ua/:ct", checkToken, async (req: AuthRequest, res: Respo
         const pool = await getPool();
         const result = await (pool as sql.ConnectionPool)
             .request()
-            .query(`SELECT Unidad, Centro, Descripcion, Direccion, Baja, CountBienes, Verificados FROM vwResumenBMxUA WHERE (Unidad=${req.params.ua} OR ${req.params.ua}=0) AND (Centro=${req.params.ct} OR ${req.params.ct}=255)`);
+            .input('ua', sql.Int, Number(req.params.ua))
+            .input('ct', sql.Int, Number(req.params.ct))
+            .query(`SELECT Unidad, Centro, CASE WHEN @ua=0 AND @ct=255 THEN '000' ELSE Area END Area, CASE WHEN @ua=0 AND @ct=255 THEN Descripcion ELSE NameArea END Descripcion, Direccion, Baja, SUM(CountBienes) CountBienes, SUM(Verificados) Verificados FROM vwBMResumenxArea WHERE (Unidad=@ua OR @ua=0) AND (Centro=@ct OR @ct=255) GROUP BY Unidad, Centro, CASE WHEN @ua=0 AND @ct=255 THEN Descripcion ELSE NameArea END, Direccion, Baja, CASE WHEN @ua=0 AND @ct=255 THEN '000' ELSE Area END`);
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: 'Resumen de Bienes Muebles no encontrado' });
         }

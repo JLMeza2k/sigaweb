@@ -11,14 +11,50 @@ import EstadoPresupuesto from './components/presupuesto/EstadoPresupuesto';
 import CfdiModule from './components/cfdirepo/CfdiModule';
 import ResumenBienesMuebles from './components/bienes-muebles/ResumenBienesMuebles';
 import BienesSinRegistro from './components/bienes-muebles/BienesSinRegistro';
+import DetalleBienesMuebles from './components/bienes-muebles/DetalleBienesMuebles';
+import type { ResumenFila } from './components/bienes-muebles/useResumenBM';
+
+interface CentroSeleccionado {
+  ua: number;
+  ct: number;
+  descripcion: string;
+}
+
+interface AreaSeleccionada {
+  ua: number;
+  ct: number;
+  area: string;
+  nameArea: string;
+}
 
 function App() {
    const { user, token, logout, isLoading } = useAuth();
-   const [activeView, setActiveView] = useState<ActiveView>({ group: 'home', view: 'inicio' });
+    const [activeView, setActiveView] = useState<ActiveView>({ group: 'home', view: 'inicio' });
+    const [centroSeleccionado, setCentroSeleccionado] = useState<CentroSeleccionado | null>(null);
+    const [areaSeleccionada, setAreaSeleccionada] = useState<AreaSeleccionada | null>(null);
 
-   const navigate = (group: string, view: string) => {
-      setActiveView({ group, view });
-   };
+    const navigate = (group: string, view: string) => {
+       setActiveView({ group, view });
+    };
+
+    const handleRowClick = (fila: ResumenFila) => {
+       setCentroSeleccionado({
+          ua: fila.unidad,
+          ct: fila.centro,
+          descripcion: fila.descripcion,
+       });
+       setActiveView({ group: 'bienes-muebles', view: 'por-area' });
+    };
+
+    const handleAreaClick = (fila: ResumenFila) => {
+       setAreaSeleccionada({
+          ua: fila.unidad,
+          ct: fila.centro,
+          area: fila.area,
+          nameArea: fila.descripcion,
+       });
+       setActiveView({ group: 'bienes-muebles', view: 'detalle-area' });
+    };
 
    // ── Loading splash ────────────────────────────────────────
    if (isLoading && user.IdUser === -1) {
@@ -70,24 +106,26 @@ function App() {
    }
 
    // ── View title helper ─────────────────────────────────────
-   const getViewTitle = (): string => {
-      const { group, view } = activeView;
-      if (group === 'home') return 'Panel de Inicio';
-      if (group === 'viaticos') {
-         if (view === 'comisiones') return 'Nueva Comisión';
-         if (view === 'consulta') return 'Consulta de Viáticos';
-      }
-      if (group === 'system' && view === 'configuracion') return 'Configuración de Perfil';
-      if (group === 'presupuesto' && view === 'estado-presupuesto') return 'Estado del Presupuesto';
-      if (group === 'archivo-electronico') {
-         if (view === 'financieros') return 'Dashboard Financiero';
-         if (view === 'materiales') return 'Materiales';
-      }
-      if (group === 'contabilidad' && view === 'cfdis') return 'CFDIs';
-      if (group === 'bienes-muebles' && view === 'resumen') return 'Resumen de Bienes Muebles';
-      if (group === 'bienes-muebles' && view === 'sin-registro') return 'Bienes Muebles sin registro';
-      return 'Portal ISSBCS';
-   };
+    const getViewTitle = (): string => {
+       const { group, view } = activeView;
+       if (group === 'home') return 'Panel de Inicio';
+       if (group === 'viaticos') {
+          if (view === 'comisiones') return 'Nueva Comisión';
+          if (view === 'consulta') return 'Consulta de Viáticos';
+       }
+       if (group === 'system' && view === 'configuracion') return 'Configuración de Perfil';
+       if (group === 'presupuesto' && view === 'estado-presupuesto') return 'Estado del Presupuesto';
+       if (group === 'archivo-electronico') {
+          if (view === 'financieros') return 'Dashboard Financiero';
+          if (view === 'materiales') return 'Materiales';
+       }
+       if (group === 'contabilidad' && view === 'cfdis') return 'CFDIs';
+       if (group === 'bienes-muebles' && view === 'resumen') return 'Resumen de Bienes Muebles';
+        if (group === 'bienes-muebles' && view === 'por-area') return centroSeleccionado?.descripcion ?? 'Detalle por Centro';
+        if (group === 'bienes-muebles' && view === 'detalle-area') return areaSeleccionada?.nameArea ?? 'Detalle de Área';
+        if (group === 'bienes-muebles' && view === 'sin-registro') return 'Bienes Muebles sin registro';
+       return 'Portal ISSBCS';
+    };
 
    // ── Render helpers ────────────────────────────────────────
    const is = (group: string, view: string) =>
@@ -103,6 +141,8 @@ function App() {
       && !is('presupuesto', 'estado-presupuesto')
       && !is('contabilidad', 'cfdis')
       && !is('bienes-muebles', 'resumen')
+      && !is('bienes-muebles', 'por-area')
+      && !is('bienes-muebles', 'detalle-area')
       && !is('bienes-muebles', 'sin-registro');
 
    // ── Full-screen dashboards ───────────────────────────────
@@ -112,9 +152,15 @@ function App() {
 if (is('presupuesto', 'estado-presupuesto')) {
        return <EstadoPresupuesto onBack={() => navigate('home', 'inicio')} />;
     }
-    if (is('bienes-muebles', 'resumen')) {
-       return <ResumenBienesMuebles onBack={() => navigate('home', 'inicio')} />;
-    }
+     if (is('bienes-muebles', 'resumen')) {
+        return <ResumenBienesMuebles onBack={() => navigate('home', 'inicio')} onRowClick={handleRowClick} />;
+     }
+     if (is('bienes-muebles', 'por-area') && centroSeleccionado) {
+        return <ResumenBienesMuebles onBack={() => navigate('bienes-muebles', 'resumen')} ua={centroSeleccionado.ua} ct={centroSeleccionado.ct} descripcion={centroSeleccionado.descripcion} onAreaClick={handleAreaClick} />;
+     }
+     if (is('bienes-muebles', 'detalle-area') && areaSeleccionada) {
+        return <DetalleBienesMuebles ua={areaSeleccionada.ua} ct={areaSeleccionada.ct} area={areaSeleccionada.area} nameArea={areaSeleccionada.nameArea} onBack={() => navigate('bienes-muebles', 'por-area')} />;
+     }
 
    // ── Authenticated layout ──────────────────────────────────
    return (

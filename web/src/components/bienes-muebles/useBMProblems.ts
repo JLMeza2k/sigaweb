@@ -18,8 +18,12 @@ const toNumber = (value: unknown): number => {
   return Number.isFinite(number) ? number : 0;
 };
 
-export function useBMProblems() {
-  const { data, loading, error, execute } = useFetch<BMProblemRaw[]>('bm/issues/0/255/000');
+export function useBMProblems(ua?: number, ct?: number, area?: string) {
+  const defaultUa = ua !== undefined ? ua : 0;
+  const defaultCt = ct !== undefined ? ct : 255;
+  const defaultArea = area ?? '000';
+  const url = `bm/issues/${defaultUa}/${defaultCt}/${defaultArea}`;
+  const { data, loading, error, execute } = useFetch<BMProblemRaw[]>(url, [ua, ct, area]);
 
   const filas = useMemo<BMProblem[]>(() => (Array.isArray(data) ? data : []).map(row => ({
     descripcion: String(row.Descripcion ?? '').trim() || 'Sin descripción',
