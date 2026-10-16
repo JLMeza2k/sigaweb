@@ -47,12 +47,26 @@ function formatDate(value: string) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('es-MX');
 }
 
+function formatLocation(row: Relacion, areas: Area[]) {
+  const areaCode = row.Area.trim();
+  const unidad = areas.find((item) => item.Unidad === row.Unidad && item.Centro === 0 && item.Area.trim() === '000');
+  const centro = areas.find((item) => item.Unidad === row.Unidad && item.Centro === row.Centro && item.Centro !== 0 && item.Area.trim() === '000');
+  const area = areas.find((item) => item.Unidad === row.Unidad && item.Centro === row.Centro && item.Area.trim() === areaCode && areaCode !== '000');
+
+  return [
+    unidad?.ShortName || unidad?.Descripcion || `Unidad ${row.Unidad}`,
+    centro?.ShortName || centro?.Descripcion || `Centro ${row.Centro}`,
+    area?.ShortName || area?.Descripcion || row.AreaDescripcion || `Área ${areaCode}`,
+  ].join(' / ');
+}
+
 function AreaSelectors({
-  areas, unidad, centro, area, onUnidad, onCentro, onArea, required = false,
+  areas, unidad, centro, area, onUnidad, onCentro, onArea, required = false, groupUnitCenter = false,
 }: {
   areas: Area[]; unidad: string; centro: string; area: string;
   onUnidad: (value: string) => void; onCentro: (value: string) => void; onArea: (value: string) => void;
   required?: boolean;
+  groupUnitCenter?: boolean;
 }) {
   const unidades = useMemo(() => areas.filter((item) => item.Centro === 0 && item.Area === '000'), [areas]);
   const centros = useMemo(() => areas.filter((item) => item.Unidad === Number(unidad) && item.Area === '000' && item.Centro !== 0), [areas, unidad]);
@@ -60,20 +74,22 @@ function AreaSelectors({
   const selectClass = 'h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm text-fg-primary shadow-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-panel-muted disabled:text-fg-faint';
   return (
     <>
-      <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
-        Unidad
-        <select required={required} value={unidad} onChange={(event) => onUnidad(event.target.value)} className={`${selectClass} mt-1`}>
-          <option value="">{required ? 'Selecciona una unidad' : 'Todas las unidades'}</option>
-          {unidades.map((item) => <option key={item.Unidad} value={item.Unidad}>{item.ShortName || item.Descripcion}</option>)}
-        </select>
-      </label>
-      <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
-        Centro
-        <select required={required} value={centro} disabled={!unidad} onChange={(event) => onCentro(event.target.value)} className={`${selectClass} mt-1`}>
-          <option value="">{required ? 'Selecciona un centro' : 'Todos los centros'}</option>
-          {centros.map((item) => <option key={`${item.Unidad}-${item.Centro}`} value={item.Centro}>{item.ShortName || item.Descripcion}</option>)}
-        </select>
-      </label>
+      <div className={groupUnitCenter ? 'col-span-2 grid grid-cols-2 gap-3 md:contents' : 'contents'}>
+        <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
+          Unidad
+          <select required={required} value={unidad} onChange={(event) => onUnidad(event.target.value)} className={`${selectClass} mt-1`}>
+            <option value="">{required ? 'Selecciona una unidad' : 'Todas las unidades'}</option>
+            {unidades.map((item) => <option key={item.Unidad} value={item.Unidad}>{item.ShortName || item.Descripcion}</option>)}
+          </select>
+        </label>
+        <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
+          Centro
+          <select required={required} value={centro} disabled={!unidad} onChange={(event) => onCentro(event.target.value)} className={`${selectClass} mt-1`}>
+            <option value="">{required ? 'Selecciona un centro' : 'Todos los centros'}</option>
+            {centros.map((item) => <option key={`${item.Unidad}-${item.Centro}`} value={item.Centro}>{item.ShortName || item.Descripcion}</option>)}
+          </select>
+        </label>
+      </div>
       <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
         Área
         <select required={required} value={area} disabled={!centro} onChange={(event) => onArea(event.target.value)} className={`${selectClass} mt-1`}>
@@ -257,14 +273,27 @@ export default function BienesSinRegistro({ onBack }: { onBack?: () => void } = 
           <div><h3 className="font-bold text-fg-primary">Filtrar relaciones</h3><p className="text-xs text-fg-faint">Selecciona una ubicación para acotar los resultados.</p></div>
           <button type="button" onClick={() => { const cleared = { Unidad: '', Centro: '', Area: '' }; setFilter(cleared); void loadRows(cleared); }} className="px-3 py-2 text-xs font-bold text-fg-faint hover:text-accent-fg">Limpiar filtros</button>
         </div>
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,1fr)] gap-3 md:grid-cols-4">
           <AreaSelectors
             areas={areas} unidad={filter.Unidad} centro={filter.Centro} area={filter.Area}
             onUnidad={(Unidad) => setFilter({ Unidad, Centro: '', Area: '' })}
             onCentro={(Centro) => setFilter((current) => ({ ...current, Centro, Area: '' }))}
             onArea={(Area) => setFilter((current) => ({ ...current, Area }))}
+            groupUnitCenter
           />
-          <button type="button" onClick={() => void loadRows(filter)} className="h-10 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:bg-accent-hover">Buscar</button>
+          <button
+            type="button"
+            onClick={() => void loadRows(filter)}
+            aria-label="Buscar relaciones"
+            title="Buscar relaciones"
+            className="flex h-10 items-center justify-center gap-2 rounded-xl bg-accent px-2 text-sm font-bold text-white transition hover:bg-accent-hover md:px-4"
+          >
+            <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" strokeWidth="2" />
+              <path strokeLinecap="round" strokeWidth="2" d="m20 20-4-4" />
+            </svg>
+            <span className="hidden md:inline">Buscar</span>
+          </button>
         </div>
       </section>
 
@@ -274,26 +303,48 @@ export default function BienesSinRegistro({ onBack }: { onBack?: () => void } = 
           <button type="button" onClick={() => void loadRows(filter)} className="rounded-lg border border-border-strong px-3 py-2 text-xs font-bold text-fg-secondary hover:bg-hover">Actualizar</button>
         </div>
         {listError ? <div role="alert" className="p-8 text-center text-sm text-danger">{listError}</div> : loading ? <div className="p-10 text-center text-sm text-fg-muted">Cargando relaciones…</div> : rows.length === 0 ? <div className="p-10 text-center text-sm text-fg-muted">No hay relaciones para mostrar.</div> : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="bg-panel-muted text-xs uppercase tracking-wide text-fg-fainter"><tr>
-                <th className="px-5 py-3">Folio / fecha</th><th className="px-5 py-3">Unidad / centro / área</th><th className="px-5 py-3">Bienes</th><th className="px-5 py-3">Observaciones</th><th className="px-5 py-3 text-right">Acciones</th>
-              </tr></thead>
-              <tbody className="divide-y divide-border-subtle">
-                {rows.map((row) => (
-                  <tr key={row.Folio} className="hover:bg-hover/40">
-                    <td className="px-5 py-4"><span className="font-bold text-fg-primary">#{row.Folio}</span><span className="mt-1 block text-xs text-fg-faint">{formatDate(row.Fecha)}</span></td>
-                    <td className="px-5 py-4"><span className="font-semibold text-fg-secondary">{row.AreaDescripcion || `Área ${row.Area.trim()}`}</span><span className="mt-1 block text-xs text-fg-muted">Unidad {row.Unidad} · Centro {row.Centro} · Área {row.Area.trim()}</span></td>
-                    <td className="px-5 py-4"><span className="rounded-full border border-accent-border bg-accent-soft px-2.5 py-1 text-xs font-bold text-accent-fg">{row.CantidadBienes}</span></td>
-                    <td className="max-w-xs truncate px-5 py-4 text-fg-muted" title={row.Observaciones ?? ''}>{row.Observaciones || '—'}</td>
-                    <td className="px-5 py-4"><div className="flex justify-end gap-2">
-                      <button type="button" onClick={() => void startEdit(row.Folio)} className="rounded-lg border border-border-strong px-3 py-2 text-xs font-bold text-fg-secondary hover:border-accent-border hover:bg-accent-soft hover:text-accent-fg">Editar</button>
-                      <button type="button" onClick={() => void remove(row)} className="rounded-lg border border-danger-border px-3 py-2 text-xs font-bold text-danger hover:bg-danger-soft">Eliminar</button>
-                    </div></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-3 p-4 sm:p-5 lg:grid-cols-2">
+            {rows.map((row) => (
+              <article key={row.Folio} className="overflow-hidden rounded-xl border border-border-subtle bg-app/50 transition-colors hover:border-border-strong">
+                <header className="flex items-center justify-between gap-3 border-b border-border-subtle bg-panel-muted/60 px-4 py-3">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="text-sm font-black text-fg-primary">Folio #{row.Folio}</span>
+                    <time dateTime={row.Fecha} className="text-xs text-fg-faint">{formatDate(row.Fecha)}</time>
+                    <span className="rounded-full border border-accent-border bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent-fg">
+                      {row.CantidadBienes} {row.CantidadBienes === 1 ? 'bien' : 'bienes'}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => void startEdit(row.Folio)}
+                      aria-label={`Editar relación ${row.Folio}`}
+                      title="Editar relación"
+                      className="rounded-lg border border-border-strong p-2 text-fg-secondary transition-colors hover:border-accent-border hover:bg-accent-soft hover:text-accent-fg"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931ZM19.5 7.125 16.875 4.5M18 14v4.75A2.25 2.25 0 0 1 15.75 21h-9.5A2.25 2.25 0 0 1 4 18.75v-9.5A2.25 2.25 0 0 1 6.25 7H11" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void remove(row)}
+                      aria-label={`Eliminar relación ${row.Folio}`}
+                      title="Eliminar relación"
+                      className="rounded-lg border border-danger-border p-2 text-danger transition-colors hover:bg-danger-soft"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 7h12m-10 0V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-.8 13H8.8L8 7m3 3v6m2-6v6" />
+                      </svg>
+                    </button>
+                  </div>
+                </header>
+                <div className="space-y-2 px-4 py-3">
+                  <p className="text-sm font-semibold text-fg-secondary">{formatLocation(row, areas)}</p>
+                  <p className="whitespace-pre-wrap break-words text-sm text-fg-muted">{row.Observaciones || 'Sin observaciones.'}</p>
+                </div>
+              </article>
+            ))}
           </div>
         )}
       </section>
@@ -339,18 +390,27 @@ export default function BienesSinRegistro({ onBack }: { onBack?: () => void } = 
                           <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter sm:col-span-2 lg:col-span-5">Descripción
                             <input required maxLength={255} value={item.Descripcion} onChange={(event) => updateDetail(index, 'Descripcion', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" placeholder="Ej. Computadora portátil" />
                           </label>
-                          {(['Marca', 'Modelo', 'Serie'] as const).map((field) => (
-                            <label key={field} className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">{field}
-                              <input maxLength={50} value={item[field]} onChange={(event) => updateDetail(index, field, event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
-                            </label>
-                          ))}
-                          <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">Estado físico
-                            <select required value={item.EdoFisico} onChange={(event) => updateDetail(index, 'EdoFisico', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20">
-                              <option value="">Selecciona estado</option>
-                              {estados.map((state) => <option key={state.Codigo} value={state.Codigo}>{state.Descripcion}</option>)}
-                            </select>
+                          <div className="grid grid-cols-2 gap-3 sm:contents">
+                            {(['Marca', 'Modelo'] as const).map((field) => (
+                              <label key={field} className="block min-w-0 text-xs font-bold uppercase tracking-wide text-fg-fainter">{field}
+                                <input maxLength={50} value={item[field]} onChange={(event) => updateDetail(index, field, event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
+                              </label>
+                            ))}
+                          </div>
+                          <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">Serie
+                            <input maxLength={50} value={item.Serie} onChange={(event) => updateDetail(index, 'Serie', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
                           </label>
-                          <ResponsableRfcPicker value={item.RFCResponsable} token={token} onChange={(RFCResponsable) => updateDetail(index, 'RFCResponsable', RFCResponsable)} />
+                          <div className="grid grid-cols-2 gap-3 sm:contents">
+                            <label className="block min-w-0 text-xs font-bold uppercase tracking-wide text-fg-fainter">Estado físico
+                              <select required value={item.EdoFisico} onChange={(event) => updateDetail(index, 'EdoFisico', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20">
+                                <option value="">Selecciona estado</option>
+                                {estados.map((state) => <option key={state.Codigo} value={state.Codigo}>{state.Descripcion}</option>)}
+                              </select>
+                            </label>
+                            <div className="min-w-0">
+                              <ResponsableRfcPicker value={item.RFCResponsable} token={token} onChange={(RFCResponsable) => updateDetail(index, 'RFCResponsable', RFCResponsable)} />
+                            </div>
+                          </div>
                         </div>
                       </article>
                     ))}

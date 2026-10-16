@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import Login from './components/Login';
 import Header from './components/Header';
@@ -28,13 +28,26 @@ interface AreaSeleccionada {
 }
 
 function App() {
-   const { user, token, logout, isLoading } = useAuth();
+    const { user, token, logout, isLoading } = useAuth();
     const [activeView, setActiveView] = useState<ActiveView>({ group: 'home', view: 'inicio' });
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [centroSeleccionado, setCentroSeleccionado] = useState<CentroSeleccionado | null>(null);
     const [areaSeleccionada, setAreaSeleccionada] = useState<AreaSeleccionada | null>(null);
 
+    useEffect(() => {
+       if (!mobileMenuOpen) return;
+
+       const handleKeyDown = (event: KeyboardEvent) => {
+          if (event.key === 'Escape') setMobileMenuOpen(false);
+       };
+
+       window.addEventListener('keydown', handleKeyDown);
+       return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [mobileMenuOpen]);
+
     const navigate = (group: string, view: string) => {
        setActiveView({ group, view });
+       setMobileMenuOpen(false);
     };
 
     const handleRowClick = (fila: ResumenFila) => {
@@ -166,15 +179,22 @@ if (is('presupuesto', 'estado-presupuesto')) {
    // ── Authenticated layout ──────────────────────────────────
    return (
       <div className="min-h-screen flex bg-app font-sans selection:bg-accent-soft selection:text-accent-fg transition-all duration-700 animate-in fade-in">
-         <Sidebar
-            user={user}
-            onLogout={logout}
-            activeView={activeView}
-            onNavigate={navigate}
-         />
+          <Sidebar
+             user={user}
+             onLogout={logout}
+             activeView={activeView}
+             onNavigate={navigate}
+             mobileOpen={mobileMenuOpen}
+             onClose={() => setMobileMenuOpen(false)}
+          />
 
-         <div className="flex-1 flex flex-col min-w-0">
-            <Header user={user} title={getViewTitle()} />
+          <div className="flex-1 flex flex-col min-w-0">
+             <Header
+                user={user}
+                title={getViewTitle()}
+                mobileMenuOpen={mobileMenuOpen}
+                onMenuToggle={() => setMobileMenuOpen(open => !open)}
+             />
 
             <main className="flex-1 p-8 overflow-y-auto bg-app/50 backdrop-blur-3xl custom-scrollbar">
                <div className="w-full mx-auto space-y-8 pb-12">

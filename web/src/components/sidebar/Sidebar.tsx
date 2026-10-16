@@ -28,6 +28,8 @@ interface SidebarProps {
    onLogout: () => void;
    activeView: ActiveView;
    onNavigate: (group: string, view: string) => void;
+   mobileOpen: boolean;
+   onClose: () => void;
 }
 
 // ─── Sidebar option bitmap ────────────────────────────────
@@ -139,7 +141,7 @@ label: 'Bienes Muebles',
 ];
 
 // ─── Component ────────────────────────────────────────────
-export default function Sidebar({ user, onLogout, activeView, onNavigate }: SidebarProps) {
+export default function Sidebar({ user, onLogout, activeView, onNavigate, mobileOpen, onClose }: SidebarProps) {
    // Inicia con el grupo activo expandido
    const [openGroups, setOpenGroups] = useState<string[]>([activeView.group]);
 
@@ -157,18 +159,43 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate }: Side
    const showInicio = isOptEnabled(user.sideBarOpcs, 'home');
    const showConfig = isOptEnabled(user.sideBarOpcs, 'system');
 
-   return (
-      <aside className="w-64 bg-surface text-fg-secondary flex flex-col h-screen sticky top-0 border-r border-border-subtle shadow-xl overflow-hidden">
+    return (
+       <>
+       {mobileOpen && (
+          <button
+             type="button"
+             aria-label="Cerrar menú"
+             onClick={onClose}
+             className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          />
+       )}
+       <aside
+          id="main-navigation"
+          aria-label="Navegación principal"
+          className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface text-fg-secondary flex flex-col h-screen border-r border-border-subtle shadow-xl overflow-hidden transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:shrink-0`}
+       >
          {/* Brand */}
-         <div className="p-6 flex items-center gap-3 border-b border-border-subtle bg-surface/50 backdrop-blur-sm shrink-0">
-            <div className="w-10 h-10 bg-app rounded-xl p-1 shadow-inner flex items-center justify-center overflow-hidden">
-               <img src="/logo_issbcs.png" alt="Logo ISSBCS" className="object-contain" />
-            </div>
-            <div className="flex flex-col">
-               <span className="text-sm font-bold text-fg-primary tracking-tight leading-none">ISSBCS</span>
-               <span className="text-[10px] text-fg-faint font-medium uppercase tracking-wider mt-1">Portal Web</span>
-            </div>
-         </div>
+          <div className="p-6 flex items-center justify-between gap-3 border-b border-border-subtle bg-surface/50 backdrop-blur-sm shrink-0">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-app rounded-xl p-1 shadow-inner flex items-center justify-center overflow-hidden">
+                   <img src="/logo_issbcs.png" alt="Logo ISSBCS" className="object-contain" />
+                </div>
+                <div className="flex flex-col">
+                   <span className="text-sm font-bold text-fg-primary tracking-tight leading-none">ISSBCS</span>
+                   <span className="text-[10px] text-fg-faint font-medium uppercase tracking-wider mt-1">Portal Web</span>
+                </div>
+             </div>
+             <button
+                type="button"
+                onClick={onClose}
+                aria-label="Cerrar menú"
+                className="lg:hidden p-2 -mr-2 rounded-lg text-fg-muted hover:bg-hover hover:text-fg-primary focus-visible:outline-2 focus-visible:outline-accent"
+             >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+             </button>
+          </div>
 
          {/* Navigation */}
          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
@@ -260,6 +287,7 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate }: Side
                Cerrar Sesión
             </button>
          </div>
-      </aside>
-   );
+       </aside>
+       </>
+    );
 }

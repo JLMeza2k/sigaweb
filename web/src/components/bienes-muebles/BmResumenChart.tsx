@@ -74,15 +74,24 @@ export default function BmResumenChart({ filas, loading, error, onRowClick, isAr
                       </span>
                     )}
                   </div>
+                  <div
+                    className="sm:hidden mt-2 h-2.5 w-full rounded-full bg-warning-soft overflow-hidden flex"
+                    title={`${f.verificados} verificados de ${f.total}`}
+                    aria-label={`${f.descripcion}: ${f.verificados} verificados de ${f.total}`}
+                    role="img"
+                  >
+                    <div className="h-full bg-success transition-all duration-500" style={{ width: `${pctBarra}%` }} />
+                    <div className="h-full bg-warning transition-all duration-500" style={{ width: `${100 - pctBarra}%` }} />
+                  </div>
                   {!isAreaMode && f.direccion !== '' && (
-                    <p className="text-xs text-fg-faint truncate mt-0.5">{f.direccion}</p>
+                    <p className="hidden sm:block text-xs text-fg-faint truncate mt-0.5">{f.direccion}</p>
                   )}
                 </div>
 
                 {/* Barra apilada + conteo: ocupa el 100% del track */}
                 <div className="flex items-center gap-3 shrink-0">
                   <div
-                    className="h-2.5 w-40 sm:w-56 rounded-full bg-warning-soft overflow-hidden flex"
+                    className="hidden sm:flex h-2.5 w-40 sm:w-56 rounded-full bg-warning-soft overflow-hidden"
                     title={`${f.verificados} verificados de ${f.total}`}
                     aria-label={`${f.descripcion}: ${f.verificados} verificados de ${f.total}`}
                     role="img"
