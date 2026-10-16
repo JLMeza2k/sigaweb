@@ -49,10 +49,10 @@ function FileDropZone({
   return (
     <div
       className={`relative group border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 ease-out ${isDragging
-        ? "border-indigo-500 bg-indigo-500/10 scale-[1.02]"
+        ? "border-indigo bg-indigo-soft scale-[1.02]"
         : file
-          ? "border-emerald-500/50 bg-emerald-950/30"
-          : "border-slate-700 hover:border-slate-500 hover:bg-slate-800/30"
+          ? "border-success-border bg-success-soft"
+          : "border-border-strong hover:border-fg-faint hover:bg-hover"
         }`}
       onDragOver={(e) => {
         e.preventDefault();
@@ -75,16 +75,16 @@ function FileDropZone({
 
       {file ? (
         <div className="flex flex-col items-center gap-2">
-          <IconCheck className="w-10 h-10 text-emerald-400" />
-          <p className="text-sm font-medium text-emerald-300 truncate max-w-full">{file.name}</p>
-          <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
+          <IconCheck className="w-10 h-10 text-success" />
+          <p className="text-sm font-medium text-success truncate max-w-full">{file.name}</p>
+          <p className="text-xs text-fg-faint">{(file.size / 1024).toFixed(1)} KB</p>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-2">
           <div className="text-3xl mb-1">{icon}</div>
-          <IconUpload className="w-6 h-6 text-slate-500 group-hover:text-slate-400 transition-colors" />
-          <p className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">{label}</p>
-          <p className="text-xs text-slate-600">Arrastra o haz clic para seleccionar</p>
+          <IconUpload className="w-6 h-6 text-fg-faint group-hover:text-fg-muted transition-colors" />
+          <p className="text-sm font-medium text-fg-muted group-hover:text-fg-secondary transition-colors">{label}</p>
+          <p className="text-xs text-fg-fainter">Arrastra o haz clic para seleccionar</p>
         </div>
       )}
     </div>
@@ -108,7 +108,7 @@ function PasswordField({
 
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-300 mb-2">
+      <label htmlFor={id} className="block text-sm font-medium text-fg-secondary mb-2">
         {label}
       </label>
       <div className="relative">
@@ -118,12 +118,12 @@ function PasswordField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-4 py-3 pr-12 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all duration-200"
+          className="w-full px-4 py-3 pr-12 rounded-xl bg-input border border-border-strong text-fg-primary placeholder-fg-faint focus:outline-none focus:ring-2 focus:ring-indigo/50 focus:border-indigo transition-all duration-200"
         />
         <button
           type="button"
           onClick={() => setShow(!show)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-faint hover:text-fg-secondary transition-colors"
           tabIndex={-1}
         >
           {show ? <IconEyeOff className="w-5 h-5" /> : <IconEye className="w-5 h-5" />}
@@ -228,16 +228,16 @@ export default function FielModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl">
-        <div className="flex items-center justify-between px-8 py-5 border-b border-slate-800/50">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-surface rounded-2xl border border-border-subtle shadow-2xl">
+        <div className="flex items-center justify-between px-8 py-5 border-b border-border-subtle/50">
           <div>
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />
+            <h2 className="text-lg font-semibold text-fg-primary flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo inline-block" />
               Configurar FIEL
             </h2>
-            <p className="text-sm text-slate-500 mt-1">Carga los archivos de tu Firma Electrónica Avanzada</p>
+            <p className="text-sm text-fg-faint mt-1">Carga los archivos de tu Firma Electrónica Avanzada</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer">
+          <button onClick={onClose} className="p-2 rounded-lg text-fg-muted hover:text-fg-secondary hover:bg-hover transition-colors cursor-pointer">
             <IconClose className="w-5 h-5" />
           </button>
         </div>
@@ -254,17 +254,17 @@ export default function FielModal({
           </div>
 
           {error && (
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm">
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-danger-soft border border-danger-border text-danger-fg text-sm">
               <span className="text-lg shrink-0">⚠️</span>
               <p>{error}</p>
             </div>
           )}
 
           <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="px-5 py-3 rounded-xl font-semibold text-sm bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white transition-all duration-200 cursor-pointer">
+            <button type="button" onClick={onClose} className="px-5 py-3 rounded-xl font-semibold text-sm bg-panel-muted border border-border-strong text-fg-secondary hover:bg-hover hover:text-fg-primary transition-all duration-200 cursor-pointer">
               Cancelar
             </button>
-            <button type="submit" disabled={isLoading} className="flex-1 py-3 rounded-xl font-semibold text-sm bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 active:from-indigo-700 active:to-purple-700 text-white shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer flex items-center justify-center gap-2">
+            <button type="submit" disabled={isLoading} className="flex-1 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo to-purple hover:from-indigo-hover active:from-indigo-hover/90 text-white shadow-lg shadow-indigo/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer flex items-center justify-center gap-2">
               {isLoading ? (
                 <><IconSpinner className="w-5 h-5" />Procesando…</>
               ) : (

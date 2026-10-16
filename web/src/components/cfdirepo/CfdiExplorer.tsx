@@ -61,11 +61,11 @@ const TIPO_COMPROBANTE_LABEL: Record<string, string> = {
 };
 
 const TIPO_COMPROBANTE_COLORS: Record<string, string> = {
-  I: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
-  E: "bg-rose-500/15 text-rose-300 border border-rose-500/20",
-  P: "bg-indigo-500/15 text-indigo-300 border border-indigo-500/20",
-  N: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
-  T: "bg-slate-500/15 text-slate-300 border border-slate-500/20",
+  I: "bg-success-soft text-success border border-success-border",
+  E: "bg-danger-soft text-danger border border-danger-border",
+  P: "bg-indigo-soft text-indigo-fg border border-indigo-border",
+  N: "bg-warning-soft text-warning border border-warning-border",
+  T: "bg-panel-muted text-fg-secondary border border-border-strong",
 };
 
 function truncate(s: string, n: number) {
@@ -178,26 +178,26 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* ── Filtros ───────────────────────────────────────────── */}
-      <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800">
+      <div className="bg-panel rounded-2xl p-6 border border-border-subtle">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-medium text-slate-400">Filtros</span>
+          <span className="text-xs font-medium text-fg-muted">Filtros</span>
           <button
             onClick={onDescargarCfdis}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-white bg-gradient-to-r from-indigo to-purple hover:from-indigo-hover transition cursor-pointer"
           >
             <IconDownload className="w-3.5 h-3.5" />
             Descargar CFDIs
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs font-medium text-slate-400 mr-2">Tipo:</span>
-          <div className="inline-flex rounded-xl border border-slate-700 bg-slate-800 p-0.5">
+          <span className="text-xs font-medium text-fg-muted mr-2">Tipo:</span>
+          <div className="inline-flex rounded-xl border border-border-strong bg-panel-muted p-0.5">
             <button
               onClick={() => handleTipoChange("recibidos")}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition cursor-pointer ${
                 tipo === "recibidos"
-                  ? "bg-indigo-600 text-white shadow"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-indigo text-white shadow"
+                  : "text-fg-muted hover:text-fg-secondary"
               }`}
             >
               Recibidos
@@ -206,8 +206,8 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
               onClick={() => handleTipoChange("emitidos")}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition cursor-pointer ${
                 tipo === "emitidos"
-                  ? "bg-indigo-600 text-white shadow"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-indigo text-white shadow"
+                  : "text-fg-muted hover:text-fg-secondary"
               }`}
             >
               Emitidos
@@ -217,25 +217,25 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Del</label>
+            <label className="block text-xs font-medium text-fg-muted mb-1">Del</label>
             <input
               type="date"
               value={pendingDel}
               onChange={(e) => setPendingDel(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition"
+              className="w-full bg-input border border-border-strong rounded-xl px-3 py-2 text-sm text-fg-primary focus:outline-none focus:border-indigo transition"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Al</label>
+            <label className="block text-xs font-medium text-fg-muted mb-1">Al</label>
             <input
               type="date"
               value={pendingAl}
               onChange={(e) => setPendingAl(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition"
+              className="w-full bg-input border border-border-strong rounded-xl px-3 py-2 text-sm text-fg-primary focus:outline-none focus:border-indigo transition"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
+            <label className="block text-xs font-medium text-fg-muted mb-1">
               {rfcLabel} / Nombre
             </label>
             <input
@@ -244,17 +244,17 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
               onChange={(e) => setPendingRfc(e.target.value.toUpperCase())}
               maxLength={100}
               placeholder="Buscar por RFC o nombre…"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition"
+              className="w-full bg-input border border-border-strong rounded-xl px-3 py-2 text-sm text-fg-primary placeholder-fg-faint focus:outline-none focus:border-indigo transition"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
+            <label className="block text-xs font-medium text-fg-muted mb-1">
               Tipo de Comprobante
             </label>
             <select
               value={pendingTipoComprobante}
               onChange={(e) => setPendingTipoComprobante(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition"
+              className="w-full bg-input border border-border-strong rounded-xl px-3 py-2 text-sm text-fg-primary focus:outline-none focus:border-indigo transition"
             >
               <option value="">Todos</option>
               <option value="I">Ingreso</option>
@@ -267,7 +267,7 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
           <div className="flex items-end">
             <button
               onClick={handleBuscar}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo to-purple hover:from-indigo-hover transition cursor-pointer"
             >
               <IconSearch className="w-4 h-4" />
               Buscar
@@ -276,7 +276,7 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
         </div>
 
         {error && (
-          <div className="mt-4 bg-rose-500/10 border border-rose-500/20 text-rose-300 px-4 py-2 rounded-xl text-sm">
+          <div className="mt-4 bg-danger-soft border border-danger-border text-danger-fg px-4 py-2 rounded-xl text-sm">
             {error}
           </div>
         )}
@@ -285,17 +285,17 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
       {/* ── KPIs ───────────────────────────────────────────────── */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Kpi label="CFDis" value={stats.total.toLocaleString("es-MX")} accent="text-slate-100" />
-          <Kpi label={tipo === "emitidos" ? "Receptores" : "Emisores"} value={(stats.distinctRfc ?? 0).toLocaleString("es-MX")} accent="text-indigo-300" />
-          <Kpi label="Suma Total" value={`$${formatMoney(stats.sumTotal)}`} accent="text-emerald-300" />
-          <Kpi label="Página" value={`${page} / ${totalPages}`} accent="text-slate-300" />
+          <Kpi label="CFDis" value={stats.total.toLocaleString("es-MX")} accent="text-fg-primary" />
+          <Kpi label={tipo === "emitidos" ? "Receptores" : "Emisores"} value={(stats.distinctRfc ?? 0).toLocaleString("es-MX")} accent="text-indigo-fg" />
+          <Kpi label="Suma Total" value={`$${formatMoney(stats.sumTotal)}`} accent="text-success" />
+          <Kpi label="Página" value={`${page} / ${totalPages}`} accent="text-fg-secondary" />
         </div>
       )}
 
       {/* ── Tabla ─────────────────────────────────────────────── */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-          <h2 className="text-lg font-semibold text-slate-100">
+      <div className="bg-panel rounded-2xl border border-border-subtle overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
+          <h2 className="text-lg font-semibold text-fg-primary">
             CFDis {tipo === "emitidos" ? "Emitidos" : "Recibidos"}
           </h2>
           <div className="flex items-center gap-3">
@@ -305,7 +305,7 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
                 setLimit(parseInt(e.target.value, 10));
                 setPage(1);
               }}
-              className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+              className="bg-input border border-border-strong rounded-lg px-2 py-1 text-xs text-fg-secondary focus:outline-none focus:border-indigo"
             >
               <option value="25">25 / pág</option>
               <option value="50">50 / pág</option>
@@ -315,7 +315,7 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
             <button
               onClick={fetchData}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800 disabled:opacity-50 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-fg-muted hover:text-fg-secondary hover:bg-hover disabled:opacity-50 transition cursor-pointer"
             >
               <IconRefresh className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
               Actualizar
@@ -324,19 +324,19 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
         </div>
 
         {loading && cfdis.length === 0 ? (
-          <div className="px-6 py-16 text-center text-slate-500 text-sm flex items-center justify-center gap-2">
+          <div className="px-6 py-16 text-center text-fg-muted text-sm flex items-center justify-center gap-2">
             <IconSpinner className="w-4 h-4" />
             Cargando CFDis…
           </div>
         ) : cfdis.length === 0 ? (
-          <div className="px-6 py-16 text-center text-slate-600 text-sm">
+          <div className="px-6 py-16 text-center text-fg-faint text-sm">
             No se encontraron CFDis con los filtros aplicados.
           </div>
         ) : (
           <div className="relative max-h-[60vh] overflow-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-slate-900">
-                <tr className="text-xs text-slate-500 uppercase border-b border-slate-800">
+              <thead className="sticky top-0 z-10 bg-panel">
+                <tr className="text-xs text-fg-fainter uppercase border-b border-border-subtle">
                   <th className="px-4 py-3 text-left font-medium">UUID</th>
                   <th className="px-4 py-3 text-left font-medium">Fecha</th>
                   <th className="px-4 py-3 text-center font-medium">Tipo</th>
@@ -346,7 +346,7 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
                   <th className="px-4 py-3 text-right font-medium">Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/50">
+              <tbody className="divide-y divide-border-subtle/50">
                 {cfdis.map((c) => {
                   const rfcVal = rowGet(c as unknown as AnyRow, rfcField);
                   const nombreVal = rowGet(c as unknown as AnyRow, nombreField);
@@ -354,12 +354,12 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
                     <tr
                       key={c.UUID}
                       onClick={() => openDetalle(c.UUID)}
-                      className="hover:bg-slate-800/40 cursor-pointer transition"
+                      className="hover:bg-hover cursor-pointer transition"
                     >
-                      <td className="px-4 py-3 text-slate-500 font-mono text-xs" title={c.UUID}>
+                      <td className="px-4 py-3 text-fg-faint font-mono text-xs" title={c.UUID}>
                         {truncate(c.UUID, 8)}…
                       </td>
-                      <td className="px-4 py-3 text-slate-300 whitespace-nowrap">
+                      <td className="px-4 py-3 text-fg-secondary whitespace-nowrap">
                         {formatShort(c.fecha)}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -373,21 +373,21 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
                           {TIPO_COMPROBANTE_LABEL[c.tipoComprobante]?.[0] ?? c.tipoComprobante}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-300 font-mono text-xs whitespace-nowrap">
+                      <td className="px-4 py-3 text-fg-secondary font-mono text-xs whitespace-nowrap">
                         {c.serie || "—"}
                         {c.serie && c.folio ? " " : ""}
                         {c.folio || ""}
                       </td>
                       <td className="px-4 py-3 max-w-60">
-                        <div className="text-slate-300 text-xs font-mono">{rfcVal || "—"}</div>
-                        <div className="text-slate-500 text-xs truncate" title={nombreVal}>
+                        <div className="text-fg-secondary text-xs font-mono">{rfcVal || "—"}</div>
+                        <div className="text-fg-faint text-xs truncate" title={nombreVal}>
                           {nombreVal || "—"}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-300 font-mono text-xs whitespace-nowrap">
+                      <td className="px-4 py-3 text-right text-fg-secondary font-mono text-xs whitespace-nowrap">
                         ${formatMoney(c.importe)}
                       </td>
-                      <td className="px-4 py-3 text-right text-emerald-300 font-mono text-xs whitespace-nowrap font-semibold">
+                      <td className="px-4 py-3 text-right text-success font-mono text-xs whitespace-nowrap font-semibold">
                         ${formatMoney(c.total)}
                       </td>
                     </tr>
@@ -400,7 +400,7 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
 
         {/* ── Paginación ────────────────────────────────────── */}
         {stats && stats.total > 0 && (
-          <div className="flex items-center justify-between px-6 py-3 border-t border-slate-800 text-xs text-slate-400">
+          <div className="flex items-center justify-between px-6 py-3 border-t border-border-subtle text-xs text-fg-muted">
             <div>
               Mostrando {(page - 1) * limit + 1}–{Math.min(page * limit, stats.total)} de{" "}
               {stats.total.toLocaleString("es-MX")}
@@ -409,29 +409,29 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
               <button
                 onClick={() => setPage(1)}
                 disabled={page === 1}
-                className="px-2 py-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                className="px-2 py-1 rounded-lg hover:bg-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
               >
                 «
               </button>
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="inline-flex items-center px-2 py-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                className="inline-flex items-center px-2 py-1 rounded-lg hover:bg-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
               >
                 <IconArrowLeft className="w-3.5 h-3.5" />
               </button>
-              <span className="px-3 py-1 text-slate-300">{page}</span>
+              <span className="px-3 py-1 text-fg-secondary">{page}</span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="inline-flex items-center px-2 py-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                className="inline-flex items-center px-2 py-1 rounded-lg hover:bg-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
               >
                 <IconArrowRight className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setPage(totalPages)}
                 disabled={page === totalPages}
-                className="px-2 py-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                className="px-2 py-1 rounded-lg hover:bg-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
               >
                 »
               </button>
@@ -455,8 +455,8 @@ export default function CfdiExplorer({ onDescargarCfdis }: { onDescargarCfdis: (
 
 function Kpi({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div className="bg-slate-900 rounded-2xl p-4 border border-slate-800">
-      <div className="text-xs text-slate-500 uppercase tracking-wide">{label}</div>
+    <div className="bg-panel rounded-2xl p-4 border border-border-subtle">
+      <div className="text-xs text-fg-muted uppercase tracking-wide">{label}</div>
       <div className={`text-xl font-semibold mt-1 ${accent}`}>{value}</div>
     </div>
   );

@@ -1,4 +1,5 @@
 import BmCard from './BmCard';
+import ThemeToggle from '../shared/ThemeToggle';
 import { useBienesArea } from './useBienesArea';
 
 interface DetalleBienesMueblesProps {
@@ -17,15 +18,13 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack }:
   const pctVerificado = bienes.length > 0 ? Math.round((verificados / bienes.length) * 100) : 0;
 
   return (
-    <div className="h-screen bg-slate-900 text-white flex flex-col">
-      <header className="h-auto lg:h-[8.33333%] min-h-[56px] border-b border-slate-800/80 bg-slate-900/90 flex-shrink-0">
+    <div className="h-screen bg-app text-fg-primary flex flex-col">
+      <header className="h-auto lg:h-[8.33333%] min-h-[56px] border-b border-border-subtle bg-surface/90 flex-shrink-0">
         <div className="h-full px-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <button
               onClick={onBack}
-              className="flex items-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-600/70
-                         border border-slate-600/50 text-slate-300 hover:text-white
-                         rounded-xl text-xs font-semibold transition-all active:scale-95"
+              className="flex items-center gap-2 px-3 py-2 bg-hover border border-border-strong text-fg-secondary hover:text-fg-primary rounded-xl text-xs font-semibold transition-all active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -36,20 +35,18 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack }:
               <img src="/logo_issbcs.png" alt="Logo ISSBCS" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-white font-black text-xl tracking-tight leading-none">{nameArea}</h1>
-              <p className="text-slate-500 text-xs mt-0.5">Bienes muebles del área</p>
+              <h1 className="text-fg-primary font-black text-xl tracking-tight leading-none">{nameArea}</h1>
+              <p className="text-fg-faint text-xs mt-0.5">Bienes muebles del área</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="px-3 py-1.5 bg-indigo-500/20 border border-indigo-500/30 rounded-xl text-indigo-300 text-xs font-bold">
+            <div className="px-3 py-1.5 bg-indigo-soft border border-indigo-border rounded-xl text-indigo-fg text-xs font-bold">
               Detalle por Área
             </div>
             <button
               onClick={() => { void refetch(); }}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70
-                         border border-slate-600/50 text-slate-300 hover:text-white
-                         rounded-xl text-xs font-semibold transition-all active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 bg-hover border border-border-strong text-fg-secondary hover:text-fg-primary rounded-xl text-xs font-semibold transition-all active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -57,28 +54,29 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack }:
               </svg>
               Actualizar
             </button>
+            <ThemeToggle />
           </div>
         </div>
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 animate-fade-in">
-            <p className="text-slate-500 text-xs mb-1">Total de Bienes</p>
-            <p className="text-2xl font-black text-white">{loading ? '—' : bienes.length.toLocaleString('es-MX')}</p>
+          <div className="bg-app border border-border-subtle rounded-2xl p-4 animate-fade-in">
+            <p className="text-fg-faint text-xs mb-1">Total de Bienes</p>
+            <p className="text-2xl font-black text-fg-primary">{loading ? '—' : bienes.length.toLocaleString('es-MX')}</p>
           </div>
-          <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '80ms' }}>
-            <p className="text-slate-500 text-xs mb-1">Verificados</p>
-            <p className="text-2xl font-black text-emerald-400">{loading ? '—' : verificados.toLocaleString('es-MX')}</p>
+          <div className="bg-app border border-border-subtle rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '80ms' }}>
+            <p className="text-fg-faint text-xs mb-1">Verificados</p>
+            <p className="text-2xl font-black text-success">{loading ? '—' : verificados.toLocaleString('es-MX')}</p>
           </div>
-          <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '160ms' }}>
-            <p className="text-slate-500 text-xs mb-1">Pendientes</p>
-            <p className="text-2xl font-black text-amber-400">{loading ? '—' : pendientes.toLocaleString('es-MX')}</p>
+          <div className="bg-app border border-border-subtle rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '160ms' }}>
+            <p className="text-fg-faint text-xs mb-1">Pendientes</p>
+            <p className="text-2xl font-black text-warning">{loading ? '—' : pendientes.toLocaleString('es-MX')}</p>
           </div>
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl p-4 text-xs mb-4">
+          <div className="flex items-center gap-2 text-danger bg-danger-soft border border-danger-border rounded-xl p-4 text-xs mb-4">
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -87,14 +85,14 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack }:
         )}
 
         {loading && (
-          <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-500 text-sm">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent" />
+          <div className="flex flex-col items-center justify-center py-12 gap-3 text-fg-faint text-sm">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-accent border-t-transparent" />
             Cargando bienes muebles...
           </div>
         )}
 
         {!loading && !error && bienes.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-500 text-sm">
+          <div className="flex flex-col items-center justify-center py-12 text-fg-faint text-sm">
             Sin bienes muebles registrados en esta área
           </div>
         )}
@@ -102,10 +100,10 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack }:
         {!loading && !error && bienes.length > 0 && (
           <>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full" />
+              <div className="w-1 h-8 bg-gradient-to-b from-accent to-accent-hover rounded-full" />
               <div>
-                <h2 className="text-white font-bold text-base">Bienes Muebles</h2>
-                <p className="text-slate-500 text-xs">
+                <h2 className="text-fg-primary font-bold text-base">Bienes Muebles</h2>
+                <p className="text-fg-faint text-xs">
                   {bienes.length} {bienes.length === 1 ? 'bien registrado' : 'bienes registrados'} · {pctVerificado}% verificados
                 </p>
               </div>

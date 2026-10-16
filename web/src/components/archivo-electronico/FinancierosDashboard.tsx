@@ -5,6 +5,7 @@ import EArchCLCChart from './EArchCLCChart';
 import EArchConciliaGrid from './EArchConciliaGrid';
 import EArchPieChart from './EArchPieChart';
 import SectionBadge from '../shared/SectionBadge';
+import ThemeToggle from '../shared/ThemeToggle';
 import CLCDetailModal from './CLCDetailModal';
 import SufDetailModal from './SufDetailModal';
 
@@ -53,13 +54,13 @@ interface YearSelectProps {
 function YearSelect({ id, label, value, onChange }: YearSelectProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      {label && (<label htmlFor={id} className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{label}</label>)}
+      {label && (<label htmlFor={id} className="text-fg-muted text-xs font-semibold uppercase tracking-wider">{label}</label>)}
       <select
         id={id}
         value={value}
         onChange={e => onChange(Number(e.target.value))}
-        className="bg-slate-700/70 border border-slate-600/70 text-white text-sm rounded-xl px-4 py-2.5
-                   focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+        className="bg-input border border-border-strong text-fg-primary text-sm rounded-xl px-4 py-2.5
+                   focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20
                    transition-all cursor-pointer min-w-[90px]"
       >
         {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
@@ -152,15 +153,13 @@ export default function Dashboard({ onBack }: DashboardProps) {
     <div className="h-screen bg-slate-900 text-white flex flex-col">
 
       {/* ══ Header (1/12 h) ══ */}
-      <header className="h-auto lg:h-[8.33333%] min-h-[56px] border-b border-slate-800/80 bg-slate-900/90 flex-shrink-0">
+      <header className="h-auto lg:h-[8.33333%] min-h-[56px] border-b border-border-subtle bg-surface/90 flex-shrink-0">
         <div className="h-full px-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             {onBack && (
               <button
                 onClick={onBack}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-600/70
-                           border border-slate-600/50 text-slate-300 hover:text-white
-                           rounded-xl text-xs font-semibold transition-all active:scale-95"
+                className="flex items-center gap-2 px-3 py-2 bg-hover border border-border-strong text-fg-secondary hover:text-fg-primary rounded-xl text-xs font-semibold transition-all active:scale-95"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -172,8 +171,8 @@ export default function Dashboard({ onBack }: DashboardProps) {
               <img src="/logo_issbcs.png" alt="Logo ISSBCS" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-white font-black text-xl tracking-tight leading-none">SIGADASH</h1>
-              <p className="text-slate-500 text-xs mt-0.5">Sistema de Gestión Administrativa</p>
+              <h1 className="text-fg-primary font-black text-xl tracking-tight leading-none">SIGADASH</h1>
+              <p className="text-fg-faint text-xs mt-0.5">Sistema de Gestión Administrativa</p>
             </div>
           </div>
 
@@ -182,13 +181,12 @@ export default function Dashboard({ onBack }: DashboardProps) {
             <button
               id="btn-refetch"
               onClick={handleRefetch}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70
-                         border border-slate-600/50 text-slate-300 hover:text-white
-                         rounded-xl text-xs font-semibold transition-all active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 bg-hover border border-border-strong text-fg-secondary hover:text-fg-primary rounded-xl text-xs font-semibold transition-all active:scale-95"
             >
               <IconRefresh />
               Actualizar ({Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')})
             </button>
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -198,7 +196,7 @@ export default function Dashboard({ onBack }: DashboardProps) {
 
         {/* ━━━━ Columna izquierda: CLCs ━━━━ */}
         <div className="w-full lg:w-1/2 h-auto lg:h-full flex flex-col">
-          <section id="section-clc" className="h-auto lg:h-2/3 p-4 flex flex-col bg-slate-950 rounded-2xl m-2">
+          <section id="section-clc" className="h-auto lg:h-2/3 p-4 flex flex-col bg-panel rounded-2xl m-2">
             <div className="flex flex-wrap items-end justify-between gap-3 mb-4 flex-shrink-0">
               <div>
                 <SectionBadge color="green" label="CLCs digitalizadas en eArch" />
@@ -236,7 +234,7 @@ export default function Dashboard({ onBack }: DashboardProps) {
           </section>
 
           {/* ━━━━ Bottom row: Pie charts ━━━━ */}
-          <section id="section-pies" className="h-auto lg:h-1/3 p-4 gap-4 flex flex-col lg:flex-row bg-slate-950 rounded-2xl m-2">
+          <section id="section-pies" className="h-auto lg:h-1/3 p-4 gap-4 flex flex-col lg:flex-row bg-panel rounded-2xl m-2">
             <div className="h-[190px] lg:h-full lg:flex-1 min-w-0">
               <EArchPieChart
                 data={viaticosData.length > 0 ? [
@@ -274,20 +272,20 @@ export default function Dashboard({ onBack }: DashboardProps) {
         </div>
 
         {/* ━━━━ Columna derecha: Conciliaciones ━━━━ */}
-        <section id="section-concilia" className="w-full lg:w-1/2 h-[450px] lg:h-full p-4 flex flex-col bg-slate-950 rounded-2xl m-2">
+        <section id="section-concilia" className="w-full lg:w-1/2 h-[450px] lg:h-full p-4 flex flex-col bg-panel rounded-2xl m-2">
           <div className="flex flex-wrap items-end justify-between gap-6 mb-4 flex-shrink-0">
             <div>
               <SectionBadge color="green" label="Conciliaciones Bancarias" />
             </div>
             <div className="flex flex-wrap gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="sel-ubicacion" className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Ubicación</label>
+                <label htmlFor="sel-ubicacion" className="text-fg-muted text-xs font-semibold uppercase tracking-wider">Ubicación</label>
                 <select
                   id="sel-ubicacion"
                   value={ubicacion}
                   onChange={e => setUbicacion(Number(e.target.value))}
-                  className="bg-slate-700/70 border border-slate-600/70 text-white text-sm rounded-xl px-4 py-2.5
-                             focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                  className="bg-input border border-border-strong text-fg-primary text-sm rounded-xl px-4 py-2.5
+                             focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20
                              transition-all cursor-pointer min-w-[170px]"
                 >
                   <option value={1}>Oficina Central</option>

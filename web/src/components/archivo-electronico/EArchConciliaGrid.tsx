@@ -69,10 +69,10 @@ function doesConciliaApply(
 
 /* Tailwind classes per state */
 const cellClass: Record<CellState, string> = {
-  completo: 'bg-emerald-500/75 border-emerald-400/30 hover:bg-emerald-400 hover:scale-110',
-  pendiente: 'bg-red-500/65    border-red-400/25    hover:bg-red-400    hover:scale-110',
-  noAplica: 'bg-slate-600/45  border-slate-500/20  hover:bg-slate-500/70',
-  sinDatos: 'bg-slate-800/60  border-slate-700/30  cursor-default',
+  completo: 'bg-success/75 border-success-border hover:bg-success hover:scale-110',
+  pendiente: 'bg-danger/65 border-danger-border hover:bg-danger hover:scale-110',
+  noAplica: 'bg-fg-fainter/45 border-border-strong/20 hover:bg-fg-muted/70',
+  sinDatos: 'bg-panel-muted/60 border-border-strong/30 cursor-default',
 };
 
 const cellLabel: Record<CellState, string> = {
@@ -100,8 +100,8 @@ const LEGEND: { state: CellState; label: string }[] = [
 /* ── Status placeholder ── */
 function StatusBox({ children, spin = false }: { children: React.ReactNode; spin?: boolean }) {
   return (
-    <div className="h-48 flex flex-col items-center justify-center gap-3 text-slate-500 text-sm flex-shrink-0">
-      {spin && <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent" />}
+    <div className="h-48 flex flex-col items-center justify-center gap-3 text-fg-faint text-sm flex-shrink-0">
+      {spin && <div className="animate-spin rounded-full h-8 w-8 border-2 border-success border-t-transparent" />}
       {children}
     </div>
   );
@@ -114,20 +114,20 @@ export default function EArchConciliaGrid({ data, loading, error, añoConcilia }
     : [];
 
   return (
-    <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 shadow-xl animate-fade-in flex flex-col h-full min-h-0" style={{ opacity: 0, animationDelay: '250ms' }}>
+    <div className="bg-surface/60 border border-border-strong/50 rounded-2xl p-6 shadow-xl animate-fade-in flex flex-col h-full min-h-0" style={{ opacity: 0, animationDelay: '250ms' }}>
       {/* Header + Legend */}
       <div className="flex items-center gap-3 mb-4 flex-shrink-0">
-        <div className="w-1 h-8 bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-full" />
+        <div className="w-1 h-8 bg-gradient-to-b from-success to-emerald-700 rounded-full" />
         <div>
-          <h3 className="text-white font-bold text-base">Estado de Conciliación por Mes</h3>
-          <p className="text-slate-500 text-xs">Cuentas bancarias · Año concilia {añoConcilia}</p>
+          <h3 className="text-fg-primary font-bold text-base">Estado de Conciliación por Mes</h3>
+          <p className="text-fg-faint text-xs">Cuentas bancarias · Año concilia {añoConcilia}</p>
         </div>
         <div className="flex-1" />
         <div className="flex flex-wrap gap-4">
           {LEGEND.map(({ state, label }) => (
             <div key={state} className="flex items-center gap-1.5">
               <div className={`w-3 h-3 rounded border transition-transform ${cellClass[state]}`} />
-              <span className="text-slate-400 text-xs">{label}</span>
+              <span className="text-fg-muted text-xs">{label}</span>
             </div>
           ))}
         </div>
@@ -135,7 +135,7 @@ export default function EArchConciliaGrid({ data, loading, error, añoConcilia }
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl p-4 text-xs flex-shrink-0">
+        <div className="flex items-center gap-2 text-danger bg-danger-soft border border-danger-border rounded-xl p-4 text-xs flex-shrink-0">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -152,14 +152,14 @@ export default function EArchConciliaGrid({ data, loading, error, añoConcilia }
             className="border-collapse table-fixed"
             style={{ minWidth: `${monthKeys.length * 44 + 220}px` }}
           >
-            <thead className="sticky top-0 z-10 bg-slate-800">
+            <thead className="sticky top-0 z-10 bg-surface">
               <tr>
                 {/* Account name column header */}
-                <th className="text-left text-slate-500 text-xs font-semibold pb-3 pr-4 w-1/3 bg-slate-800">
+                <th className="text-left text-fg-faint text-xs font-semibold pb-3 pr-4 w-1/3 bg-surface">
                   Cuenta Bancaria
                 </th>
                 {monthKeys.map(mk => (
-                  <th key={mk} className="text-center text-slate-500 text-xs font-semibold pb-3 px-0.5 bg-slate-800">
+                  <th key={mk} className="text-center text-fg-faint text-xs font-semibold pb-3 px-0.5 bg-surface">
                     {shortMonth(mk)}
                   </th>
                 ))}
@@ -181,16 +181,14 @@ export default function EArchConciliaGrid({ data, loading, error, añoConcilia }
                 ].filter(Boolean).join(' | ');
 
                 return (
-                  <tr key={ri} className="group border-b border-slate-700/20 last:border-b-0 hover:bg-slate-700/10 transition-colors">
-                    {/* Account name */}
+                  <tr key={ri} className="group border-b border-border-strong/20 last:border-b-0 hover:bg-hover transition-colors">
                     <td
-                      className="text-slate-300 text-xs font-medium pr-4 py-2 truncate"
+                      className="text-fg-secondary text-xs font-medium pr-4 py-2 truncate"
                       title={accountTooltip}
                     >
                       {row.Descripcion}
                     </td>
 
-                    {/* Month cells */}
                     {monthKeys.map(mk => {
                       const val = row[mk] as number | null | undefined;
                       const applies = doesConciliaApply(mk, row.fechaApertura, row.fechaCancelacion);

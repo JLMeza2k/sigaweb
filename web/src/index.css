@@ -1,5 +1,116 @@
 @import "tailwindcss";
 
+/* ── Design tokens (Tailwind v4 @theme) ─────────────────────────────────────
+   Sistema de tokens semánticos con soporte dark/light.
+   Default = light. Override = `:root[data-theme="dark"]` abajo.
+   El hook `useTheme` aplica el atributo `data-theme` a <html>.
+   Cualquier módulo del @web puede adoptar estas utilidades:
+     - bg-app, bg-surface, bg-panel, bg-panel-muted, bg-input, bg-hover
+     - border-border-subtle, border-border-strong
+     - text-fg-primary, text-fg-secondary, text-fg-muted, text-fg-faint, text-fg-fainter
+     - bg-accent, hover:bg-accent-hover, text-accent-fg, border-accent-border, bg-accent-soft
+     - text-success, text-warning, text-danger, bg-danger-soft, border-danger-border
+     - text-indigo, bg-indigo-soft, border-indigo-border
+   Cambios de paleta futuros se hacen solo aquí.
+*/
+@theme {
+  /* ── LIGHT (default) ── */
+  --color-app: oklch(0.985 0.002 247);             /* slate-50 */
+  --color-surface: oklch(1 0 0);                   /* white */
+  --color-panel: oklch(1 0 0);                     /* white */
+  --color-panel-muted: oklch(0.984 0.003 247);     /* slate-50 */
+  --color-input: oklch(1 0 0);                     /* white */
+  --color-hover: oklch(0.961 0.006 247);           /* slate-100 */
+  --color-border-subtle: oklch(0.929 0.013 255);   /* slate-200 */
+  --color-border-strong: oklch(0.869 0.02 252);    /* slate-300 */
+  --color-fg-primary: oklch(0.21 0.034 264);       /* slate-900 */
+  --color-fg-secondary: oklch(0.372 0.044 257);    /* slate-700 */
+  --color-fg-muted: oklch(0.554 0.041 257);        /* slate-500 */
+  --color-fg-faint: oklch(0.707 0.04 257);         /* slate-400 */
+  --color-fg-fainter: oklch(0.869 0.02 252);       /* slate-300 */
+  --color-accent: oklch(0.546 0.245 264);          /* blue-600 */
+  --color-accent-hover: oklch(0.491 0.27 262);     /* blue-700 */
+  --color-accent-fg: oklch(0.491 0.27 262);        /* blue-700 */
+  --color-accent-soft: color-mix(in oklab, oklch(0.546 0.245 264) 10%, transparent);
+  --color-accent-border: color-mix(in oklab, oklch(0.546 0.245 264) 25%, transparent);
+  --color-success: oklch(0.596 0.145 163);         /* emerald-600 */
+  --color-success-soft: color-mix(in oklab, oklch(0.596 0.145 163) 10%, transparent);
+  --color-success-border: color-mix(in oklab, oklch(0.596 0.145 163) 25%, transparent);
+  --color-success-fg: oklch(0.522 0.134 162);      /* emerald-700 */
+  --color-warning: oklch(0.681 0.162 75);          /* amber-600 */
+  --color-warning-soft: color-mix(in oklab, oklch(0.681 0.162 75) 10%, transparent);
+  --color-warning-border: color-mix(in oklab, oklch(0.681 0.162 75) 25%, transparent);
+  --color-warning-fg: oklch(0.612 0.158 75);       /* amber-700 */
+  --color-danger: oklch(0.577 0.197 27);           /* red-600 */
+  --color-danger-soft: color-mix(in oklab, oklch(0.577 0.197 27) 8%, transparent);
+  --color-danger-border: color-mix(in oklab, oklch(0.577 0.197 27) 22%, transparent);
+  --color-danger-fg: oklch(0.521 0.194 26);        /* red-700 */
+  --color-indigo: oklch(0.511 0.262 276);          /* indigo-600 */
+  --color-indigo-soft: color-mix(in oklab, oklch(0.511 0.262 276) 10%, transparent);
+  --color-indigo-border: color-mix(in oklab, oklch(0.511 0.262 276) 25%, transparent);
+  --color-indigo-fg: oklch(0.457 0.235 277);       /* indigo-700 */
+  --color-purple: oklch(0.558 0.288 303);          /* purple-600 */
+  --color-purple-soft: color-mix(in oklab, oklch(0.558 0.288 303) 10%, transparent);
+  --color-purple-border: color-mix(in oklab, oklch(0.558 0.288 303) 25%, transparent);
+  --color-purple-fg: oklch(0.498 0.265 304);       /* purple-700 */
+  --color-sky: oklch(0.588 0.158 241);             /* sky-500 */
+  --color-rose: oklch(0.645 0.246 16);             /* rose-500 */
+  --color-violet: oklch(0.541 0.281 293);          /* violet-600 */
+  --color-violet-soft: color-mix(in oklab, oklch(0.541 0.281 293) 10%, transparent);
+  --color-violet-border: color-mix(in oklab, oklch(0.541 0.281 293) 25%, transparent);
+  --color-violet-fg: oklch(0.488 0.265 294);       /* violet-700 */
+  --color-cyan: oklch(0.609 0.126 221);            /* cyan-500 */
+}
+
+/* ── DARK override (aplicado por useTheme) ── */
+:root[data-theme="dark"] {
+  --color-app: oklch(0.205 0.04 264);              /* slate-950 */
+  --color-surface: oklch(0.279 0.039 257);         /* slate-900 */
+  --color-panel: oklch(0.205 0.04 264);            /* slate-950 */
+  --color-panel-muted: oklch(0.279 0.039 257);     /* slate-900 */
+  --color-input: oklch(0.279 0.039 257);           /* slate-900 */
+  --color-hover: oklch(0.372 0.044 257);           /* slate-800 */
+  --color-border-subtle: color-mix(in oklab, oklch(0.372 0.044 257) 80%, transparent);
+  --color-border-strong: oklch(0.446 0.043 257);   /* slate-700 */
+  --color-fg-primary: oklch(1 0 0);                /* white */
+  --color-fg-secondary: oklch(0.932 0.014 248);    /* slate-200 */
+  --color-fg-muted: oklch(0.707 0.04 257);         /* slate-400 */
+  --color-fg-faint: oklch(0.554 0.041 257);        /* slate-500 */
+  --color-fg-fainter: oklch(0.446 0.043 257);      /* slate-600 */
+  --color-accent: oklch(0.623 0.214 260);          /* blue-400 */
+  --color-accent-hover: oklch(0.707 0.205 257);    /* blue-300 */
+  --color-accent-fg: oklch(0.707 0.205 257);       /* blue-300/400 */
+  --color-accent-soft: color-mix(in oklab, oklch(0.546 0.245 264) 15%, transparent);
+  --color-accent-border: color-mix(in oklab, oklch(0.546 0.245 264) 25%, transparent);
+  --color-success: oklch(0.696 0.17 162);          /* emerald-400 */
+  --color-success-soft: color-mix(in oklab, oklch(0.696 0.17 162) 15%, transparent);
+  --color-success-border: color-mix(in oklab, oklch(0.696 0.17 162) 25%, transparent);
+  --color-success-fg: oklch(0.765 0.154 163);      /* emerald-300 */
+  --color-warning: oklch(0.769 0.188 70);          /* amber-400 */
+  --color-warning-soft: color-mix(in oklab, oklch(0.769 0.188 70) 15%, transparent);
+  --color-warning-border: color-mix(in oklab, oklch(0.769 0.188 70) 25%, transparent);
+  --color-warning-fg: oklch(0.833 0.169 80);       /* amber-300 */
+  --color-danger: oklch(0.704 0.191 22);           /* red-400 */
+  --color-danger-soft: color-mix(in oklab, oklch(0.704 0.191 22) 10%, transparent);
+  --color-danger-border: color-mix(in oklab, oklch(0.704 0.191 22) 20%, transparent);
+  --color-danger-fg: oklch(0.808 0.171 19);        /* red-300 */
+  --color-indigo: oklch(0.585 0.233 277);          /* indigo-400 */
+  --color-indigo-soft: color-mix(in oklab, oklch(0.585 0.233 277) 20%, transparent);
+  --color-indigo-border: color-mix(in oklab, oklch(0.585 0.233 277) 30%, transparent);
+  --color-indigo-fg: oklch(0.711 0.196 275);       /* indigo-300 */
+  --color-purple: oklch(0.627 0.265 304);          /* purple-400 */
+  --color-purple-soft: color-mix(in oklab, oklch(0.558 0.288 303) 15%, transparent);
+  --color-purple-border: color-mix(in oklab, oklch(0.558 0.288 303) 25%, transparent);
+  --color-purple-fg: oklch(0.711 0.231 305);       /* purple-300 */
+  --color-sky: oklch(0.685 0.169 237);             /* sky-400 */
+  --color-rose: oklch(0.71 0.222 22);              /* rose-400 */
+  --color-violet: oklch(0.606 0.275 293);          /* violet-400 */
+  --color-violet-soft: color-mix(in oklab, oklch(0.541 0.281 293) 15%, transparent);
+  --color-violet-border: color-mix(in oklab, oklch(0.541 0.281 293) 25%, transparent);
+  --color-violet-fg: oklch(0.702 0.265 295);       /* violet-300 */
+  --color-cyan: oklch(0.715 0.143 215);            /* cyan-400 */
+}
+
 @keyframes blob {
   0% { transform: translate(0px, 0px) scale(1); }
   33% { transform: translate(30px, -50px) scale(1.1); }
@@ -16,7 +127,7 @@
   animation: fadeSlideUp 0.45s ease-out forwards;
 }
 
-/* ── Custom scrollbar (slate / indigo scheme) — compartido ────────────────
+/* ── Custom scrollbar — usa tokens semánticos ──────────────────────────────
    .scroll-slim  : clase nueva, usar en cualquier contenedor con scroll
    .custom-scrollbar / .cfdi-scroll : alias conservados por referencias previas
    Se aplica al propio elemento y a sus descendientes.                     */
@@ -28,7 +139,7 @@
 .cfdi-scroll,
 .cfdi-scroll * {
   scrollbar-width: thin;
-  scrollbar-color: rgb(51 65 85) transparent; /* slate-700 on transparent track */
+  scrollbar-color: var(--color-border-strong) transparent;
 }
 
 .scroll-slim::-webkit-scrollbar,
@@ -56,9 +167,9 @@
 .custom-scrollbar *::-webkit-scrollbar-thumb,
 .cfdi-scroll::-webkit-scrollbar-thumb,
 .cfdi-scroll *::-webkit-scrollbar-thumb {
-  background-color: rgb(51 65 85); /* slate-700 */
+  background-color: var(--color-border-strong);
   border-radius: 9999px;
-  border: 2px solid rgb(15 23 42); /* slate-950 — matches page bg */
+  border: 2px solid var(--color-app);
 }
 
 .scroll-slim::-webkit-scrollbar-thumb:hover,
@@ -67,7 +178,7 @@
 .custom-scrollbar *::-webkit-scrollbar-thumb:hover,
 .cfdi-scroll::-webkit-scrollbar-thumb:hover,
 .cfdi-scroll *::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(99 102 241); /* indigo-500 */
+  background-color: var(--color-indigo);
 }
 
 .scroll-slim::-webkit-scrollbar-thumb:active,
@@ -76,7 +187,7 @@
 .custom-scrollbar *::-webkit-scrollbar-thumb:active,
 .cfdi-scroll::-webkit-scrollbar-thumb:active,
 .cfdi-scroll *::-webkit-scrollbar-thumb:active {
-  background-color: rgb(79 70 229); /* indigo-600 */
+  background-color: var(--color-indigo);
 }
 
 .scroll-slim::-webkit-scrollbar-corner,

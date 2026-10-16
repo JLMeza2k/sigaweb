@@ -412,11 +412,41 @@ bmRouter.post("/verificar/:nuibm", checkToken, async (req: AuthRequest, res: Res
 bmRouter.get("/resumen/:ua/:ct", checkToken, async (req: AuthRequest, res: Response) => {
     try {
         const pool = await getPool();
-        const result = await (pool as sql.ConnectionPool)
-            .request()
-            .input('ua', sql.Int, Number(req.params.ua))
-            .input('ct', sql.Int, Number(req.params.ct))
-            .query(`SELECT Unidad, Centro, CASE WHEN @ua=0 AND @ct=255 THEN '000' ELSE Area END Area, CASE WHEN @ua=0 AND @ct=255 THEN Descripcion ELSE NameArea END Descripcion, Direccion, Baja, SUM(CountBienes) CountBienes, SUM(Verificados) Verificados FROM vwBMResumenxArea WHERE (Unidad=@ua OR @ua=0) AND (Centro=@ct OR @ct=255) GROUP BY Unidad, Centro, CASE WHEN @ua=0 AND @ct=255 THEN Descripcion ELSE NameArea END, Direccion, Baja, CASE WHEN @ua=0 AND @ct=255 THEN '000' ELSE Area END`);
+        const ua = Number(req.params.ua);
+        const ct = Number(req.params.ct);
+
+        const request = (pool as sql.ConnectionPool).request();
+        let query: string;
+
+        if (ua === 0 && ct === 255) {
+            query = `
+                SELECT Unidad, Centro, '000' AS Area, Descripcion, Direccion, Baja, 
+                       SUM(CountBienes) AS CountBienes, SUM(Verificados) AS Verificados 
+                FROM vwBMResumenxArea 
+                GROUP BY Unidad, Centro, Descripcion, Direccion, Baja
+            `;
+        } else {
+            const conditions: string[] = [];
+            if (ua !== 0) {
+                request.input('ua', sql.Int, ua);
+                conditions.push('Unidad = @ua');
+            }
+            if (ct !== 255) {
+                request.input('ct', sql.Int, ct);
+                conditions.push('Centro = @ct');
+            }
+            const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+            query = `
+                SELECT Unidad, Centro, Area, NameArea AS Descripcion, Direccion, Baja, 
+                       SUM(CountBienes) AS CountBienes, SUM(Verificados) AS Verificados 
+                FROM vwBMResumenxArea 
+                ${whereClause}
+                GROUP BY Unidad, Centro, NameArea, Direccion, Baja, Area
+            `;
+        }
+
+        const result = await request.query(query);
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: 'Resumen de Bienes Muebles no encontrado' });
         }

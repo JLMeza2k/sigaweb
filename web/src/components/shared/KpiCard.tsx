@@ -13,32 +13,32 @@ interface KpiCardProps {
 
 const colorMap = {
   blue: {
-    grad: 'from-blue-500/15 to-blue-600/5',
-    border: 'border-blue-500/25',
-    icon: 'bg-blue-500/15 text-blue-400',
-    value: 'text-blue-300',
-    dot: 'bg-blue-400',
+    grad: 'from-accent/15 to-accent/5',
+    border: 'border-accent-border',
+    icon: 'bg-accent-soft text-accent-fg',
+    value: 'text-accent-fg',
+    dot: 'bg-accent',
   },
   green: {
-    grad: 'from-emerald-500/15 to-emerald-600/5',
-    border: 'border-emerald-500/25',
-    icon: 'bg-emerald-500/15 text-emerald-400',
-    value: 'text-emerald-300',
-    dot: 'bg-emerald-400',
+    grad: 'from-success/15 to-success/5',
+    border: 'border-success-border',
+    icon: 'bg-success-soft text-success',
+    value: 'text-success',
+    dot: 'bg-success',
   },
   amber: {
-    grad: 'from-amber-500/15 to-amber-600/5',
-    border: 'border-amber-500/25',
-    icon: 'bg-amber-500/15 text-amber-400',
-    value: 'text-amber-300',
-    dot: 'bg-amber-400',
+    grad: 'from-warning/15 to-warning/5',
+    border: 'border-warning-border',
+    icon: 'bg-warning-soft text-warning',
+    value: 'text-warning',
+    dot: 'bg-warning',
   },
   purple: {
-    grad: 'from-purple-500/15 to-purple-600/5',
-    border: 'border-purple-500/25',
-    icon: 'bg-purple-500/15 text-purple-400',
-    value: 'text-purple-300',
-    dot: 'bg-purple-400',
+    grad: 'from-purple/15 to-purple/5',
+    border: 'border-purple-border',
+    icon: 'bg-purple-soft text-purple-fg',
+    value: 'text-purple-fg',
+    dot: 'bg-purple',
   },
 };
 
@@ -50,21 +50,20 @@ export default function KpiCard({ title, value, subtitle, icon, color, loading =
       className={`relative rounded-2xl border ${c.border} bg-gradient-to-br ${c.grad} backdrop-blur-sm p-2 shadow-xl animate-fade-in overflow-hidden`}
       style={{ animationDelay: `${delay}ms`, opacity: 0 }}
     >
-      {/* Decorative glow blob */}
       <div className={`absolute -right-6 -top-6 w-28 h-28 rounded-full ${c.dot} opacity-10 blur-3xl pointer-events-none`} />
 
       <div className="flex items-start justify-between relative z-10">
         <div className="flex-1 min-w-0">
-          <p className={`text-slate-400 text-xs font-semibold uppercase ${compact ? 'tracking-normal leading-tight' : 'tracking-widest'}`}>{title}</p>
+          <p className={`text-fg-muted text-xs font-semibold uppercase ${compact ? 'tracking-normal leading-tight' : 'tracking-widest'}`}>{title}</p>
 
           {loading ? (
-            <div className={`${compact ? 'h-8 w-16' : 'h-10 w-28'} bg-slate-700/60 animate-pulse rounded-xl`} />
+            <div className={`${compact ? 'h-8 w-16' : 'h-10 w-28'} bg-panel-muted animate-pulse rounded-xl`} />
           ) : (
             <p className={`${compact ? 'text-2xl xl:text-3xl' : 'text-4xl'} font-black ${c.value} tracking-tight leading-none`}>{value}</p>
           )}
 
           {subtitle && !loading && (
-            <p className="text-slate-500 text-xs mt-1 font-medium leading-snug">{subtitle}</p>
+            <p className="text-fg-faint text-xs mt-1 font-medium leading-snug">{subtitle}</p>
           )}
         </div>
 

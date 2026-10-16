@@ -79,8 +79,8 @@ const AccordionSelector = ({
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onToggle(); }}
             className={`w-full flex items-center justify-between px-4 py-3 transition-all duration-200 cursor-pointer select-none rounded-xl ${
                isGroupActive && !isOpen
-                  ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-accent-soft text-accent-fg border border-accent-border'
+                  : 'text-fg-muted hover:bg-hover hover:text-fg-primary'
             }`}
          >
             <span className='flex items-center gap-3'>
@@ -97,7 +97,7 @@ const AccordionSelector = ({
                      title={addButton.title}
                      disabled={addButton.disabled}
                      onClick={(e) => { e.stopPropagation(); addButton.onClick(); }}
-                     className='bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+                     className='bg-accent text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
                   >+</button>
                )}
                <svg
@@ -109,7 +109,7 @@ const AccordionSelector = ({
             </div>
          </div>
          {isOpen && (
-            <div className='mt-1 ml-4 pl-4 border-l border-slate-700 space-y-1'>
+            <div className='mt-1 ml-4 pl-4 border-l border-border-strong space-y-1'>
                {items.map(item => {
                   if (item.children && item.children.length > 0) {
                      const childOpen = openChildren.includes(item.id);
@@ -120,8 +120,8 @@ const AccordionSelector = ({
                               onClick={() => toggleChild(item.id)}
                               className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
                                  isChildActive(item)
-                                    ? 'text-blue-300 font-semibold'
-                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                    ? 'text-accent-fg font-semibold'
+                                    : 'text-fg-muted hover:bg-hover hover:text-fg-primary'
                               }`}
                            >
                               <span className='flex items-center gap-2.5'>
@@ -140,20 +140,20 @@ const AccordionSelector = ({
                               </svg>
                            </button>
                            {childOpen && (
-                              <div className='ml-4 pl-4 border-l border-slate-700/60 space-y-1'>
+                              <div className='ml-4 pl-4 border-l border-border-strong/60 space-y-1'>
                                  {item.children.map(child => (
                                     <button
                                        key={child.id}
                                        onClick={() => onSelect(child.id)}
                                        className={`w-full flex items-center gap-2.5 text-left px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
                                           selectedId === child.id
-                                             ? 'bg-blue-600 text-white font-semibold shadow-lg shadow-blue-900/40'
-                                             : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                             ? 'bg-accent text-white font-semibold shadow-lg shadow-accent/40'
+                                             : 'text-fg-muted hover:bg-hover hover:text-fg-primary'
                                        }`}
                                     >
-                                       {child.icon && (
+                                       {item.icon && (
                                           <svg className='w-4 h-4 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d={child.icon} />
+                                             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d={item.icon} />
                                           </svg>
                                        )}
                                        {child.Description}
@@ -170,8 +170,8 @@ const AccordionSelector = ({
                         onClick={() => onSelect(item.id)}
                         className={`w-full flex items-center gap-2.5 text-left px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
                            selectedId === item.id
-                              ? 'bg-blue-600 text-white font-semibold shadow-lg shadow-blue-900/40'
-                              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                              ? 'bg-accent text-white font-semibold shadow-lg shadow-accent/40'
+                              : 'text-fg-muted hover:bg-hover hover:text-fg-primary'
                         }`}
                      >
                         {item.icon && (

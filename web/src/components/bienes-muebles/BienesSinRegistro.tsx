@@ -3,6 +3,7 @@ import Swal from 'sweetalert2';
 import { useAuth } from '../../hooks/useAuth';
 import HttpClient from '../../utils/HttpClient';
 import { API_BASE } from '../../utils/api';
+import ThemeToggle from '../shared/ThemeToggle';
 import ResponsableRfcPicker from './ResponsableRfcPicker';
 
 type Area = { Unidad: number; Centro: number; Area: string; Descripcion: string; ShortName?: string };
@@ -56,24 +57,24 @@ function AreaSelectors({
   const unidades = useMemo(() => areas.filter((item) => item.Centro === 0 && item.Area === '000'), [areas]);
   const centros = useMemo(() => areas.filter((item) => item.Unidad === Number(unidad) && item.Area === '000' && item.Centro !== 0), [areas, unidad]);
   const areasCentro = useMemo(() => areas.filter((item) => item.Unidad === Number(unidad) && item.Centro === Number(centro) && item.Area !== '000'), [areas, unidad, centro]);
-  const selectClass = 'h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50 disabled:text-slate-400';
+  const selectClass = 'h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm text-fg-primary shadow-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-panel-muted disabled:text-fg-faint';
   return (
     <>
-      <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+      <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
         Unidad
         <select required={required} value={unidad} onChange={(event) => onUnidad(event.target.value)} className={`${selectClass} mt-1`}>
           <option value="">{required ? 'Selecciona una unidad' : 'Todas las unidades'}</option>
           {unidades.map((item) => <option key={item.Unidad} value={item.Unidad}>{item.ShortName || item.Descripcion}</option>)}
         </select>
       </label>
-      <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+      <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
         Centro
         <select required={required} value={centro} disabled={!unidad} onChange={(event) => onCentro(event.target.value)} className={`${selectClass} mt-1`}>
           <option value="">{required ? 'Selecciona un centro' : 'Todos los centros'}</option>
           {centros.map((item) => <option key={`${item.Unidad}-${item.Centro}`} value={item.Centro}>{item.ShortName || item.Descripcion}</option>)}
         </select>
       </label>
-      <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+      <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
         Área
         <select required={required} value={area} disabled={!centro} onChange={(event) => onArea(event.target.value)} className={`${selectClass} mt-1`}>
           <option value="">{required ? 'Selecciona un área' : 'Todas las áreas'}</option>
@@ -84,7 +85,7 @@ function AreaSelectors({
   );
 }
 
-export default function BienesSinRegistro() {
+export default function BienesSinRegistro({ onBack }: { onBack?: () => void } = {}) {
   const { token } = useAuth();
   const [areas, setAreas] = useState<Area[]>([]);
   const [estados, setEstados] = useState<EstadoFisico[]>([]);
@@ -221,24 +222,40 @@ export default function BienesSinRegistro() {
   };
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-300">
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">Bienes Muebles</p>
-          <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900">Bienes sin registro en sistema</h2>
-          <p className="mt-1 text-sm text-slate-500">Registra los bienes encontrados durante el levantamiento, organizados por área.</p>
+    <div className="w-full min-h-screen bg-app text-fg-primary space-y-6 p-4 sm:p-6 animate-in fade-in slide-in-from-bottom-3 duration-300">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border-subtle bg-app/90 px-2 pb-4 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex items-center gap-2 rounded-xl border border-border-strong bg-panel px-3 py-2 text-xs font-semibold text-fg-secondary transition-all hover:border-accent-border hover:bg-accent-soft hover:text-accent-fg active:scale-95"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Portal
+            </button>
+          )}
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-accent-fg">Bienes Muebles</p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight text-fg-primary">Bienes sin registro en sistema</h2>
+          </div>
         </div>
-        <button type="button" onClick={startCreate} className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95">
-          + Nueva relación
-        </button>
-      </section>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={startCreate} className="rounded-xl bg-accent px-5 py-3 text-sm font-bold text-white shadow-lg shadow-accent/20 transition hover:bg-accent-hover active:scale-95">
+            + Nueva relación
+          </button>
+          <ThemeToggle />
+        </div>
+      </header>
 
-      {catalogError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">No se pudieron cargar los catálogos: {catalogError}</div>}
+      {catalogError && <div role="alert" className="rounded-xl border border-danger-border bg-danger-soft px-4 py-3 text-sm text-danger-fg">No se pudieron cargar los catálogos: {catalogError}</div>}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-border-subtle bg-panel p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div><h3 className="font-bold text-slate-800">Filtrar relaciones</h3><p className="text-xs text-slate-500">Selecciona una ubicación para acotar los resultados.</p></div>
-          <button type="button" onClick={() => { const cleared = { Unidad: '', Centro: '', Area: '' }; setFilter(cleared); void loadRows(cleared); }} className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-blue-700">Limpiar filtros</button>
+          <div><h3 className="font-bold text-fg-primary">Filtrar relaciones</h3><p className="text-xs text-fg-faint">Selecciona una ubicación para acotar los resultados.</p></div>
+          <button type="button" onClick={() => { const cleared = { Unidad: '', Centro: '', Area: '' }; setFilter(cleared); void loadRows(cleared); }} className="px-3 py-2 text-xs font-bold text-fg-faint hover:text-accent-fg">Limpiar filtros</button>
         </div>
         <div className="grid gap-3 md:grid-cols-4">
           <AreaSelectors
@@ -247,31 +264,31 @@ export default function BienesSinRegistro() {
             onCentro={(Centro) => setFilter((current) => ({ ...current, Centro, Area: '' }))}
             onArea={(Area) => setFilter((current) => ({ ...current, Area }))}
           />
-          <button type="button" onClick={() => void loadRows(filter)} className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white transition hover:bg-slate-700">Buscar</button>
+          <button type="button" onClick={() => void loadRows(filter)} className="h-10 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:bg-accent-hover">Buscar</button>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <div><h3 className="font-bold text-slate-800">Relaciones capturadas</h3><p className="text-xs text-slate-500">{rows.length} {rows.length === 1 ? 'relación' : 'relaciones'}</p></div>
-          <button type="button" onClick={() => void loadRows(filter)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Actualizar</button>
+      <section className="overflow-hidden rounded-2xl border border-border-subtle bg-panel shadow-sm">
+        <div className="flex items-center justify-between border-b border-border-subtle px-5 py-4">
+          <div><h3 className="font-bold text-fg-primary">Relaciones capturadas</h3><p className="text-xs text-fg-faint">{rows.length} {rows.length === 1 ? 'relación' : 'relaciones'}</p></div>
+          <button type="button" onClick={() => void loadRows(filter)} className="rounded-lg border border-border-strong px-3 py-2 text-xs font-bold text-fg-secondary hover:bg-hover">Actualizar</button>
         </div>
-        {listError ? <div role="alert" className="p-8 text-center text-sm text-red-600">{listError}</div> : loading ? <div className="p-10 text-center text-sm text-slate-400">Cargando relaciones…</div> : rows.length === 0 ? <div className="p-10 text-center text-sm text-slate-400">No hay relaciones para mostrar.</div> : (
+        {listError ? <div role="alert" className="p-8 text-center text-sm text-danger">{listError}</div> : loading ? <div className="p-10 text-center text-sm text-fg-muted">Cargando relaciones…</div> : rows.length === 0 ? <div className="p-10 text-center text-sm text-fg-muted">No hay relaciones para mostrar.</div> : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>
+              <thead className="bg-panel-muted text-xs uppercase tracking-wide text-fg-fainter"><tr>
                 <th className="px-5 py-3">Folio / fecha</th><th className="px-5 py-3">Unidad / centro / área</th><th className="px-5 py-3">Bienes</th><th className="px-5 py-3">Observaciones</th><th className="px-5 py-3 text-right">Acciones</th>
               </tr></thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border-subtle">
                 {rows.map((row) => (
-                  <tr key={row.Folio} className="hover:bg-slate-50/70">
-                    <td className="px-5 py-4"><span className="font-bold text-slate-800">#{row.Folio}</span><span className="mt-1 block text-xs text-slate-500">{formatDate(row.Fecha)}</span></td>
-                    <td className="px-5 py-4"><span className="font-semibold text-slate-700">{row.AreaDescripcion || `Área ${row.Area.trim()}`}</span><span className="mt-1 block text-xs text-slate-500">Unidad {row.Unidad} · Centro {row.Centro} · Área {row.Area.trim()}</span></td>
-                    <td className="px-5 py-4"><span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">{row.CantidadBienes}</span></td>
-                    <td className="max-w-xs truncate px-5 py-4 text-slate-500" title={row.Observaciones ?? ''}>{row.Observaciones || '—'}</td>
+                  <tr key={row.Folio} className="hover:bg-hover/40">
+                    <td className="px-5 py-4"><span className="font-bold text-fg-primary">#{row.Folio}</span><span className="mt-1 block text-xs text-fg-faint">{formatDate(row.Fecha)}</span></td>
+                    <td className="px-5 py-4"><span className="font-semibold text-fg-secondary">{row.AreaDescripcion || `Área ${row.Area.trim()}`}</span><span className="mt-1 block text-xs text-fg-muted">Unidad {row.Unidad} · Centro {row.Centro} · Área {row.Area.trim()}</span></td>
+                    <td className="px-5 py-4"><span className="rounded-full border border-accent-border bg-accent-soft px-2.5 py-1 text-xs font-bold text-accent-fg">{row.CantidadBienes}</span></td>
+                    <td className="max-w-xs truncate px-5 py-4 text-fg-muted" title={row.Observaciones ?? ''}>{row.Observaciones || '—'}</td>
                     <td className="px-5 py-4"><div className="flex justify-end gap-2">
-                      <button type="button" onClick={() => void startEdit(row.Folio)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">Editar</button>
-                      <button type="button" onClick={() => void remove(row)} className="rounded-lg border border-red-100 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50">Eliminar</button>
+                      <button type="button" onClick={() => void startEdit(row.Folio)} className="rounded-lg border border-border-strong px-3 py-2 text-xs font-bold text-fg-secondary hover:border-accent-border hover:bg-accent-soft hover:text-accent-fg">Editar</button>
+                      <button type="button" onClick={() => void remove(row)} className="rounded-lg border border-danger-border px-3 py-2 text-xs font-bold text-danger hover:bg-danger-soft">Eliminar</button>
                     </div></td>
                   </tr>
                 ))}
@@ -282,17 +299,17 @@ export default function BienesSinRegistro() {
       </section>
 
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setModalOpen(false); }}>
-          <div role="dialog" aria-modal="true" aria-labelledby="sin-registro-title" className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-7">
-              <div><h3 id="sin-registro-title" className="text-lg font-black text-slate-900">{editingFolio ? `Editar relación #${editingFolio}` : 'Nueva relación de bienes'}</h3><p className="text-xs text-slate-500">Información del levantamiento y bienes encontrados.</p></div>
-              <button type="button" onClick={() => setModalOpen(false)} disabled={saving} aria-label="Cerrar" className="rounded-lg p-2 text-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-app/70 p-3 backdrop-blur-sm sm:p-6" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setModalOpen(false); }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="sin-registro-title" className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-border-subtle bg-panel shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border-subtle px-5 py-4 sm:px-7">
+              <div><h3 id="sin-registro-title" className="text-lg font-black text-fg-primary">{editingFolio ? `Editar relación #${editingFolio}` : 'Nueva relación de bienes'}</h3><p className="text-xs text-fg-faint">Información del levantamiento y bienes encontrados.</p></div>
+              <button type="button" onClick={() => setModalOpen(false)} disabled={saving} aria-label="Cerrar" className="rounded-lg p-2 text-xl text-fg-muted hover:bg-hover hover:text-fg-primary">×</button>
             </div>
             <form onSubmit={(event) => void save(event)} className="flex min-h-0 flex-1 flex-col">
               <div className="flex-1 space-y-6 overflow-y-auto p-5 sm:p-7">
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_2fr]">
-                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Fecha del levantamiento
-                    <input required type="date" value={draft.Fecha} onChange={(event) => updateDraft('Fecha', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20" />
+                  <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">Fecha del levantamiento
+                    <input required type="date" value={draft.Fecha} onChange={(event) => updateDraft('Fecha', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
                   </label>
                   <div className="contents">
                     <AreaSelectors
@@ -302,33 +319,33 @@ export default function BienesSinRegistro() {
                       onArea={(Area) => updateDraft('Area', Area)}
                     />
                   </div>
-                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 sm:col-span-2 lg:col-span-4">Observaciones
-                    <textarea maxLength={255} rows={2} value={draft.Observaciones} onChange={(event) => updateDraft('Observaciones', event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20" placeholder="Notas generales del levantamiento (opcional)" />
+                  <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter sm:col-span-2 lg:col-span-4">Observaciones
+                    <textarea maxLength={255} rows={2} value={draft.Observaciones} onChange={(event) => updateDraft('Observaciones', event.target.value)} className="mt-1 w-full rounded-xl border border-border-strong bg-input px-3 py-2 text-sm text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" placeholder="Notas generales del levantamiento (opcional)" />
                   </label>
                 </div>
 
-                <div className="border-t border-slate-100 pt-5">
+                <div className="border-t border-border-subtle pt-5">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <div><h4 className="font-bold text-slate-800">Detalle de bienes</h4><p className="text-xs text-slate-500">Captura descripción, identificación, estado y responsable.</p></div>
-                    <button type="button" onClick={() => updateDraft('Detalles', [...draft.Detalles, emptyDetail()])} className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50">+ Agregar bien</button>
+                    <div><h4 className="font-bold text-fg-primary">Detalle de bienes</h4><p className="text-xs text-fg-faint">Captura descripción, identificación, estado y responsable.</p></div>
+                    <button type="button" onClick={() => updateDraft('Detalles', [...draft.Detalles, emptyDetail()])} className="rounded-lg border border-accent-border px-3 py-2 text-xs font-bold text-accent-fg hover:bg-accent-soft">+ Agregar bien</button>
                   </div>
                   <div className="space-y-4">
                     {draft.Detalles.map((item, index) => (
-                      <article key={index} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                        <div className="mb-3 flex items-center justify-between"><span className="text-xs font-black uppercase tracking-wide text-slate-500">Bien {index + 1}</span>
-                          {draft.Detalles.length > 1 && <button type="button" onClick={() => updateDraft('Detalles', draft.Detalles.filter((_, i) => i !== index))} className="text-xs font-bold text-red-600 hover:text-red-700">Quitar</button>}
+                      <article key={index} className="rounded-xl border border-border-subtle bg-panel-muted p-4">
+                        <div className="mb-3 flex items-center justify-between"><span className="text-xs font-black uppercase tracking-wide text-fg-fainter">Bien {index + 1}</span>
+                          {draft.Detalles.length > 1 && <button type="button" onClick={() => updateDraft('Detalles', draft.Detalles.filter((_, i) => i !== index))} className="text-xs font-bold text-danger hover:text-danger-fg">Quitar</button>}
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                          <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 sm:col-span-2 lg:col-span-5">Descripción
-                            <input required maxLength={255} value={item.Descripcion} onChange={(event) => updateDetail(index, 'Descripcion', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20" placeholder="Ej. Computadora portátil" />
+                          <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter sm:col-span-2 lg:col-span-5">Descripción
+                            <input required maxLength={255} value={item.Descripcion} onChange={(event) => updateDetail(index, 'Descripcion', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" placeholder="Ej. Computadora portátil" />
                           </label>
                           {(['Marca', 'Modelo', 'Serie'] as const).map((field) => (
-                            <label key={field} className="block text-xs font-bold uppercase tracking-wide text-slate-500">{field}
-                              <input maxLength={50} value={item[field]} onChange={(event) => updateDetail(index, field, event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20" />
+                            <label key={field} className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">{field}
+                              <input maxLength={50} value={item[field]} onChange={(event) => updateDetail(index, field, event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
                             </label>
                           ))}
-                          <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Estado físico
-                            <select required value={item.EdoFisico} onChange={(event) => updateDetail(index, 'EdoFisico', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20">
+                          <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">Estado físico
+                            <select required value={item.EdoFisico} onChange={(event) => updateDetail(index, 'EdoFisico', event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm font-medium text-fg-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20">
                               <option value="">Selecciona estado</option>
                               {estados.map((state) => <option key={state.Codigo} value={state.Codigo}>{state.Descripcion}</option>)}
                             </select>
@@ -340,9 +357,9 @@ export default function BienesSinRegistro() {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:px-7">
-                <button type="button" disabled={saving} onClick={() => setModalOpen(false)} className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Cancelar</button>
-                <button type="submit" disabled={saving || estados.length === 0 || areas.length === 0} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? 'Guardando…' : editingFolio ? 'Guardar cambios' : 'Registrar relación'}</button>
+              <div className="flex justify-end gap-3 border-t border-border-subtle bg-panel px-5 py-4 sm:px-7">
+                <button type="button" disabled={saving} onClick={() => setModalOpen(false)} className="rounded-xl border border-border-strong px-5 py-2.5 text-sm font-bold text-fg-secondary hover:bg-hover">Cancelar</button>
+                <button type="submit" disabled={saving || estados.length === 0 || areas.length === 0} className="rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-accent/20 hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50">{saving ? 'Guardando…' : editingFolio ? 'Guardar cambios' : 'Registrar relación'}</button>
               </div>
             </form>
           </div>

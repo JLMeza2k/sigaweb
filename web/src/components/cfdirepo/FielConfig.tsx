@@ -54,59 +54,59 @@ export default function FielConfig() {
   const badge = getBadge(fiel);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-app text-fg-primary">
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-8">
         {success && (
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm">
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-success-soft border border-success-border text-success-fg text-sm">
             <span className="text-lg shrink-0">✅</span>
             <p>{success}</p>
           </div>
         )}
 
-        <section className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800/50 shadow-2xl shadow-black/20 overflow-hidden">
-          <div className="px-8 py-6 border-b border-slate-800/50">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full inline-block ${fiel ? "bg-emerald-500" : "bg-slate-600"}`} />
+        <section className="bg-surface/50 backdrop-blur-xl rounded-2xl border border-border-subtle/50 shadow-2xl shadow-black/20 overflow-hidden">
+          <div className="px-8 py-6 border-b border-border-subtle/50">
+            <h2 className="text-lg font-semibold text-fg-primary flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full inline-block ${fiel ? "bg-success" : "bg-fg-fainter"}`} />
               FIEL Configurada
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-fg-faint mt-1">
               {loading ? "Cargando…" : fiel ? "Certificado de Firma Electrónica Avanzada activo" : "No hay FIEL configurada"}
             </p>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-16"><IconSpinner className="w-8 h-8 text-indigo-400" /></div>
+            <div className="flex items-center justify-center py-16"><IconSpinner className="w-8 h-8 text-indigo" /></div>
           ) : fiel ? (
             <div className="p-8">
               <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-                <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 shrink-0">
-                  <IconShield className="w-8 h-8 text-indigo-400" />
+                <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-panel-muted border border-border-strong shrink-0">
+                  <IconShield className="w-8 h-8 text-indigo" />
                 </div>
                 <div className="flex-1 space-y-3">
                   <div className="flex items-baseline gap-3">
-                    <span className="font-mono text-xl font-bold text-white tracking-wide">{fiel.nombre}</span>
+                    <span className="font-mono text-xl font-bold text-fg-primary tracking-wide">{fiel.nombre}</span>
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.className}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
                       {badge.label}
                     </span>
                   </div>
-                  <div className="text-sm text-slate-400">Vigencia: <span className={badge.label === "Expirado" ? "text-rose-400 font-medium" : "text-slate-300"}>{formatDate(fiel.vigencia)}</span></div>
+                  <div className="text-sm text-fg-muted">Vigencia: <span className={badge.label === "Expirado" ? "text-danger font-medium" : "text-fg-secondary"}>{formatDate(fiel.vigencia)}</span></div>
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-8 pt-6 border-t border-slate-800/50">
-                <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 cursor-pointer">
+              <div className="flex gap-3 mt-8 pt-6 border-t border-border-subtle/50">
+                <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo to-purple hover:from-indigo-hover text-white shadow-lg shadow-indigo/20 transition-all duration-200 cursor-pointer">
                   <IconRefresh className="w-4 h-4" />
                   Sustituir FIEL
                 </button>
                 {deleteConfirm ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500">¿Eliminar?</span>
-                    <button onClick={handleDelete} className="px-4 py-2.5 rounded-xl text-xs font-medium bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors cursor-pointer">Sí, eliminar</button>
-                    <button onClick={() => setDeleteConfirm(false)} className="px-4 py-2.5 rounded-xl text-xs font-medium bg-slate-700/50 text-slate-400 hover:bg-slate-700 transition-colors cursor-pointer">Cancelar</button>
+                    <span className="text-xs text-fg-faint">¿Eliminar?</span>
+                    <button onClick={handleDelete} className="px-4 py-2.5 rounded-xl text-xs font-medium bg-danger-soft text-danger hover:bg-danger-soft/80 transition-colors cursor-pointer">Sí, eliminar</button>
+                    <button onClick={() => setDeleteConfirm(false)} className="px-4 py-2.5 rounded-xl text-xs font-medium bg-hover text-fg-muted hover:text-fg-secondary transition-colors cursor-pointer">Cancelar</button>
                   </div>
                 ) : (
-                  <button onClick={() => setDeleteConfirm(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-slate-700 hover:border-rose-500/30 transition-all duration-200 cursor-pointer">
+                  <button onClick={() => setDeleteConfirm(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-fg-muted hover:text-danger hover:bg-danger-soft border border-border-strong hover:border-danger-border transition-all duration-200 cursor-pointer">
                     <IconTrash className="w-4 h-4" />
                     Eliminar
                   </button>
@@ -115,10 +115,10 @@ export default function FielConfig() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center mb-4"><IconShield className="w-8 h-8 text-slate-600" /></div>
-              <p className="text-sm text-slate-500 mb-1">No hay FIEL configurada</p>
-              <p className="text-xs text-slate-600 mb-6">Agrega tu certificado para comenzar a timbrar CFDIs</p>
-              <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 cursor-pointer">
+              <div className="w-16 h-16 rounded-2xl bg-panel-muted/50 border border-border-strong/50 flex items-center justify-center mb-4"><IconShield className="w-8 h-8 text-fg-fainter" /></div>
+              <p className="text-sm text-fg-faint mb-1">No hay FIEL configurada</p>
+              <p className="text-xs text-fg-fainter mb-6">Agrega tu certificado para comenzar a timbrar CFDIs</p>
+              <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo to-purple hover:from-indigo-hover text-white shadow-lg shadow-indigo/20 transition-all duration-200 cursor-pointer">
                 <IconPlus className="w-5 h-5" />
                 Agregar FIEL
               </button>
@@ -129,8 +129,8 @@ export default function FielConfig() {
 
       <FielModal isOpen={showModal} onClose={() => setShowModal(false)} onSaved={handleSaved} />
 
-      <footer className="border-t border-slate-800/40 py-6 mt-8">
-        <p className="text-center text-xs text-slate-700">Los datos se almacenan únicamente en este equipo • Contraseñas encriptadas con AES-256-GCM</p>
+      <footer className="border-t border-border-subtle/40 py-6 mt-8">
+        <p className="text-center text-xs text-fg-fainter">Los datos se almacenan únicamente en este equipo • Contraseñas encriptadas con AES-256-GCM</p>
       </footer>
     </div>
   );

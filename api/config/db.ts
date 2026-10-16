@@ -6,9 +6,11 @@ const config: sql.config = {
   server: process.env.DB_HOST!,
   port: parseInt(process.env.DB_PORT!),
   database: process.env.DB_NAME!,
+  requestTimeout: 30000,
   options: {
     encrypt: false, // Deshabilitar encriptación para conexiones locales/de confianza
-    trustServerCertificate: true // Necesario si encrypt es false
+    trustServerCertificate: true, // Necesario si encrypt es false
+    enableArithAbort: true
   }
 };
 

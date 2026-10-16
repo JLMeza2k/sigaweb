@@ -15,7 +15,6 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
   const [view, setView] = useState<ViewState>(initialView);
   const { dbLogin, dbVerifyActivation, isLoading: authLoading } = useAuth();
 
-  // Form states
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [rfc, setRfc] = useState('');
@@ -29,7 +28,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
   const isLoading = loading || authLoading;
 
   const renderIcon = (path: string) => (
-    <span className="absolute left-3 top-[14px] text-blue-200">
+    <span className="absolute left-3 top-[14px] text-sky-200">
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={path} />
       </svg>
@@ -37,7 +36,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
   );
 
   const buttonClass = "w-full flex items-center justify-center py-3 px-4 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-500/30 transform transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100";
-  const inputClass = "w-full pl-10 pr-4 py-3 bg-blue-950/30 border border-blue-300/30 rounded-xl text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-sky-400 transition-all duration-300";
+  const inputClass = "w-full pl-10 pr-4 py-3 bg-app/40 border border-white/30 rounded-xl text-white placeholder-sky-200/60 focus:outline-none focus:ring-2 focus:ring-sky-400 transition-all duration-300";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,13 +177,13 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
             {view.startsWith('FORGOT') && 'Recuperar Acceso'}
             {view === 'ACTIVATE' && 'Activa tu Cuenta'}
           </h1>
-          <p className="text-blue-200 mt-2 text-sm">Gestor de Comisiones de Trabajo</p>
+          <p className="text-sky-200 mt-2 text-sm">Gestor de Comisiones de Trabajo</p>
         </div>
 
         {view === 'LOGIN' && (
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="relative">
-              <label className="text-sm font-medium text-blue-100 block mb-2">RFC o Correo</label>
+              <label className="text-sm font-medium text-sky-100 block mb-2">RFC o Correo</label>
               <div className="relative">
                 {renderIcon("M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z")}
                 <input type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)} className={inputClass} placeholder="Ingresa RFC o correo" />
@@ -192,7 +191,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
             </div>
             <div className="relative">
               <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-blue-100">Contraseña</label>
+                <label className="text-sm font-medium text-sky-100">Contraseña</label>
                 <button type="button" onClick={() => setView('FORGOT_PASS_1')} className="text-xs text-sky-300 hover:text-white transition-colors">¿Olvidaste tu contraseña?</button>
               </div>
               <div className="relative">
@@ -201,7 +200,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
               </div>
             </div>
             <button type="submit" disabled={isLoading} className={buttonClass}>{isLoading ? 'Cargando...' : 'Entrar'}</button>
-            <div className="text-center mt-4 text-sm text-blue-100">
+            <div className="text-center mt-4 text-sm text-sky-100">
               ¿No tienes cuenta? <button type="button" onClick={() => setView('REGISTER')} className="text-white hover:underline font-semibold border-none bg-transparent">Regístrate</button>
             </div>
           </form>
@@ -210,19 +209,19 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
         {view === 'REGISTER' && (
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="relative">
-              <label className="text-sm font-medium text-blue-100 block mb-1">RFC</label>
+              <label className="text-sm font-medium text-sky-100 block mb-1">RFC</label>
               <div className="relative">
                 <input type="text" value={rfc} onChange={(e) => setRfc(e.target.value.toUpperCase())} className={inputClass} placeholder="Tu RFC" maxLength={13} />
               </div>
             </div>
             <div className="relative">
-              <label className="text-sm font-medium text-blue-100 block mb-1">Correo Electrónico</label>
+              <label className="text-sm font-medium text-sky-100 block mb-1">Correo Electrónico</label>
               <div className="relative">
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="ejemplo@saludbcs.gob.mx" />
               </div>
             </div>
             <div className="relative">
-              <label className="text-sm font-medium text-blue-100 block mb-1">Contraseña</label>
+              <label className="text-sm font-medium text-sky-100 block mb-1">Contraseña</label>
               <div className="relative">
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
               </div>
@@ -236,9 +235,9 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
 
         {view === 'FORGOT_PASS_1' && (
           <form onSubmit={handleSendCode} className="space-y-6">
-            <p className="text-blue-100 text-sm mb-4">Ingresa tu RFC o correo electrónico y te enviaremos un código de recuperación.</p>
+            <p className="text-sky-100 text-sm mb-4">Ingresa tu RFC o correo electrónico y te enviaremos un código de recuperación.</p>
             <div className="relative">
-              <label className="text-sm font-medium text-blue-100 block mb-2">RFC o Correo</label>
+              <label className="text-sm font-medium text-sky-100 block mb-2">RFC o Correo</label>
               <div className="relative">
                 <input type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)} className={inputClass} placeholder="Ingresa RFC o correo" />
               </div>
@@ -252,9 +251,9 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
 
         {view === 'FORGOT_PASS_2' && (
           <form onSubmit={handleVerifyCode} className="space-y-6">
-            <p className="text-blue-100 text-sm mb-4">Ingresa el código que hemos enviado a tu correo.</p>
+            <p className="text-sky-100 text-sm mb-4">Ingresa el código que hemos enviado a tu correo.</p>
             <div className="relative">
-              <label className="text-sm font-medium text-blue-100 block mb-2">Código de Verificación</label>
+              <label className="text-sm font-medium text-sky-100 block mb-2">Código de Verificación</label>
               <div className="relative">
                 <input type="text" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} className={inputClass} placeholder="A1B2C" maxLength={5} />
               </div>
@@ -268,9 +267,9 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
 
         {view === 'FORGOT_PASS_3' && (
           <form onSubmit={handleResetPassword} className="space-y-6">
-            <p className="text-blue-100 text-sm mb-4">Tu código ha sido verificado. Crea una nueva contraseña.</p>
+            <p className="text-sky-100 text-sm mb-4">Tu código ha sido verificado. Crea una nueva contraseña.</p>
             <div className="relative">
-              <label className="text-sm font-medium text-blue-100 block mb-2">Nueva Contraseña</label>
+              <label className="text-sm font-medium text-sky-100 block mb-2">Nueva Contraseña</label>
               <div className="relative">
                 <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} placeholder="Nueva contraseña" />
               </div>
@@ -281,9 +280,9 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
 
         {view === 'ACTIVATE' && (
           <form onSubmit={handleVerifyActivation} className="space-y-6">
-            <p className="text-blue-100 text-sm mb-4">Tu cuenta aún no está activa. Ingresa el código de activación que enviamos a tu correo al momento del registro.</p>
+            <p className="text-sky-100 text-sm mb-4">Tu cuenta aún no está activa. Ingresa el código de activación que enviamos a tu correo al momento del registro.</p>
             <div className="relative">
-              <label className="text-sm font-medium text-blue-100 block mb-2">Código de Activación</label>
+              <label className="text-sm font-medium text-sky-100 block mb-2">Código de Activación</label>
               <div className="relative">
                 <input type="text" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} className={inputClass} placeholder="A1B2C" maxLength={5} />
               </div>

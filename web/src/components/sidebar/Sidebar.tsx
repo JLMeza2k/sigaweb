@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { UserType } from '../../utils/types';
 import AccordionSelector from './AccordionSelector';
+import ThemeToggle from '../shared/ThemeToggle';
 
 // ─── Types ────────────────────────────────────────────────
 export type ActiveView = {
@@ -157,15 +158,15 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate }: Side
    const showConfig = isOptEnabled(user.sideBarOpcs, 'system');
 
    return (
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen sticky top-0 border-r border-slate-800 shadow-xl overflow-hidden">
+      <aside className="w-64 bg-surface text-fg-secondary flex flex-col h-screen sticky top-0 border-r border-border-subtle shadow-xl overflow-hidden">
          {/* Brand */}
-         <div className="p-6 flex items-center gap-3 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-sm shrink-0">
-            <div className="w-10 h-10 bg-white rounded-xl p-1 shadow-inner flex items-center justify-center overflow-hidden">
+         <div className="p-6 flex items-center gap-3 border-b border-border-subtle bg-surface/50 backdrop-blur-sm shrink-0">
+            <div className="w-10 h-10 bg-app rounded-xl p-1 shadow-inner flex items-center justify-center overflow-hidden">
                <img src="/logo_issbcs.png" alt="Logo ISSBCS" className="object-contain" />
             </div>
             <div className="flex flex-col">
-               <span className="text-sm font-bold text-white tracking-tight leading-none">ISSBCS</span>
-               <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1">Portal Web</span>
+               <span className="text-sm font-bold text-fg-primary tracking-tight leading-none">ISSBCS</span>
+               <span className="text-[10px] text-fg-faint font-medium uppercase tracking-wider mt-1">Portal Web</span>
             </div>
          </div>
 
@@ -177,8 +178,8 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate }: Side
                    onClick={() => onNavigate('home', 'inicio')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                      isHome
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40'
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-accent text-white shadow-lg shadow-accent/40'
+                        : 'text-fg-muted hover:bg-hover hover:text-fg-primary'
                   }`}
                >
                   <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +192,7 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate }: Side
             {/* Divider */}
             {enabledGroups.length > 0 && (
                <div className="pt-2 pb-1 px-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Módulos</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-fg-fainter">Módulos</p>
                </div>
             )}
 
@@ -214,7 +215,7 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate }: Side
             {/* Divider */}
             {showConfig && (
                <div className="pt-2 pb-1 px-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Sistema</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-fg-fainter">Sistema</p>
                </div>
             )}
 
@@ -224,8 +225,8 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate }: Side
                   onClick={() => onNavigate('system', 'configuracion')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                      activeView.group === 'system' && activeView.view === 'configuracion'
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40'
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-accent text-white shadow-lg shadow-accent/40'
+                        : 'text-fg-muted hover:bg-hover hover:text-fg-primary'
                   }`}
                >
                   <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,20 +238,21 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate }: Side
          </nav>
 
          {/* User Footer */}
-         <div className="p-4 border-t border-slate-800 bg-slate-900/80 shrink-0">
-            <div className="flex items-center gap-3 mb-4 p-2 bg-slate-800/50 rounded-xl border border-slate-700/50">
-               <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white font-bold text-lg shadow-md uppercase shrink-0">
+         <div className="p-4 border-t border-border-subtle bg-surface/80 shrink-0 space-y-3">
+            <ThemeToggle variant="sidebar" />
+            <div className="flex items-center gap-3 p-2 bg-panel-muted rounded-xl border border-border-strong">
+               <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accent to-sky flex items-center justify-center text-white font-bold text-lg shadow-md uppercase shrink-0">
                   {user.Nombre.charAt(0)}
                </div>
                <div className="flex flex-col overflow-hidden">
-                  <span className="text-xs font-bold text-white truncate">{user.Nombre}</span>
-                  <span className="text-[10px] text-slate-500 font-mono mt-0.5">{user.RFC}</span>
+                  <span className="text-xs font-bold text-fg-primary truncate">{user.Nombre}</span>
+                  <span className="text-[10px] text-fg-faint font-mono mt-0.5">{user.RFC}</span>
                </div>
             </div>
 
             <button
                onClick={onLogout}
-               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-red-400 bg-red-900/20 hover:bg-red-900/30 border border-red-900/30 rounded-xl transition-all duration-300 group shadow-sm hover:shadow-red-900/20"
+               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-danger bg-danger-soft hover:bg-danger-soft/80 border border-danger-border rounded-xl transition-all duration-300 group shadow-sm"
             >
                <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

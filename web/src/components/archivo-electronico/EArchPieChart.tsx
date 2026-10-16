@@ -25,15 +25,15 @@ const CustomTooltip = ({ active, payload, onSelect }: any) => {
   if (!active || !payload?.length) return null;
   const { name, value } = payload[0];
   const status: 0 | 1 = name === 'Completo' ? 1 : 0;
-  const color = name === 'Completo' ? 'emerald' : 'amber';
+  const isCompleto = name === 'Completo';
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs shadow-xl">
+    <div className="bg-surface border border-border-strong rounded-lg px-3 py-2 text-xs shadow-xl">
       <div className="flex items-center justify-between gap-4">
-        <span className="text-slate-300">{name}: <span className="text-white font-bold">{value}</span></span>
+        <span className="text-fg-secondary">{name}: <span className="text-fg-primary font-bold">{value}</span></span>
         {onSelect && value > 0 && (
           <button
             onClick={() => onSelect(status)}
-            className={`text-[10px] font-semibold text-${color}-300 hover:text-white bg-${color}-500/10 hover:bg-${color}-500/25 border border-${color}-500/30 rounded-md px-2 py-0.5 transition-all active:scale-95`}
+            className={`text-[10px] font-semibold ${isCompleto ? 'text-success-fg hover:text-fg-primary bg-success-soft hover:bg-success/25 border-success-border' : 'text-warning-fg hover:text-fg-primary bg-warning-soft hover:bg-warning/25 border-warning-border'} border rounded-md px-2 py-0.5 transition-all active:scale-95`}
           >
             Ver detalle
           </button>
@@ -45,8 +45,8 @@ const CustomTooltip = ({ active, payload, onSelect }: any) => {
 
 function StatusBox({ children, spin = false }: { children: React.ReactNode; spin?: boolean }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-2 text-slate-500 text-xs flex-shrink-0">
-      {spin && <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent" />}
+    <div className="flex-1 flex flex-col items-center justify-center gap-2 text-fg-faint text-xs flex-shrink-0">
+      {spin && <div className="animate-spin rounded-full h-5 w-5 border-2 border-success border-t-transparent" />}
       {children}
     </div>
   );
@@ -57,18 +57,18 @@ export default function EArchPieChart({ data, loading, error, title, subtitle, c
   const hasData = data.some(d => d.value > 0);
 
   return (
-    <div className="w-full bg-slate-800/60 border border-slate-700/50 rounded-2xl p-2 shadow-xl animate-fade-in flex flex-col h-full min-h-0" style={{ opacity: 0, animationDelay: '100ms' }}>
+    <div className="w-full bg-surface/60 border border-border-strong/50 rounded-2xl p-2 shadow-xl animate-fade-in flex flex-col h-full min-h-0" style={{ opacity: 0, animationDelay: '100ms' }}>
       {/* Title row */}
       <div className="flex items-start justify-between gap-2 mb-1 flex-shrink-0">
         <div className="flex flex-col">
           <SectionBadge color="green" label={title} />
-          {subtitle && <p className="text-slate-500 text-[10px] leading-tight">{subtitle}</p>}
+          {subtitle && <p className="text-fg-faint text-[10px] leading-tight">{subtitle}</p>}
         </div>
         {headerRight && <div className="flex-shrink-0">{headerRight}</div>}
       </div>
 
       {error && (
-        <div className="text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg p-2 text-[10px] flex-shrink-0">
+        <div className="text-danger bg-danger-soft border border-danger-border rounded-lg p-2 text-[10px] flex-shrink-0">
           {error}
         </div>
       )}
@@ -106,8 +106,8 @@ export default function EArchPieChart({ data, loading, error, title, subtitle, c
             </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center">
-                <p className="text-white font-bold text-lg leading-none">{total}</p>
-                {centerLabel && <p className="text-slate-400 text-[10px] mt-0.5 leading-tight">{centerLabel}</p>}
+                <p className="text-fg-primary font-bold text-lg leading-none">{total}</p>
+                {centerLabel && <p className="text-fg-muted text-[10px] mt-0.5 leading-tight">{centerLabel}</p>}
               </div>
             </div>
           </div>
@@ -116,9 +116,9 @@ export default function EArchPieChart({ data, loading, error, title, subtitle, c
             {data.map((item, i) => (
               <div key={item.name} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                <span className="text-slate-400 text-[10px]">{item.name}</span>
-                <span className="text-white text-[10px] font-bold">{item.value}</span>
-                <span className="text-slate-500 text-[10px]">
+                <span className="text-fg-muted text-[10px]">{item.name}</span>
+                <span className="text-fg-primary text-[10px] font-bold">{item.value}</span>
+                <span className="text-fg-faint text-[10px]">
                   ({total > 0 ? Math.round((item.value / total) * 100) : 0}%)
                 </span>
               </div>

@@ -59,7 +59,7 @@ export default function ResponsableRfcPicker({ value, token, onChange }: Props) 
 
   return (
     <div className="relative">
-      <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Responsable (RFC)</label>
+      <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-fg-fainter">Responsable (RFC)</label>
       <input
         required
         maxLength={50}
@@ -73,11 +73,11 @@ export default function ResponsableRfcPicker({ value, token, onChange }: Props) 
         }}
         placeholder="Buscar por RFC o nombre"
         autoComplete="off"
-        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
+        className="h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm text-fg-primary shadow-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
       />
-      {loading && <div className="absolute right-3 top-9 text-xs text-slate-400">Buscando…</div>}
+      {loading && <div className="absolute right-3 top-9 text-xs text-fg-muted">Buscando…</div>}
       {!selected && resultsFor === query.trim() && results.length > 0 && (
-        <ul className="absolute z-30 mt-1 max-h-52 w-full overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+        <ul className="absolute z-30 mt-1 max-h-52 w-full overflow-auto rounded-xl border border-border-strong bg-panel shadow-2xl">
           {results.map((employee) => (
             <li key={`${employee.RFC}-${employee.CLUES}`}>
               <button
@@ -91,17 +91,17 @@ export default function ResponsableRfcPicker({ value, token, onChange }: Props) 
                   setLoading(false);
                   onChange(employee.RFC);
                 }}
-                className="w-full border-b border-slate-100 px-3 py-2 text-left last:border-0 hover:bg-blue-50"
+                className="w-full border-b border-border-subtle px-3 py-2 text-left last:border-0 hover:bg-accent-soft"
               >
-                <span className="block text-sm font-bold text-slate-700">{employee.RFC} · {employee.Nombre}</span>
-                <span className="block text-xs text-slate-400">{employee.CLUES} · Unidad {employee.Unidad}</span>
+                <span className="block text-sm font-bold text-fg-primary">{employee.RFC} · {employee.Nombre}</span>
+                <span className="block text-xs text-fg-muted">{employee.CLUES} · Unidad {employee.Unidad}</span>
               </button>
             </li>
           ))}
         </ul>
       )}
       {!selected && query.length > 0 && value === '' && !loading && results.length === 0 && query.length >= 2 && (
-        <span className="mt-1 block text-[11px] text-slate-400">Selecciona un empleado o captura un RFC válido.</span>
+        <span className="mt-1 block text-[11px] text-fg-muted">Selecciona un empleado o captura un RFC válido.</span>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { useFuentesFinanciamiento } from './useFuentesFinanciamiento';
 import { formatCurrency } from '../../utils/format';
 import KpiCard from '../shared/KpiCard';
 import SectionBadge from '../shared/SectionBadge';
+import ThemeToggle from '../shared/ThemeToggle';
 
 /* ── Year range: 2020 … currentYear ── */
 const CURRENT_YEAR = new Date().getFullYear();
@@ -44,7 +45,7 @@ function YearSelect({ id, label, value, onChange }: YearSelectProps) {
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={id} className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+        <label htmlFor={id} className="text-fg-muted text-xs font-semibold uppercase tracking-wider">
           {label}
         </label>
       )}
@@ -52,8 +53,8 @@ function YearSelect({ id, label, value, onChange }: YearSelectProps) {
         id={id}
         value={value}
         onChange={e => onChange(Number(e.target.value))}
-        className="bg-slate-700/70 border border-slate-600/70 text-white text-sm rounded-xl px-4 py-2.5
-                   focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+        className="bg-input border border-border-strong text-fg-primary text-sm rounded-xl px-4 py-2.5
+                   focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20
                    transition-all cursor-pointer min-w-[90px]"
       >
         {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
@@ -77,8 +78,8 @@ function FfSelect({ id, value, onChange, fuentes, disabled }: FfSelectProps) {
       value={value}
       disabled={disabled}
       onChange={e => onChange(e.target.value)}
-      className="bg-slate-700/70 border border-slate-600/70 text-white text-sm rounded-xl px-4 py-2.5
-                 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+      className="bg-input border border-border-strong text-fg-primary text-sm rounded-xl px-4 py-2.5
+                 focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20
                  transition-all cursor-pointer min-w-[220px] disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <option value="ALL">— TODAS —</option>
@@ -99,15 +100,15 @@ interface BadgeButtonProps {
 }
 function BadgeButton({ label, active, onClick }: BadgeButtonProps) {
   const cls = active
-    ? 'bg-blue-600/20 border-blue-500/40 text-blue-300'
-    : 'bg-slate-700/40 border-slate-600/50 text-slate-400 hover:bg-slate-700/70 hover:text-white';
+    ? 'bg-accent-soft border-accent-border text-accent-fg'
+    : 'bg-hover border-border-strong text-fg-muted hover:bg-hover/80 hover:text-fg-primary';
   return (
     <button
       type="button"
       onClick={onClick}
       className={`inline-flex items-center gap-2 px-3 py-1.5 border rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-200 cursor-pointer ${cls}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-blue-400 animate-pulse' : 'bg-slate-500'}`} />
+      <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-accent animate-pulse' : 'bg-fg-faint'}`} />
       {label}
     </button>
   );
@@ -165,18 +166,16 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
   };
 
   return (
-    <div className="h-screen bg-slate-900 text-white flex flex-col">
+    <div className="h-screen bg-app text-fg-primary flex flex-col">
 
       {/* ══ Header ══ */}
-      <header className="h-auto lg:h-[8.33333%] min-h-[56px] border-b border-slate-800/80 bg-slate-900/90 flex-shrink-0">
+      <header className="h-auto lg:h-[8.33333%] min-h-[56px] border-b border-border-subtle bg-surface/90 flex-shrink-0">
         <div className="h-full px-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             {onBack && (
               <button
                 onClick={onBack}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-600/70
-                           border border-slate-600/50 text-slate-300 hover:text-white
-                           rounded-xl text-xs font-semibold transition-all active:scale-95"
+                className="flex items-center gap-2 px-3 py-2 bg-hover border border-border-strong text-fg-secondary hover:text-fg-primary rounded-xl text-xs font-semibold transition-all active:scale-95"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -188,8 +187,8 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
               <img src="/logo_issbcs.png" alt="Logo ISSBCS" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-white font-black text-xl tracking-tight leading-none">SIGADASH</h1>
-              <p className="text-slate-500 text-xs mt-0.5">Sistema de Gestión Administrativa</p>
+              <h1 className="text-fg-primary font-black text-xl tracking-tight leading-none">SIGADASH</h1>
+              <p className="text-fg-faint text-xs mt-0.5">Sistema de Gestión Administrativa</p>
             </div>
           </div>
 
@@ -198,13 +197,12 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
             <button
               id="btn-refetch"
               onClick={handleRefetch}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70
-                         border border-slate-600/50 text-slate-300 hover:text-white
-                         rounded-xl text-xs font-semibold transition-all active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 bg-hover border border-border-strong text-fg-secondary hover:text-fg-primary rounded-xl text-xs font-semibold transition-all active:scale-95"
             >
               <IconRefresh />
               Actualizar ({Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')})
             </button>
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -213,7 +211,7 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
       <main className="flex-1 overflow-auto p-4 flex flex-col gap-4">
 
         {/* ━━━━ Filtros ━━━━ */}
-        <section className="bg-slate-950 rounded-2xl p-4 flex flex-col gap-4 flex-shrink-0">
+        <section className="bg-panel rounded-2xl p-4 flex flex-col gap-4 flex-shrink-0">
           <div className="flex items-center gap-2">
             <SectionBadge color="green" label="Parámetros" />
           </div>
@@ -222,14 +220,14 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
             <YearSelect id="sel-ejercicio" label="Ejercicio" value={ejercicio} onChange={setEjercicio} />
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="sel-ff" className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+              <label htmlFor="sel-ff" className="text-fg-muted text-xs font-semibold uppercase tracking-wider">
                 Fuente de Financiamiento
               </label>
               <FfSelect id="sel-ff" value={ff} onChange={setFf} fuentes={fuentes} />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Agrupar por</span>
+              <span className="text-fg-muted text-xs font-semibold uppercase tracking-wider">Agrupar por</span>
               <div className="flex items-center gap-2">
                 {LEVELS.map(lvl => (
                   <BadgeButton
@@ -245,76 +243,41 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
         </section>
 
         {/* ━━━━ KPIs ━━━━ */}
-        <section className="bg-slate-950 rounded-2xl p-4 flex flex-col gap-4 flex-shrink-0">
+        <section className="bg-panel rounded-2xl p-4 flex flex-col gap-4 flex-shrink-0">
           <div className="flex items-center gap-2">
             <SectionBadge color="blue" label="Totales" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-            <KpiCard
-              title="Autorizado"
-              value={loading ? '—' : formatCurrency(totals.Autorizado)}
-              subtitle="Presupuesto inicial"
-              icon={<IconWallet />} color="blue" loading={loading} delay={0}
-            />
-            <KpiCard
-              title="Modificado"
-              value={loading ? '—' : formatCurrency(totals.Modificado)}
-              subtitle="Ajustes acumulados"
-              icon={<IconScale />} color="purple" loading={loading} delay={60}
-            />
-            <KpiCard
-              title="Disponible"
-              value={loading ? '—' : formatCurrency(totals.Disponible)}
-              subtitle="Por ejercer"
-              icon={<IconMoney />} color="green" loading={loading} delay={120}
-            />
-            <KpiCard
-              title="Reservado"
-              value={loading ? '—' : formatCurrency(totals.Reservado)}
-              subtitle="Pre-compromiso"
-              icon={<IconScale />} color="amber" loading={loading} delay={180}
-            />
-            <KpiCard
-              title="Comprometido"
-              value={loading ? '—' : formatCurrency(totals.Comprometido)}
-              subtitle="Compromisos formales"
-              icon={<IconWallet />} color="blue" loading={loading} delay={240}
-            />
-            <KpiCard
-              title="Devengado"
-              value={loading ? '—' : formatCurrency(totals.Devengado)}
-              subtitle="Cuentas por liquidar"
-              icon={<IconMoney />} color="purple" loading={loading} delay={300}
-            />
-            <KpiCard
-              title="Pagado"
-              value={loading ? '—' : formatCurrency(totals.Pagado)}
-              subtitle="Ejercido"
-              icon={<IconWallet />} color="green" loading={loading} delay={360}
-            />
+            <KpiCard title="Autorizado" value={loading ? '—' : formatCurrency(totals.Autorizado)} subtitle="Presupuesto inicial" icon={<IconWallet />} color="blue" loading={loading} delay={0} />
+            <KpiCard title="Modificado" value={loading ? '—' : formatCurrency(totals.Modificado)} subtitle="Ajustes acumulados" icon={<IconScale />} color="purple" loading={loading} delay={60} />
+            <KpiCard title="Disponible" value={loading ? '—' : formatCurrency(totals.Disponible)} subtitle="Por ejercer" icon={<IconMoney />} color="green" loading={loading} delay={120} />
+            <KpiCard title="Reservado" value={loading ? '—' : formatCurrency(totals.Reservado)} subtitle="Pre-compromiso" icon={<IconScale />} color="amber" loading={loading} delay={180} />
+            <KpiCard title="Comprometido" value={loading ? '—' : formatCurrency(totals.Comprometido)} subtitle="Compromisos formales" icon={<IconWallet />} color="blue" loading={loading} delay={240} />
+            <KpiCard title="Devengado" value={loading ? '—' : formatCurrency(totals.Devengado)} subtitle="Cuentas por liquidar" icon={<IconMoney />} color="purple" loading={loading} delay={300} />
+            <KpiCard title="Pagado" value={loading ? '—' : formatCurrency(totals.Pagado)} subtitle="Ejercido" icon={<IconWallet />} color="green" loading={loading} delay={360} />
           </div>
         </section>
 
         {/* ━━━━ Listado ━━━━ */}
-        <section className="bg-slate-950 rounded-2xl p-4 flex-1 min-h-0 flex flex-col">
+        <section className="bg-panel rounded-2xl p-4 flex-1 min-h-0 flex flex-col">
           <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <SectionBadge color="green" label="Detalle por Clave" />
-            <span className="text-xs text-slate-500 font-mono">
+            <span className="text-xs text-fg-faint font-mono">
               {loading ? 'Cargando…' : `${rows.length} registro${rows.length === 1 ? '' : 's'}`}
             </span>
           </div>
 
           {error && (
-            <div className="bg-red-900/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl text-sm mb-3">
+            <div className="bg-danger-soft border border-danger-border text-danger-fg px-4 py-3 rounded-xl text-sm mb-3">
               {error}
             </div>
           )}
 
-          <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-800/80">
+          <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border-subtle">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10">
-                <tr className="text-slate-400 uppercase tracking-wider text-[10px] font-black">
+              <thead className="sticky top-0 bg-app/95 backdrop-blur-sm z-10">
+                <tr className="text-fg-fainter uppercase tracking-wider text-[10px] font-black">
                   <th className="px-4 py-3 text-left">Clave</th>
                   <th className="px-4 py-3 text-left">Descripción</th>
                   <th className="px-4 py-3 text-right">Autorizado</th>
@@ -329,10 +292,10 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
               <tbody>
                 {loading && rows.length === 0 && (
                   Array.from({ length: 8 }).map((_, i) => (
-                    <tr key={`sk-${i}`} className="border-t border-slate-800/60">
+                    <tr key={`sk-${i}`} className="border-t border-border-subtle">
                       {Array.from({ length: 9 }).map((__, j) => (
                         <td key={j} className="px-4 py-3">
-                          <div className="h-4 bg-slate-700/50 animate-pulse rounded" />
+                          <div className="h-4 bg-hover animate-pulse rounded" />
                         </td>
                       ))}
                     </tr>
@@ -341,7 +304,7 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
 
                 {!loading && rows.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
+                    <td colSpan={9} className="px-4 py-12 text-center text-fg-faint">
                       Sin registros para los parámetros seleccionados.
                     </td>
                   </tr>
@@ -350,12 +313,12 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
                 {rows.map(row => (
                   <tr
                     key={row.Partida}
-                    className="border-t border-slate-800/60 hover:bg-slate-800/40 transition-colors"
+                    className="border-t border-border-subtle hover:bg-hover transition-colors"
                   >
-                    <td className="px-4 py-2.5 font-mono font-bold text-blue-300 whitespace-nowrap">
+                    <td className="px-4 py-2.5 font-mono font-bold text-indigo-fg whitespace-nowrap">
                       {row.Partida}
                     </td>
-                    <td className="px-4 py-2.5 text-slate-300">
+                    <td className="px-4 py-2.5 text-fg-secondary">
                       {row.Descripcion ?? '—'}
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono tabular-nums">{formatCurrency(row.Autorizado)}</td>

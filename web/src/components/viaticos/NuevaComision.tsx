@@ -169,10 +169,10 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
   };
 
   // ── Styles ───────────────────────────────────────────────────────────────
-  const inputCls = "w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium placeholder:text-slate-400";
-  const labelCls = "block text-xs font-black text-slate-500 uppercase tracking-widest mb-2";
-  const btnPrimary = "flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed";
-  const btnSecondary = "flex items-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all active:scale-95";
+  const inputCls = "w-full px-4 py-3 rounded-xl border border-border-strong bg-input text-fg-primary focus:outline-none focus:ring-2 focus:ring-indigo focus:border-transparent transition-all font-medium placeholder:text-fg-faint";
+  const labelCls = "block text-xs font-black text-fg-muted uppercase tracking-widest mb-2";
+  const btnPrimary = "flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-hover text-white font-black rounded-xl shadow-lg shadow-accent/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed";
+  const btnSecondary = "flex items-center gap-2 px-6 py-3 bg-panel-muted hover:bg-hover text-fg-secondary font-bold rounded-xl transition-all active:scale-95";
 
   const steps = ['Empleado', 'Fechas', 'Destino', 'Detalle', 'Confirmar'];
 
@@ -190,26 +190,26 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
           const done = n < step;
           return (
             <div key={s} className="flex items-center flex-1 last:flex-none">
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${active ? 'bg-blue-600 text-white shadow-md' : done ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-400'}`}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${active ? 'bg-white text-blue-600' : done ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-500'}`}>{done ? '✓' : n}</span>
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${active ? 'bg-accent text-white shadow-md' : done ? 'bg-surface text-fg-secondary' : 'bg-panel-muted text-fg-faint'}`}>
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${active ? 'bg-app text-accent' : done ? 'bg-white/20 text-white' : 'bg-fg-fainter text-fg-faint'}`}>{done ? '✓' : n}</span>
                 <span className="hidden sm:block text-xs font-black uppercase tracking-widest whitespace-nowrap">{s}</span>
               </div>
-              {i < steps.length - 1 && <div className={`flex-1 h-0.5 mx-1 rounded-full transition-all duration-300 ${done ? 'bg-slate-800' : 'bg-slate-200'}`}></div>}
+              {i < steps.length - 1 && <div className={`flex-1 h-0.5 mx-1 rounded-full transition-all duration-300 ${done ? 'bg-surface' : 'bg-border-strong'}`}></div>}
             </div>
           );
         })}
       </div>
 
       {/* Main card */}
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-panel rounded-[2rem] border border-border-subtle shadow-sm overflow-hidden">
         <div className="p-8">
 
           {/* ── Step 1: Employee ─────────────────────────────────── */}
           {step === STEP.EMPLEADO && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
               <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Identificación del Empleado</h2>
-                <p className="text-slate-400 mt-1 font-medium">Ingresa RFC o parte del nombre para buscar al empleado.</p>
+                <h2 className="text-2xl font-black text-fg-primary tracking-tight">Identificación del Empleado</h2>
+                <p className="text-fg-faint mt-1 font-medium">Ingresa RFC o parte del nombre para buscar al empleado.</p>
               </div>
 
               <div className="space-y-4">
@@ -225,7 +225,7 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
                       placeholder="Ej: GOMA810101, GONZALEZ MARTINEZ..."
                     />
                     {empleado && (
-                      <span className="absolute right-3 top-3.5 text-green-500">
+                      <span className="absolute right-3 top-3.5 text-success">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
                       </span>
                     )}
@@ -241,38 +241,38 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
 
                 {/* Inline results panel — expands in flow, no height cap */}
                 {showResults && resultados.length > 0 && (
-                  <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-lg animate-in slide-in-from-top-2 duration-200">
-                    <div className="flex items-center justify-between px-5 py-3 bg-slate-800 sticky top-0">
-                      <span className="text-xs font-black text-slate-300 uppercase tracking-widest">
+                  <div className="border border-border-subtle rounded-2xl overflow-hidden shadow-lg animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center justify-between px-5 py-3 bg-surface sticky top-0">
+                      <span className="text-xs font-black text-fg-secondary uppercase tracking-widest">
                         {resultados.length} resultado{resultados.length !== 1 ? 's' : ''} — selecciona uno
                       </span>
                       <button
                         type="button"
                         onClick={() => { setShowResults(false); setResultados([]); }}
-                        className="text-slate-400 hover:text-white transition-colors"
+                        className="text-fg-faint hover:text-fg-primary transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     </div>
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-border-subtle">
                       {resultados.map((emp, idx) => (
                         <button
                           key={emp.RFC}
                           type="button"
                           onClick={() => seleccionarEmpleado(emp)}
-                          className={`w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-blue-50 transition-colors group ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}`}
+                          className={`w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-accent-soft transition-colors group ${idx % 2 === 0 ? 'bg-panel' : 'bg-panel-muted/60'}`}
                         >
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-700 to-slate-600 flex items-center justify-center text-white font-black text-sm shrink-0 group-hover:from-blue-600 group-hover:to-sky-500 transition-all uppercase shadow-sm">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-fg-fainter to-fg-muted flex items-center justify-center text-white font-black text-sm shrink-0 group-hover:from-accent group-hover:to-indigo transition-all uppercase shadow-sm">
                             {emp.Nombre.charAt(0)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-slate-800 font-bold text-sm group-hover:text-blue-700 transition-colors">{emp.Nombre}</p>
-                            <p className="text-slate-400 font-mono text-xs mt-0.5">{emp.RFC}</p>
-                            <p className="text-slate-400 text-xs mt-0.5 truncate">{emp.Unidad}</p>
+                            <p className="text-fg-primary font-bold text-sm group-hover:text-accent-fg transition-colors">{emp.Nombre}</p>
+                            <p className="text-fg-faint font-mono text-xs mt-0.5">{emp.RFC}</p>
+                            <p className="text-fg-faint text-xs mt-0.5 truncate">{emp.Unidad}</p>
                           </div>
                           <div className="shrink-0 flex items-center gap-2">
-                            <span className="hidden sm:block text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full border">{emp.CLUES}</span>
-                            <svg className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+                            <span className="hidden sm:block text-[10px] font-bold text-fg-faint bg-panel-muted px-2 py-0.5 rounded-full border border-border-strong">{emp.CLUES}</span>
+                            <svg className="w-4 h-4 text-fg-fainter group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
                           </div>
                         </button>
                       ))}
@@ -283,23 +283,23 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
 
               {/* Selected employee card */}
               {empleado && (
-                <div className="flex items-start gap-5 p-6 bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl border border-slate-700 animate-in slide-in-from-bottom-2 duration-300 shadow-xl">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-blue-600/30 uppercase shrink-0">
+                <div className="flex items-start gap-5 p-6 bg-gradient-to-r from-surface to-app rounded-2xl border border-border-strong animate-in slide-in-from-bottom-2 duration-300 shadow-xl">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-accent to-sky flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-accent/30 uppercase shrink-0">
                     {empleado.Nombre.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-lg tracking-tight leading-tight">{empleado.Nombre}</p>
-                    <p className="text-slate-400 font-mono text-sm mt-0.5">{empleado.RFC}</p>
+                    <p className="text-fg-primary font-black text-lg tracking-tight leading-tight">{empleado.Nombre}</p>
+                    <p className="text-fg-faint font-mono text-sm mt-0.5">{empleado.RFC}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="px-3 py-1 bg-blue-900/50 text-blue-300 text-xs font-bold rounded-full border border-blue-800">{empleado.CLUES}</span>
-                      <span className="px-3 py-1 bg-slate-700 text-slate-300 text-xs font-medium rounded-full border border-slate-600 truncate max-w-[280px]">{empleado.Unidad}</span>
+                      <span className="px-3 py-1 bg-indigo-soft text-indigo-fg text-xs font-bold rounded-full border border-indigo-border">{empleado.CLUES}</span>
+                      <span className="px-3 py-1 bg-panel-muted text-fg-secondary text-xs font-medium rounded-full border border-border-strong truncate max-w-[280px]">{empleado.Unidad}</span>
                     </div>
                   </div>
                   <button
                     type="button"
                     title="Cambiar empleado"
                     onClick={() => { setEmpleado(null); setSearchInput(''); setResultados([]); }}
-                    className="shrink-0 w-8 h-8 bg-slate-700 hover:bg-red-800 rounded-full flex items-center justify-center transition-colors text-slate-400 hover:text-white"
+                    className="shrink-0 w-8 h-8 bg-panel-muted hover:bg-danger-soft rounded-full flex items-center justify-center transition-colors text-fg-faint hover:text-danger"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -312,8 +312,8 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
           {step === STEP.FECHAS && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
               <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Periodo de la Comisión</h2>
-                <p className="text-slate-400 mt-1 font-medium">Define las fechas de salida y regreso.</p>
+                <h2 className="text-2xl font-black text-fg-primary tracking-tight">Periodo de la Comisión</h2>
+                <p className="text-fg-faint mt-1 font-medium">Define las fechas de salida y regreso.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -326,13 +326,13 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
                 </div>
               </div>
               {daysDiff > 0 && (
-                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-sm font-semibold text-blue-700 flex items-center gap-3 animate-in fade-in">
-                  <svg className="w-5 h-5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <div className="p-4 bg-accent-soft border border-accent-border rounded-2xl text-sm font-semibold text-accent-fg flex items-center gap-3 animate-in fade-in">
+                  <svg className="w-5 h-5 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                   Comisión de <strong>{daysDiff}</strong> {daysDiff === 1 ? 'día' : 'días'}
                 </div>
               )}
               {fechaSalida && fechaRegreso && fechaRegreso < fechaSalida && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-sm font-bold text-red-600 flex items-center gap-3">
+                <div className="p-4 bg-danger-soft border border-danger-border rounded-2xl text-sm font-bold text-danger flex items-center gap-3">
                   <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   La fecha de regreso debe ser posterior o igual a la de salida.
                 </div>
@@ -344,8 +344,8 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
           {step === STEP.DESTINO && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
               <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Destino Principal</h2>
-                <p className="text-slate-400 mt-1 font-medium">Selecciona la entidad y localidad a donde se comisiona.</p>
+                <h2 className="text-2xl font-black text-fg-primary tracking-tight">Destino Principal</h2>
+                <p className="text-fg-faint mt-1 font-medium">Selecciona la entidad y localidad a donde se comisiona.</p>
               </div>
               <div>
                 <label className={labelCls}>Entidad Federativa</label>
@@ -357,7 +357,7 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
               </div>
               <div>
                 <label className={labelCls}>
-                  Localidad {fetchingLoc && <span className="text-blue-500 animate-pulse">(Cargando…)</span>}
+                  Localidad {fetchingLoc && <span className="text-accent animate-pulse">(Cargando…)</span>}
                 </label>
                 <select
                   value={localidadSel ?? ''}
@@ -377,9 +377,9 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
                 </select>
               </div>
               {localidadSel && (
-                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-700 text-slate-300 flex items-center gap-3 text-sm font-semibold animate-in fade-in">
-                  <svg className="w-5 h-5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  Destino: <span className="text-white font-black">{localidadNombre}</span>
+                <div className="p-4 bg-app rounded-2xl border border-border-strong text-fg-secondary flex items-center gap-3 text-sm font-semibold animate-in fade-in">
+                  <svg className="w-5 h-5 text-indigo shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  Destino: <span className="text-fg-primary font-black">{localidadNombre}</span>
                 </div>
               )}
             </div>
@@ -389,22 +389,22 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
           {step === STEP.DETALLE && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
               <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Detalles de la Comisión</h2>
-                <p className="text-slate-400 mt-1 font-medium">Describe el objeto de la comisión y datos adicionales.</p>
+                <h2 className="text-2xl font-black text-fg-primary tracking-tight">Detalles de la Comisión</h2>
+                <p className="text-fg-faint mt-1 font-medium">Describe el objeto de la comisión y datos adicionales.</p>
               </div>
               <div>
-                <label className={labelCls}>Motivo de la Comisión <span className="text-red-400">*</span></label>
+                <label className={labelCls}>Motivo de la Comisión <span className="text-danger">*</span></label>
                 <textarea value={motivo} onChange={e => setMotivo(e.target.value)} className={inputCls + ' resize-none h-28'} placeholder="Describe brevemente el objetivo de esta comisión..." />
               </div>
               <div>
-                <label className={labelCls}>Destinos Específicos <span className="text-slate-400 font-normal normal-case">(opcional)</span></label>
+                <label className={labelCls}>Destinos Específicos <span className="text-fg-faint font-normal normal-case">(opcional)</span></label>
                 <input type="text" value={destinosEspecif} onChange={e => setDestinosEspecif(e.target.value)} className={inputCls} placeholder="Ej: Hospital General, Clínica Conchita..." />
               </div>
               {fuera_bcs && (
                 <div className="animate-in slide-in-from-bottom-2 duration-300">
-                  <label className={labelCls}>Pasajes (fuera de BCS) <span className="text-red-400">*</span></label>
+                  <label className={labelCls}>Pasajes (fuera de BCS) <span className="text-danger">*</span></label>
                   <div className="relative">
-                    <span className="absolute left-4 top-3.5 text-slate-500 font-black text-sm">$</span>
+                    <span className="absolute left-4 top-3.5 text-fg-faint font-black text-sm">$</span>
                     <input type="number" min={0} step="0.01" value={pasajes} onChange={e => setPasajes(e.target.value === '' ? '' : Number(e.target.value))} className={inputCls + ' pl-8'} placeholder="0.00" />
                   </div>
                 </div>
@@ -416,10 +416,10 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
           {step === STEP.CONFIRMAR && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
               <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Confirmar y Registrar</h2>
-                <p className="text-slate-400 mt-1 font-medium">Verifica los datos antes de enviar la solicitud.</p>
+                <h2 className="text-2xl font-black text-fg-primary tracking-tight">Confirmar y Registrar</h2>
+                <p className="text-fg-faint mt-1 font-medium">Verifica los datos antes de enviar la solicitud.</p>
               </div>
-              <div className="bg-slate-900 rounded-2xl border border-slate-700 overflow-hidden divide-y divide-slate-800">
+              <div className="bg-app rounded-2xl border border-border-strong overflow-hidden divide-y divide-border-strong">
                 {[
                   { label: 'Empleado', value: empleado?.Nombre },
                   { label: 'RFC', value: empleado?.RFC },
@@ -433,8 +433,8 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
                   ...(fuera_bcs && pasajes !== '' ? [{ label: 'Pasajes', value: `$${Number(pasajes).toFixed(2)}` }] : []),
                 ].map((row, i) => (
                   <div key={i} className={`flex gap-4 px-6 py-3.5 ${i % 2 === 0 ? 'bg-white/5' : ''}`}>
-                    <span className="text-slate-500 text-sm font-black uppercase tracking-wider min-w-[140px]">{row.label}</span>
-                    <span className="text-white text-sm font-semibold">{row.value}</span>
+                    <span className="text-fg-faint text-sm font-black uppercase tracking-wider min-w-[140px]">{row.label}</span>
+                    <span className="text-fg-primary text-sm font-semibold">{row.value}</span>
                   </div>
                 ))}
               </div>
@@ -443,7 +443,7 @@ export default function NuevaComision({ onSuccess }: NuevaComisionProps) {
         </div>
 
         {/* Footer navigation */}
-        <div className="flex justify-between items-center px-8 py-5 border-t border-slate-100 bg-slate-50/80">
+        <div className="flex justify-between items-center px-8 py-5 border-t border-border-subtle bg-panel-muted/80">
           <button onClick={() => step > STEP.EMPLEADO && setStep(s => s - 1)} disabled={step === STEP.EMPLEADO} className={btnSecondary + (step === STEP.EMPLEADO ? ' invisible' : '')}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
             Anterior

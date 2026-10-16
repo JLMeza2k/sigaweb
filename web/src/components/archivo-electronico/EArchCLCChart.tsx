@@ -58,32 +58,32 @@ function FloatingTooltip({ bar, locked, containerRect, onLock, onUnlock, onSelec
       className="absolute z-50 pointer-events-auto"
       style={{ left, top }}
     >
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-2xl text-xs w-56">
-        <p className="text-white font-bold mb-3 leading-snug">{ff}</p>
+      <div className="bg-surface border border-border-strong rounded-xl p-4 shadow-2xl text-xs w-56">
+        <p className="text-fg-primary font-bold mb-3 leading-snug">{ff}</p>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-4">
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />Completo
+            <span className="flex items-center gap-1.5 text-fg-muted">
+              <span className="w-2 h-2 rounded-full bg-success inline-block" />Completo
             </span>
-            <span className="text-emerald-400 font-bold">{completo}</span>
+            <span className="text-success font-bold">{completo}</span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />Pendiente
+            <span className="flex items-center gap-1.5 text-fg-muted">
+              <span className="w-2 h-2 rounded-full bg-warning inline-block" />Pendiente
             </span>
-            <span className="text-amber-400 font-bold">{pendiente}</span>
+            <span className="text-warning font-bold">{pendiente}</span>
           </div>
-          <div className="border-t border-slate-700 pt-2 mt-2 flex justify-between">
-            <span className="text-slate-400">Completitud</span>
+          <div className="border-t border-border-strong pt-2 mt-2 flex justify-between">
+            <span className="text-fg-muted">Completitud</span>
             <span className="font-black" style={{ color: pctColor }}>{pct}%</span>
           </div>
         </div>
         {canDrill && (
-          <div className="mt-3 pt-3 border-t border-slate-700 flex gap-2">
+          <div className="mt-3 pt-3 border-t border-border-strong flex gap-2">
             {completo > 0 && (
               <button
                 onClick={() => onSelect(ff, 1)}
-                className="flex-1 text-[11px] font-semibold text-emerald-300 hover:text-white bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-lg py-1.5 transition-all active:scale-95"
+                className="flex-1 text-[11px] font-semibold text-success-fg hover:text-fg-primary bg-success-soft hover:bg-success/25 border border-success-border rounded-lg py-1.5 transition-all active:scale-95"
               >
                 Ver completos ({completo})
               </button>
@@ -91,7 +91,7 @@ function FloatingTooltip({ bar, locked, containerRect, onLock, onUnlock, onSelec
             {pendiente > 0 && (
               <button
                 onClick={() => onSelect(ff, 0)}
-                className="flex-1 text-[11px] font-semibold text-amber-300 hover:text-white bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 rounded-lg py-1.5 transition-all active:scale-95"
+                className="flex-1 text-[11px] font-semibold text-warning-fg hover:text-fg-primary bg-warning-soft hover:bg-warning/25 border border-warning-border rounded-lg py-1.5 transition-all active:scale-95"
               >
                 Ver pendientes ({pendiente})
               </button>
@@ -99,7 +99,7 @@ function FloatingTooltip({ bar, locked, containerRect, onLock, onUnlock, onSelec
           </div>
         )}
         {locked && (
-          <div className="mt-2 text-[10px] text-slate-500 italic text-center">Tooltip fijado</div>
+          <div className="mt-2 text-[10px] text-fg-faint italic text-center">Tooltip fijado</div>
         )}
       </div>
     </div>
@@ -109,8 +109,8 @@ function FloatingTooltip({ bar, locked, containerRect, onLock, onUnlock, onSelec
 /* ── Error / Empty / Loading states ── */
 function StatusBox({ children, spin = false }: { children: React.ReactNode; spin?: boolean }) {
   return (
-    <div className="h-56 flex flex-col items-center justify-center gap-3 text-slate-500 text-sm flex-shrink-0">
-      {spin && <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent" />}
+    <div className="h-56 flex flex-col items-center justify-center gap-3 text-fg-faint text-sm flex-shrink-0">
+      {spin && <div className="animate-spin rounded-full h-8 w-8 border-2 border-accent border-t-transparent" />}
       {children}
     </div>
   );
@@ -227,17 +227,17 @@ export default function EArchCLCChart({ data, loading, error, onSelectSegment }:
   };
 
   return (
-    <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-3 shadow-xl animate-fade-in flex flex-col h-full min-h-0" style={{ opacity: 0, animationDelay: '150ms' }}>
+    <div className="bg-surface/60 border border-border-strong/50 rounded-2xl p-3 shadow-xl animate-fade-in flex flex-col h-full min-h-0" style={{ opacity: 0, animationDelay: '150ms' }}>
       <div className="flex items-center gap-3 mb-6 flex-shrink-0">
-        <div className="w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full" />
+        <div className="w-1 h-8 bg-gradient-to-b from-accent to-accent-hover rounded-full" />
         <div>
-          <h3 className="text-white font-bold text-base">CLCs por Fuente de Financiamiento</h3>
-          <p className="text-slate-500 text-xs">Expediente digital: CLC + Pago + Póliza de Pago</p>
+          <h3 className="text-fg-primary font-bold text-base">CLCs por Fuente de Financiamiento</h3>
+          <p className="text-fg-faint text-xs">Expediente digital: CLC + Pago + Póliza de Pago</p>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl p-4 text-xs flex-shrink-0">
+        <div className="flex items-center gap-2 text-danger bg-danger-soft border border-danger-border rounded-xl p-4 text-xs flex-shrink-0">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>

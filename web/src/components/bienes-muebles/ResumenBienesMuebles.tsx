@@ -1,6 +1,7 @@
 import BmResumenChart from './BmResumenChart';
 import KpiCard from '../shared/KpiCard';
 import SectionBadge from '../shared/SectionBadge';
+import ThemeToggle from '../shared/ThemeToggle';
 import { useResumenBM } from './useResumenBM';
 import { useBMProblems } from './useBMProblems';
 import BmProblemsChart from './BmProblemsChart';
@@ -53,18 +54,16 @@ export default function ResumenBienesMuebles({ onBack, ua, ct, descripcion, onRo
       : '🔴 Por debajo de meta';
 
   return (
-    <div className="h-screen bg-slate-900 text-white flex flex-col">
+    <div className="h-screen bg-app text-fg-primary flex flex-col">
 
       {/* ══ Header ══ */}
-      <header className="h-auto lg:h-[8.33333%] min-h-[56px] border-b border-slate-800/80 bg-slate-900/90 flex-shrink-0">
+      <header className="h-auto lg:h-[8.33333%] min-h-[56px] border-b border-border-subtle bg-surface/90 flex-shrink-0">
         <div className="h-full px-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             {onBack && (
               <button
                 onClick={onBack}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-600/70
-                           border border-slate-600/50 text-slate-300 hover:text-white
-                           rounded-xl text-xs font-semibold transition-all active:scale-95"
+                className="flex items-center gap-2 px-3 py-2 bg-hover border border-border-strong text-fg-secondary hover:text-fg-primary rounded-xl text-xs font-semibold transition-all active:scale-95"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -76,8 +75,8 @@ export default function ResumenBienesMuebles({ onBack, ua, ct, descripcion, onRo
               <img src="/logo_issbcs.png" alt="Logo ISSBCS" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-white font-black text-xl tracking-tight leading-none">SIGABM</h1>
-              <p className="text-slate-500 text-xs mt-0.5">
+              <h1 className="text-fg-primary font-black text-xl tracking-tight leading-none">SIGABM</h1>
+              <p className="text-fg-faint text-xs mt-0.5">
                 {isDetailMode && descripcion ? descripcion : 'Sistema de Gestión Administrativa'}
               </p>
             </div>
@@ -88,13 +87,12 @@ export default function ResumenBienesMuebles({ onBack, ua, ct, descripcion, onRo
             <button
               id="btn-refetch-bm"
               onClick={() => { void Promise.all([refetch(), refetchProblemas()]); }}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70
-                         border border-slate-600/50 text-slate-300 hover:text-white
-                         rounded-xl text-xs font-semibold transition-all active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 bg-hover border border-border-strong text-fg-secondary hover:text-fg-primary rounded-xl text-xs font-semibold transition-all active:scale-95"
             >
               <IconRefresh />
               Actualizar
             </button>
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -142,31 +140,31 @@ export default function ResumenBienesMuebles({ onBack, ua, ct, descripcion, onRo
             />
           </div>
 
-          <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 shadow-xl animate-fade-in" style={{ opacity: 0, animationDelay: '240ms' }}>
+          <div className="bg-app border border-border-subtle rounded-2xl p-4 shadow-xl animate-fade-in" style={{ opacity: 0, animationDelay: '240ms' }}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-1 h-8 bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-full" />
+              <div className="w-1 h-8 bg-gradient-to-b from-success to-emerald-700 rounded-full" />
               <div>
-                <h3 className="text-white font-bold text-base">Cobertura por centro</h3>
-                <p className="text-slate-500 text-xs">{filas.length === 1 ? '1 centro de trabajo con bienes' : `${filas.length} centros de trabajo con bienes`}</p>
+                <h3 className="text-fg-primary font-bold text-base">Cobertura por centro</h3>
+                <p className="text-fg-faint text-xs">{filas.length === 1 ? '1 centro de trabajo con bienes' : `${filas.length} centros de trabajo con bienes`}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <div className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-emerald-500/25 bg-emerald-500/10 px-1.5 py-2 text-[10px] sm:text-xs">
-                <span className="text-emerald-200">Verificados:</span>
-                <span className="font-bold text-emerald-400 font-mono">
+              <div className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-success-border bg-success-soft px-1.5 py-2 text-[10px] sm:text-xs">
+                <span className="text-success-fg">Verificados:</span>
+                <span className="font-bold text-success font-mono">
                   {loading ? '—' : totales.totalVerificados.toLocaleString('es-MX')}
                 </span>
               </div>
-              <div className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-amber-500/25 bg-amber-500/10 px-1.5 py-2 text-[10px] sm:text-xs">
-                <span className="text-amber-200">No verificados:</span>
-                <span className="font-bold text-amber-400 font-mono">
+              <div className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-warning-border bg-warning-soft px-1.5 py-2 text-[10px] sm:text-xs">
+                <span className="text-warning-fg">No verificados:</span>
+                <span className="font-bold text-warning font-mono">
                   {loading ? '—' : (totales.totalBienes - totales.totalVerificados).toLocaleString('es-MX')}
                 </span>
               </div>
-              <div className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-red-500/25 bg-red-500/10 px-1.5 py-2 text-[10px] sm:text-xs">
-                <span className="text-red-200">Centros dados de baja:</span>
-                <span className="font-bold text-red-400 font-mono">
+              <div className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-danger-border bg-danger-soft px-1.5 py-2 text-[10px] sm:text-xs">
+                <span className="text-danger-fg">Centros dados de baja:</span>
+                <span className="font-bold text-danger font-mono">
                   {loading ? '—' : filas.filter(f => f.baja).length.toLocaleString('es-MX')}
                 </span>
               </div>
@@ -177,7 +175,7 @@ export default function ResumenBienesMuebles({ onBack, ua, ct, descripcion, onRo
 
           <div
             aria-label="Espacio reservado"
-            className="min-h-40 flex-shrink-0 rounded-2xl border border-slate-800/80 bg-slate-950 shadow-xl"
+            className="min-h-40 flex-shrink-0 rounded-2xl border border-border-subtle bg-app shadow-xl"
           />
         </section>
 
