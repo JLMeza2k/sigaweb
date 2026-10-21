@@ -12,6 +12,8 @@ import CfdiModule from './components/cfdirepo/CfdiModule';
 import ResumenBienesMuebles from './components/bienes-muebles/ResumenBienesMuebles';
 import BienesSinRegistro from './components/bienes-muebles/BienesSinRegistro';
 import DetalleBienesMuebles from './components/bienes-muebles/DetalleBienesMuebles';
+import BuscarBienesMuebles from './components/bienes-muebles/BuscarBienesMuebles';
+import DetalleBienMueble from './components/bienes-muebles/DetalleBienMueble';
 import type { ResumenFila } from './components/bienes-muebles/useResumenBM';
 
 interface CentroSeleccionado {
@@ -33,6 +35,7 @@ function App() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [centroSeleccionado, setCentroSeleccionado] = useState<CentroSeleccionado | null>(null);
     const [areaSeleccionada, setAreaSeleccionada] = useState<AreaSeleccionada | null>(null);
+    const [bienSeleccionado, setBienSeleccionado] = useState<string | null>(null);
 
     useEffect(() => {
        if (!mobileMenuOpen) return;
@@ -67,6 +70,12 @@ function App() {
           nameArea: fila.descripcion,
        });
        setActiveView({ group: 'bienes-muebles', view: 'detalle-area' });
+    };
+
+    const handleBienClick = (nuibm: string) => {
+       setBienSeleccionado(nuibm);
+       setActiveView({ group: 'bienes-muebles', view: 'detalle-bien' });
+       setMobileMenuOpen(false);
     };
 
    // ── Loading splash ────────────────────────────────────────
@@ -133,7 +142,9 @@ function App() {
           if (view === 'materiales') return 'Materiales';
        }
        if (group === 'contabilidad' && view === 'cfdis') return 'CFDIs';
-        if (group === 'bienes-muebles' && view === 'resumen') return 'Resumen de Bienes Muebles';
+         if (group === 'bienes-muebles' && view === 'resumen') return 'Resumen de Bienes Muebles';
+         if (group === 'bienes-muebles' && view === 'buscar') return 'Buscar Bienes Muebles';
+         if (group === 'bienes-muebles' && view === 'detalle-bien') return `Detalle NUIBM ${bienSeleccionado ?? ''}`;
         if (group === 'bienes-muebles' && view === 'por-area') return centroSeleccionado?.descripcion ?? 'Detalle por Centro';
         if (group === 'bienes-muebles' && view === 'detalle-area') return areaSeleccionada?.nameArea ?? 'Detalle de Área';
         return 'Portal ISSBCS';
@@ -153,6 +164,8 @@ function App() {
       && !is('presupuesto', 'estado-presupuesto')
       && !is('contabilidad', 'cfdis')
        && !is('bienes-muebles', 'resumen')
+       && !is('bienes-muebles', 'buscar')
+       && !is('bienes-muebles', 'detalle-bien')
        && !is('bienes-muebles', 'por-area')
        && !is('bienes-muebles', 'detalle-area');
 
@@ -229,6 +242,15 @@ if (is('presupuesto', 'estado-presupuesto')) {
                {/* ── Contabilidad: CFDIs ──────────────────── */}
                 {is('contabilidad', 'cfdis') && (
                    <CfdiModule />
+                )}
+
+                {(is('bienes-muebles', 'buscar') || is('bienes-muebles', 'detalle-bien')) && (
+                   <div className={is('bienes-muebles', 'buscar') ? '' : 'hidden'}>
+                      <BuscarBienesMuebles onOpenDetail={handleBienClick} />
+                   </div>
+                )}
+                {is('bienes-muebles', 'detalle-bien') && bienSeleccionado && (
+                   <DetalleBienMueble nuibm={bienSeleccionado} onBack={() => navigate('bienes-muebles', 'buscar')} />
                 )}
 
 

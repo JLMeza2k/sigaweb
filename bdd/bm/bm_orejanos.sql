@@ -24,4 +24,20 @@ CREATE TABLE Bienes_Muebles_SinReg_Detalle (
 GO
 
 
-
+CREATE TABLE Bienes_Muebles_Verificacion (
+	NUIBM int NOT NULL,
+	Id smallint NOT NULL,
+	Fecha smalldatetime NOT NULL,
+	VerifiedBy smallint NULL,
+	FoundUA tinyint NULL,
+	FoundCt tinyint NULL,
+	FoundArea varchar(3) NULL,
+	IdRequiredAction tinyint NULL,
+	Observaciones varchar](255) NULL,
+	Resolved bit NULL,
+	ResolvedBy smallint NULL,
+	ResolvedAt smalldatetime NULL,
+ CONSTRAINT PK_Bienes_Muebles_Verificacion PRIMARY KEY CLUSTERED
+	(NUIBM ASC, Id ASC) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON PRIMARY
+) ON PRIMARY
+GO

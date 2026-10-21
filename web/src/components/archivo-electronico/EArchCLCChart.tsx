@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { memo, useEffect, useRef, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, useXAxisScale, useYAxisScale } from 'recharts';
 import type { CLCData } from './useDashboardData';
 
 interface Props {
@@ -23,35 +23,43 @@ interface FloatingTooltipProps {
   bar: HoveredBar | null;
   locked: boolean;
   containerRect: DOMRect | null;
+  tooltipRef: React.RefObject<HTMLDivElement | null>;
   onLock: () => void;
   onUnlock: () => void;
   onSelect?: (ff: string, status: 0 | 1) => void;
 }
 
-function FloatingTooltip({ bar, locked, containerRect, onLock, onUnlock, onSelect }: FloatingTooltipProps) {
+const FLOATING_TOOLTIP_WIDTH = 224;
+const FLOATING_TOOLTIP_HEIGHT = 170;
+
+function getTooltipPosition(x: number, y: number, containerRect: DOMRect | null) {
+  const baseLeft = x + 16;
+  const baseTop = y - 8;
+  let left = baseLeft;
+  let top = baseTop;
+
+  if (containerRect) {
+    if (left + FLOATING_TOOLTIP_WIDTH > containerRect.width) left = baseLeft - FLOATING_TOOLTIP_WIDTH - 32;
+    if (top + FLOATING_TOOLTIP_HEIGHT > containerRect.height) top = containerRect.height - FLOATING_TOOLTIP_HEIGHT - 8;
+    if (top < 0) top = 8;
+    if (left < 0) left = 8;
+  }
+
+  return { left, top };
+}
+
+function FloatingTooltip({ bar, locked, containerRect, tooltipRef, onLock, onUnlock, onSelect }: FloatingTooltipProps) {
   if (!bar) return null;
   const { ff, completo, pendiente } = bar;
   const total = completo + pendiente;
   const pct = total > 0 ? Math.round((completo / total) * 100) : 0;
   const pctColor = pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
   const canDrill = !!onSelect && total > 0;
-
-  // Posicionar a la derecha-arriba del cursor, pero sin salir del contenedor
-  const baseLeft = (bar.x ?? 0) + 16;
-  const baseTop = (bar.y ?? 0) - 8;
-  const tooltipW = 224; // ≈ max-w-56
-  const tooltipH = 170;
-  let left = baseLeft;
-  let top = baseTop;
-  if (containerRect) {
-    if (left + tooltipW > containerRect.width) left = baseLeft - tooltipW - 32;
-    if (top + tooltipH > containerRect.height) top = containerRect.height - tooltipH - 8;
-    if (top < 0) top = 8;
-    if (left < 0) left = 8;
-  }
+  const { left, top } = getTooltipPosition(bar.x, bar.y, containerRect);
 
   return (
     <div
+      ref={tooltipRef}
       onMouseEnter={onLock}
       onMouseLeave={onUnlock}
       onClick={e => e.stopPropagation()}
@@ -118,12 +126,48 @@ function StatusBox({ children, spin = false }: { children: React.ReactNode; spin
 
 const trimFF = (s: string) => (s.length > 26 ? s.substring(0, 24) + '…' : s);
 
+const CountsLabelsOverlay = memo(function CountsLabelsOverlay({ data }: { data: CLCData[] }) {
+  const xScale = useXAxisScale();
+  const yScale = useYAxisScale();
+
+  if (!xScale || !yScale) return null;
+
+  return (
+    <g aria-hidden="true" pointerEvents="none">
+      {data.map(point => {
+        const total = point.Completo + point.Pendiente;
+        if (total <= 0) return null;
+
+        const x = xScale(point.FF, { position: 'middle' });
+        const y = yScale(1);
+        if (typeof x !== 'number' || typeof y !== 'number') return null;
+
+        return (
+          <text
+            key={point.FF}
+            x={x}
+            y={y - 6}
+            textAnchor="middle"
+            fontSize={11}
+            fontWeight={700}
+          >
+            <tspan fill="#10b981">{point.Completo}</tspan>
+            <tspan fill="#94a3b8">-</tspan>
+            <tspan fill="#f59e0b">{point.Pendiente}</tspan>
+          </text>
+        );
+      })}
+    </g>
+  );
+});
+
 export default function EArchCLCChart({ data, loading, error, onSelectSegment }: Props) {
   // Posición/estado del tooltip flotante
   const [hovered, setHovered] = useState<HoveredBar | null>(null);
   const [locked, setLocked] = useState(false);
   const [containerRect, setContainerRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
   const hideTimer = useRef<number | null>(null);
 
   // Ref puente: Recharts invoca nuestro content (que renderiza null) durante su render,
@@ -196,7 +240,11 @@ export default function EArchCLCChart({ data, loading, error, onSelectSegment }:
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     pointerRef.current = { x, y };
-    setHovered(prev => (prev ? { ...prev, x, y } : prev));
+    if (hovered && !locked && tooltipRef.current) {
+      const position = getTooltipPosition(x, y, rect);
+      tooltipRef.current.style.left = `${position.left}px`;
+      tooltipRef.current.style.top = `${position.top}px`;
+    }
   };
 
   // Hover normal → reaparece inmediato; mientras esté locked, no se oculta
@@ -219,6 +267,7 @@ export default function EArchCLCChart({ data, loading, error, onSelectSegment }:
       window.clearTimeout(hideTimer.current);
       hideTimer.current = null;
     }
+    setHovered(prev => (prev ? { ...prev, ...pointerRef.current } : prev));
     setLocked(true);
   };
   const onTooltipUnlock = () => {
@@ -258,13 +307,16 @@ export default function EArchCLCChart({ data, loading, error, onSelectSegment }:
             <BarChart
               data={data}
               layout="horizontal"
-              margin={{ top: 0, right: 40, left: 8, bottom: 0 }}
+              stackOffset="expand"
+              margin={{ top: 20, right: 40, left: 8, bottom: 0 }}
               barCategoryGap="30%"
               onMouseLeave={onBarLeave}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
               <YAxis
                 type="number"
+                domain={[0, 1]}
+                tickFormatter={(value: number) => `${Math.round(value * 100)}%`}
                 tick={{ fill: '#64748b', fontSize: 11 }}
                 axisLine={{ stroke: '#1e293b' }}
                 tickLine={false}
@@ -281,7 +333,7 @@ export default function EArchCLCChart({ data, loading, error, onSelectSegment }:
               {/* Tooltip interno desactivado: usamos el flotante */}
               <Tooltip
                 content={handleTooltip}
-                cursor={{ fill: 'rgba(148,163,184,0.08)' }}
+                cursor={false}
                 isAnimationActive={false}
               />
               <Legend
@@ -292,6 +344,8 @@ export default function EArchCLCChart({ data, loading, error, onSelectSegment }:
                 dataKey="Completo"
                 stackId="a"
                 fill="#10b981"
+                activeBar={false}
+                isAnimationActive={false}
                 radius={[0, 0, 0, 0]}
                 style={{ cursor: onSelectSegment ? 'pointer' : 'default' }}
                 onClick={(d: unknown) => {
@@ -304,6 +358,8 @@ export default function EArchCLCChart({ data, loading, error, onSelectSegment }:
                 dataKey="Pendiente"
                 stackId="a"
                 fill="#f59e0b"
+                activeBar={false}
+                isAnimationActive={false}
                 radius={[0, 5, 5, 0]}
                 style={{ cursor: onSelectSegment ? 'pointer' : 'default' }}
                 onClick={(d: unknown) => {
@@ -312,6 +368,7 @@ export default function EArchCLCChart({ data, loading, error, onSelectSegment }:
                 }}
                 onMouseEnter={onBarEnter}
               />
+              <CountsLabelsOverlay data={data} />
             </BarChart>
           </ResponsiveContainer>
 
@@ -320,6 +377,7 @@ export default function EArchCLCChart({ data, loading, error, onSelectSegment }:
             bar={hovered}
             locked={locked}
             containerRect={containerRect}
+            tooltipRef={tooltipRef}
             onLock={onTooltipLock}
             onUnlock={onTooltipUnlock}
             onSelect={onSelectSegment}

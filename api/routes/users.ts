@@ -274,17 +274,20 @@ routerUsers.post("/add-employee-to-user", checkToken, async (req: AuthRequest, r
 
 export function checkToken(req: AuthRequest, res: Response, next: NextFunction) {  // Middleware para verificar que el token enviado por el cliente sea válido
 	const token = req.headers['authorization'];
-	if (typeof token === 'undefined')
-		res.sendStatus(403)
-	else {
-		jwt.verify(token, process.env.SECRET!, (err, data) => {
-			if (err)
-				res.sendStatus(403);
-			else
-				req.idUser = (data as any).idUser
-		})
-		next();
+	if (typeof token !== 'string') {
+		res.sendStatus(403);
+		return;
 	}
+
+	jwt.verify(token, process.env.SECRET!, (err, data) => {
+		if (err || !data || typeof data !== 'object' || typeof data.idUser !== 'number') {
+			res.sendStatus(403);
+			return;
+		}
+
+		req.idUser = data.idUser;
+		next();
+	});
 }
 
 function makeCode() { // Generar un código aleatorio de 5 caracteres para recuperación de contraseña

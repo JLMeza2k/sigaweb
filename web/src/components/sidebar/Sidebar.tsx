@@ -74,6 +74,11 @@ label: 'Bienes Muebles',
       icon: 'm21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9',
       items: [
          {
+            id: 'buscar',
+            Description: 'Buscar bienes',
+            icon: 'M21 21l-4.3-4.3m1.3-5.2a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z',
+         },
+         {
             id: 'sin-registro',
             Description: 'Bienes sin registro',
             icon: 'M4 5h16M4 10h16M4 15h10m-10 5h10M18 15v6m3-3h-6',
@@ -230,7 +235,7 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate, mobile
                   label={group.label}
                   icon={group.icon}
                   items={group.items}
-                  selectedId={activeView.group === group.id ? activeView.view : null}
+                   selectedId={activeView.group === group.id ? (activeView.view === 'detalle-bien' ? 'buscar' : activeView.view) : null}
                   isOpen={openGroups.includes(group.id)}
                   onToggle={() => toggleGroup(group.id)}
                   onSelect={(viewId) => {

@@ -1,6 +1,7 @@
 import BmCard from './BmCard';
 import ThemeToggle from '../shared/ThemeToggle';
 import { useBienesArea } from './useBienesArea';
+import { useBMRequiredActions } from './useBMRequiredActions';
 
 interface DetalleBienesMueblesProps {
   ua: number;
@@ -12,6 +13,7 @@ interface DetalleBienesMueblesProps {
 
 export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack }: DetalleBienesMueblesProps) {
   const { bienes, loading, error, refetch } = useBienesArea(ua, ct, area);
+  const requiredActions = useBMRequiredActions();
 
   const verificados = bienes.filter(b => b.verificado).length;
   const pendientes = bienes.length - verificados;
@@ -116,8 +118,12 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack }:
                   nuibm={b.nuibm}
                   descripcion={b.descripcion}
                   responsable={b.responsable}
-                  condiciones={b.condiciones}
+                  nameArea={b.nameArea}
                   verificado={b.verificado}
+                  requiredActionId={b.idRequiredAction}
+                  requiredActionDescription={b.idRequiredAction != null && b.idRequiredAction > 0
+                    ? requiredActions.get(b.idRequiredAction)
+                    : undefined}
                 />
               ))}
             </div>

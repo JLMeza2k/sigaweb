@@ -286,6 +286,78 @@ bmRouter.delete('/sin-registro/:folio', checkToken, async (req: AuthRequest, res
     }
 });
 
+bmRouter.patch('/:nuibm/required-action/resolve', checkToken, async (req: AuthRequest, res: Response) => {
+    const nuibm = Number(req.params.nuibm);
+    if (!Number.isInteger(nuibm) || nuibm <= 0) {
+        return res.status(400).json({ message: 'Nuibm inválido.' });
+    }
+    if (!Number.isInteger(req.idUser) || Number(req.idUser) <= 0) {
+        return res.status(403).json({ message: 'No se pudo identificar al usuario autenticado.' });
+    }
+
+    let transaction: sql.Transaction | undefined;
+    try {
+        const pool = await getPool();
+        transaction = new sql.Transaction(pool as sql.ConnectionPool);
+        await transaction.begin(sql.ISOLATION_LEVEL.SERIALIZABLE);
+
+        const latest = await transaction.request()
+            .input('nuibm', sql.Int, nuibm)
+            .query(`SELECT TOP (1) Id, IdRequiredAction, Resolved
+                    FROM Bienes_Muebles_Verificacion WITH (UPDLOCK, HOLDLOCK)
+                    WHERE NUIBM = @nuibm
+                    ORDER BY Id DESC`);
+
+        if (latest.recordset.length === 0) {
+            await transaction.rollback();
+            transaction = undefined;
+            return res.status(404).json({ message: 'No existe una verificación para este bien mueble.' });
+        }
+
+        const latestVerification = latest.recordset[0] as {
+            Id: number;
+            IdRequiredAction: number | null;
+            Resolved: boolean | number | null;
+        };
+
+        if (Number(latestVerification.IdRequiredAction ?? 0) <= 0) {
+            await transaction.rollback();
+            transaction = undefined;
+            return res.status(409).json({ message: 'La última verificación no tiene una acción requerida pendiente.' });
+        }
+        if (latestVerification.Resolved === true || Number(latestVerification.Resolved) === 1) {
+            await transaction.rollback();
+            transaction = undefined;
+            return res.status(409).json({ message: 'La acción requerida ya fue marcada como realizada.' });
+        }
+
+        const updated = await transaction.request()
+            .input('nuibm', sql.Int, nuibm)
+            .input('id', sql.SmallInt, latestVerification.Id)
+            .input('resolvedBy', sql.SmallInt, req.idUser)
+            .query(`UPDATE Bienes_Muebles_Verificacion
+                    SET Resolved = 1, ResolvedBy = @resolvedBy, ResolvedAt = GETDATE()
+                    OUTPUT INSERTED.NUIBM, INSERTED.Id, INSERTED.Resolved, INSERTED.ResolvedAt
+                    WHERE NUIBM = @nuibm AND Id = @id
+                      AND ISNULL(IdRequiredAction, 0) > 0
+                      AND ISNULL(Resolved, 0) = 0`);
+
+        if (updated.recordset.length === 0) {
+            await transaction.rollback();
+            transaction = undefined;
+            return res.status(409).json({ message: 'La verificación cambió o la acción ya fue resuelta. Actualiza el detalle e inténtalo de nuevo.' });
+        }
+
+        await transaction.commit();
+        transaction = undefined;
+        return res.status(200).json(updated.recordset[0]);
+    } catch (error) {
+        if (transaction) await transaction.rollback().catch(() => undefined);
+        console.error('Error al marcar como realizada la acción requerida:', error);
+        return res.status(500).json({ message: 'Error del servidor al resolver la acción requerida.' });
+    }
+});
+
 bmRouter.get("/:nuibm", checkToken, async (req: AuthRequest, res: Response) => {
     try {
         const nuibm = Number(req.params.nuibm);
@@ -295,7 +367,17 @@ bmRouter.get("/:nuibm", checkToken, async (req: AuthRequest, res: Response) => {
         const pool = await getPool();
         const result = await (pool as sql.ConnectionPool)
             .request()
-            .query(`SELECT NUIBM, FullDescripcion, Condiciones, Valor, nameProveedor, Factura, FechaFactura, Referencia, Etiquetado, EF, BlackList, Resguardatarios, Unidad, Centro, Area, Firmado, IdResguardo, dbo.GetNameArea(Unidad, Centro, Area, 0, 0, '') NameArea, Baja, FechaBaja, dscCausaBaja, obsBaja, Verificado, NameVerifiedBy, FoundIn, VerifiedAt, IdRequiredAction, VerifObs FROM vwBienesMuebles_CG_Current WHERE NUIBM=${nuibm}`);
+            .input('nuibm', sql.Int, nuibm)
+            .query(`SELECT bm.NUIBM, bm.FullDescripcion, bm.Condiciones, bm.Valor, bm.nameProveedor, bm.Factura, bm.FechaFactura, bm.Referencia, bm.Etiquetado, bm.EF, bm.BlackList, bm.Resguardatarios, bm.Unidad, bm.Centro, bm.Area, bm.Firmado, bm.IdResguardo, dbo.GetNameArea(bm.Unidad, bm.Centro, bm.Area, 0, 0, '') NameArea, bm.Baja, bm.FechaBaja, bm.dscCausaBaja, bm.obsBaja, bm.Verificado, bm.NameVerifiedBy, bm.FoundIn, bm.VerifiedAt, bm.IdRequiredAction, bm.VerifObs,
+                    latest.Resolved, latest.ResolvedAt
+                    FROM vwBienesMuebles_CG_Current AS bm
+                    OUTER APPLY (
+                        SELECT TOP (1) v.Resolved, v.ResolvedAt
+                        FROM Bienes_Muebles_Verificacion AS v
+                        WHERE v.NUIBM = bm.NUIBM
+                        ORDER BY v.Id DESC
+                    ) AS latest
+                    WHERE bm.NUIBM = @nuibm`);
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: 'Bien Mueble no encontrado' });
         }
