@@ -255,7 +255,7 @@ export default function BuscarBienesMuebles({ onOpenDetail }: { onOpenDetail: (n
                   setErrorIndividual('');
                   setBienIndividual(null);
                 }}
-                className={`${inputClass} font-mono text-sm sm:flex-1`}
+                className={`${inputClass} text-center font-mono text-2xl font-bold sm:flex-1`}
               />
               <button
                 type="submit"
