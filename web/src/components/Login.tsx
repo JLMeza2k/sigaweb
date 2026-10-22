@@ -13,7 +13,7 @@ interface LoginProps {
 
 export default function Login({ initialView = 'LOGIN', onActivationSuccess }: LoginProps) {
   const [view, setView] = useState<ViewState>(initialView);
-  const { dbLogin, dbVerifyActivation, isLoading: authLoading } = useAuth();
+  const { dbLogin, dbVerifyActivation, isLoading: authLoading, logout } = useAuth();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -289,7 +289,7 @@ export default function Login({ initialView = 'LOGIN', onActivationSuccess }: Lo
             </div>
             <button type="submit" disabled={isLoading} className={buttonClass}>{isLoading ? 'Activando...' : 'Activar Cuenta'}</button>
             <div className="text-center mt-4 border-t border-white/10 pt-4">
-              <button type="button" onClick={() => { sessionStorage.clear(); window.location.reload(); }} className="text-sm text-sky-300 hover:text-white transition-colors">
+              <button type="button" onClick={() => { logout(); window.location.reload(); }} className="text-sm text-sky-300 hover:text-white transition-colors">
                 Volver al inicio de sesión
               </button>
             </div>

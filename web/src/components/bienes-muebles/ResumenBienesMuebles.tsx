@@ -72,7 +72,7 @@ export default function ResumenBienesMuebles({ onBack, ua, ct, descripcion, onRo
               </button>
             )}
             <div className="w-10 h-10 flex items-center justify-center">
-              <img src="/logo_issbcs.png" alt="Logo ISSBCS" className="w-full h-full object-contain" />
+              <img src={`${import.meta.env.BASE_URL}logo_issbcs.png`} alt="Logo ISSBCS" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-fg-primary font-black text-xl tracking-tight leading-none">SIGABM</h1>

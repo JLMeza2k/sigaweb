@@ -115,7 +115,7 @@ routerUsers.post('/login', async (req: Request, res: Response) => {   // Acceso 
 			console.log('El usuario no existe')
 			return res.status(404).json({ message: 'El usuario no existe' })
 		}
-		const token = jwt.sign({ idUser }, process.env.SECRET!, { expiresIn: '1d' })
+		const token = jwt.sign({ idUser }, process.env.SECRET!, { expiresIn: '30d' })
 		console.log("Acceso concedido", idUser)
 		res.status(200).json({ token: token, message: "Acceso concedido" })
 	} catch (error) {

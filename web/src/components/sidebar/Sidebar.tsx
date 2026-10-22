@@ -183,7 +183,7 @@ export default function Sidebar({ user, onLogout, activeView, onNavigate, mobile
           <div className="p-6 flex items-center justify-between gap-3 border-b border-border-subtle bg-surface/50 backdrop-blur-sm shrink-0">
              <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-app rounded-xl p-1 shadow-inner flex items-center justify-center overflow-hidden">
-                   <img src="/logo_issbcs.png" alt="Logo ISSBCS" className="object-contain" />
+                    <img src={`${import.meta.env.BASE_URL}logo_issbcs.png`} alt="Logo ISSBCS" className="object-contain" />
                 </div>
                 <div className="flex flex-col">
                    <span className="text-sm font-bold text-fg-primary tracking-tight leading-none">ISSBCS</span>

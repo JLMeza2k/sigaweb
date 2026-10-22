@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useMemo, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState, useEffect } from "react";
 import HttpClient from "../utils/HttpClient.ts";
 import type { UserType } from "../utils/types.ts";
 import { API_BASE } from "../utils/api.ts";
+import { clearStoredToken, getStoredToken, onSessionExpired, storeToken } from "../utils/tokenStorage.ts";
 import Swal from 'sweetalert2'
 
 function getErrorMessage(error: unknown): string {
@@ -25,10 +26,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
    const [user, setUser] = useState<UserType>(NoUser)
-   const [token, setToken] = useState<string>(sessionStorage.getItem('token') || '');
+   const [token, setToken] = useState<string>(getStoredToken);
    const [isLoading, setIsLoading] = useState(false);
 
    const httpClient = useMemo(() => new HttpClient(API_BASE), []);
+
+   const logout = useCallback(() => {
+      setToken('');
+      setUser(NoUser);
+      clearStoredToken();
+   }, []);
+
+   useEffect(() => {
+      return onSessionExpired(() => {
+         logout();
+         Swal.fire({
+            icon: 'warning',
+            title: 'Sesión expirada',
+            text: 'Tu sesión expiró. Por favor inicia sesión nuevamente.',
+            confirmButtonText: 'Iniciar sesión',
+         });
+      });
+   }, [logout]);
 
    const dbGetUserData = async (currentToken?: string) => {
       const authHeader = currentToken || token;
@@ -45,7 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(NoUser);
             if (response.status === 403) {
                setToken('');
-               sessionStorage.removeItem('token');
+               clearStoredToken();
             }
          }
       } catch {
@@ -68,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
          const data = await response.json();
          if (response.ok && 'token' in data) {
             setToken(data.token);
-            sessionStorage.setItem('token', data.token);
+            storeToken(data.token);
             await dbGetUserData(data.token);
             return { success: true, token: data.token };
          } else {
@@ -100,12 +119,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } finally {
          setIsLoading(false);
       }
-   }
-
-   const logout = () => {
-      setToken('');
-      setUser(NoUser);
-      sessionStorage.removeItem('token');
    }
 
    const value = { user, token, isLoading, dbLogin, dbGetUserData, dbVerifyActivation, logout };

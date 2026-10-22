@@ -84,7 +84,7 @@ function App() {
          <div className="min-h-screen bg-app flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
             <div className="absolute inset-0 bg-app/40 backdrop-blur-sm flex items-center justify-center">
-               <img src="/logo_issbcs.png" alt="Loading" className="w-8 h-8 animate-pulse" />
+                <img src={`${import.meta.env.BASE_URL}logo_issbcs.png`} alt="Loading" className="w-8 h-8 animate-pulse" />
             </div>
          </div>
       );
@@ -102,7 +102,7 @@ function App() {
             <div className="relative">
                <div className="animate-spin rounded-full h-20 w-20 border-4 border-accent border-t-transparent shadow-xl"></div>
                <div className="absolute inset-0 flex items-center justify-center">
-                  <img src="/logo_issbcs.png" alt="Logo" className="w-10 h-10 object-contain" />
+                   <img src={`${import.meta.env.BASE_URL}logo_issbcs.png`} alt="Logo" className="w-10 h-10 object-contain" />
                </div>
             </div>
             <div className="text-center">

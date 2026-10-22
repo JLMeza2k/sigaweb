@@ -1,3 +1,5 @@
+import { emitSessionExpired, isSessionExpired } from './tokenStorage';
+
 type HttpClientVerb = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 export interface RequestOptions {
@@ -26,7 +28,11 @@ export default class HttpClient {
    }
 
    async request(verb: HttpClientVerb, path: string, body?: unknown, token: string = '', options?: RequestOptions) {
-      return fetch(`${this.baseUrl}/${path}`, this.getOptions(verb, body, token, options));
+      const response = await fetch(`${this.baseUrl}/${path}`, this.getOptions(verb, body, token, options));
+      if (isSessionExpired(response.status, path, token)) {
+         emitSessionExpired();
+      }
+      return response;
    }
 
    async get(path: string, token: string = '', options?: RequestOptions) {

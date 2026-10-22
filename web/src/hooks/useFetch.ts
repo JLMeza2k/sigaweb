@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import HttpClient from '../utils/HttpClient';
 import { API_BASE } from '../utils/api';
+import { emitSessionExpired, isSessionExpired } from '../utils/tokenStorage';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -147,10 +148,13 @@ export function useBlobFetch(endpoint: string | null, deps: React.DependencyList
     setLoading(true);
     setError(null);
 
-    fetch(endpoint, { headers: { authorization: token || 'NoToken' }, signal: controller.signal })
+fetch(endpoint, { headers: { authorization: token || 'NoToken' }, signal: controller.signal })
       .then(async (res) => {
-        if (cancelled) return;
-        if (!res.ok) {
+         if (cancelled) return;
+         if (isSessionExpired(res.status, endpoint.replace(`${API_BASE}/`, ''), token)) {
+            emitSessionExpired();
+         }
+         if (!res.ok) {
           setError(`Error ${res.status}: No se pudo cargar el documento`);
           setLoading(false);
           return;
