@@ -19,9 +19,10 @@ type Props = {
   value: string;
   token: string;
   onChange: (rfc: string) => void;
+  required?: boolean;
 };
 
-export default function ResponsableRfcPicker({ value, token, onChange }: Props) {
+export default function ResponsableRfcPicker({ value, token, onChange, required = true }: Props) {
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<Empleado[]>([]);
   const [resultsFor, setResultsFor] = useState('');
@@ -61,7 +62,7 @@ export default function ResponsableRfcPicker({ value, token, onChange }: Props) 
     <div className="relative">
       <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-fg-fainter">Responsable (RFC)</label>
       <input
-        required
+        required={required}
         maxLength={50}
         value={query}
         onChange={(event) => {

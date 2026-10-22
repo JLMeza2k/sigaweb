@@ -9,11 +9,13 @@ interface DetalleBienesMueblesProps {
   area: string;
   nameArea: string;
   onBack: () => void;
+  rfc?: string;
+  embedded?: boolean;
   onOpenDetail?: (nuibm: string) => void;
 }
 
-export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack, onOpenDetail }: DetalleBienesMueblesProps) {
-  const { bienes, loading, error, refetch } = useBienesArea(ua, ct, area);
+export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack, rfc = '', embedded = false, onOpenDetail }: DetalleBienesMueblesProps) {
+  const { bienes, loading, error, refetch } = useBienesArea(ua, ct, area, rfc);
   const requiredActions = useBMRequiredActions();
 
   const verificados = bienes.filter(b => b.verificado).length;
@@ -21,7 +23,29 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack, o
   const pctVerificado = bienes.length > 0 ? Math.round((verificados / bienes.length) * 100) : 0;
 
   return (
-    <div className="h-screen bg-app text-fg-primary flex flex-col">
+    <div className={embedded ? 'min-w-0 space-y-4 text-fg-primary' : 'h-screen bg-app text-fg-primary flex flex-col'}>
+      {embedded ? (
+        <header className="rounded-2xl border border-border-subtle bg-panel p-4 shadow-sm sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-accent-fg">Resultados de búsqueda</p>
+              <h2 className="mt-1 truncate text-lg font-black text-fg-primary">{nameArea}</h2>
+              <p className="mt-1 text-xs text-fg-muted">
+                {rfc ? `RFC ${rfc} · ` : ''}{ua ? `Unidad ${ua}` : 'Todas las unidades'}
+                {ct !== 255 ? ` · Centro ${ct}` : ''}{area !== '000' ? ` · Área ${area}` : ''}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button type="button" onClick={onBack} className="rounded-xl border border-border-strong bg-hover px-3 py-2 text-xs font-bold text-fg-secondary transition hover:text-fg-primary">
+                Modificar búsqueda
+              </button>
+              <button type="button" onClick={() => { void refetch(); }} className="rounded-xl border border-border-strong bg-hover px-3 py-2 text-xs font-bold text-fg-secondary transition hover:text-fg-primary">
+                Actualizar
+              </button>
+            </div>
+          </div>
+        </header>
+      ) : (
       <header className="h-auto lg:h-[8.33333%] min-h-[56px] border-b border-border-subtle bg-surface/90 flex-shrink-0">
         <div className="h-full px-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
@@ -61,8 +85,9 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack, o
           </div>
         </div>
       </header>
+      )}
 
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className={embedded ? 'space-y-4' : 'flex-1 overflow-y-auto p-6'}>
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-app border border-border-subtle rounded-2xl p-4 animate-fade-in">
             <p className="text-fg-faint text-xs mb-1">Total de Bienes</p>
@@ -96,7 +121,7 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack, o
 
         {!loading && !error && bienes.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-fg-faint text-sm">
-            Sin bienes muebles registrados en esta área
+            {embedded ? 'No se encontraron bienes para los criterios seleccionados.' : 'Sin bienes muebles registrados en esta área'}
           </div>
         )}
 

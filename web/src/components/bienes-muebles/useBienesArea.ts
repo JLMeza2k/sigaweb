@@ -21,9 +21,10 @@ export interface BienMueble {
   idRequiredAction: number | null;
 }
 
-export function useBienesArea(ua: number, ct: number, area: string) {
-  const url = `bm/-/${ua}/${ct}/${area}`;
-  const { data, loading, error, execute } = useFetch<BienMuebleRaw[]>(url, [ua, ct, area]);
+export function useBienesArea(ua: number, ct: number, area: string, rfc = '') {
+  const rfcParam = rfc.trim() || '-';
+  const url = `bm/${encodeURIComponent(rfcParam)}/${ua}/${ct}/${encodeURIComponent(area)}`;
+  const { data, loading, error, execute } = useFetch<BienMuebleRaw[]>(url, [ua, ct, area, rfc]);
 
   const bienes = useMemo<BienMueble[]>(() => {
     if (!Array.isArray(data)) return [];

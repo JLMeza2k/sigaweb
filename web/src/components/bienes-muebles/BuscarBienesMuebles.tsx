@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import HttpClient from '../../utils/HttpClient';
 import { API_BASE } from '../../utils/api';
 import BmCard from './BmCard';
+import DetalleBienesMuebles from './DetalleBienesMuebles';
 import ResponsableRfcPicker from './ResponsableRfcPicker';
 import { useBMRequiredActions } from './useBMRequiredActions';
 
@@ -38,6 +39,14 @@ type BienMueble = {
   proveedor: string;
   factura: string;
   idRequiredAction: number | null;
+};
+
+type RelationCriteria = {
+  rfc: string;
+  ua: number;
+  ct: number;
+  area: string;
+  nameArea: string;
 };
 
 const http = new HttpClient(API_BASE);
@@ -106,10 +115,8 @@ export default function BuscarBienesMuebles({ onOpenDetail }: { onOpenDetail: (n
   const [unidad, setUnidad] = useState('');
   const [centro, setCentro] = useState('');
   const [area, setArea] = useState('');
-  const [bienes, setBienes] = useState<BienMueble[]>([]);
-  const [searchedRelation, setSearchedRelation] = useState(false);
+  const [relationCriteria, setRelationCriteria] = useState<RelationCriteria | null>(null);
   const [errorRelacion, setErrorRelacion] = useState('');
-  const [loadingRelacion, setLoadingRelacion] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -144,8 +151,7 @@ export default function BuscarBienesMuebles({ onOpenDetail }: { onOpenDetail: (n
   );
 
   const clearRelationResults = () => {
-    setBienes([]);
-    setSearchedRelation(false);
+    setRelationCriteria(null);
     setErrorRelacion('');
   };
 
@@ -183,36 +189,29 @@ export default function BuscarBienesMuebles({ onOpenDetail }: { onOpenDetail: (n
     }
   };
 
-  const submitRelacion = async (event: FormEvent<HTMLFormElement>) => {
+  const submitRelacion = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (loadingRelacion) return;
     const normalizedRfc = rfc.trim();
-    if (!normalizedRfc && !unidad) {
-      setErrorRelacion('Indica un RFC o selecciona al menos una unidad para iniciar la búsqueda.');
-      setSearchedRelation(false);
-      setBienes([]);
+    const hasLocation = Boolean(unidad || centro || area);
+    if (!normalizedRfc && !hasLocation) {
+      setErrorRelacion('Indica un RFC, una unidad/centro/área o combina ambos criterios.');
+      setRelationCriteria(null);
       return;
     }
 
-    const ua = unidad || '0';
-    const ct = centro || '255';
+    const ua = Number(unidad) || 0;
+    const ct = centro ? Number(centro) : 255;
     const areaCode = area || '000';
-    const rfcParam = normalizedRfc || '-';
-    setLoadingRelacion(true);
     setErrorRelacion('');
-    setBienes([]);
-    setSearchedRelation(true);
-    try {
-      const path = `bm/${encodeURIComponent(rfcParam)}/${ua}/${ct}/${encodeURIComponent(areaCode)}`;
-      const response = await http.get(path, token);
-      if (response.status === 404) return;
-      if (!response.ok) throw new Error(await responseError(response));
-      setBienes(unwrap<BienMuebleRaw>(await response.json()).map(normalizeBien));
-    } catch (error) {
-      setErrorRelacion(error instanceof Error ? error.message : 'No se pudo consultar la relación de bienes.');
-    } finally {
-      setLoadingRelacion(false);
-    }
+    const unitLabel = unidades.find((item) => Number(item.Unidad) === ua)?.ShortName
+      ?? unidades.find((item) => Number(item.Unidad) === ua)?.Descripcion;
+    const centerLabel = centros.find((item) => Number(item.Centro) === ct)?.ShortName
+      ?? centros.find((item) => Number(item.Centro) === ct)?.Descripcion;
+    const areaLabel = areasCentro.find((item) => item.Area.trim() === areaCode)?.Descripcion;
+    const location = [unitLabel, centerLabel, areaLabel].filter(Boolean).join(' / ');
+    const nameArea = [normalizedRfc ? `RFC ${normalizedRfc}` : '', location].filter(Boolean).join(' · ');
+
+    setRelationCriteria({ rfc: normalizedRfc, ua, ct, area: areaCode, nameArea });
   };
 
   return (
@@ -250,6 +249,7 @@ export default function BuscarBienesMuebles({ onOpenDetail }: { onOpenDetail: (n
                 maxLength={512}
                 placeholder="NUIBM o escanea la etiqueta QR"
                 value={nuibm}
+                onFocus={(event) => event.currentTarget.select()}
                 onChange={(event) => {
                   setNuibm(event.target.value);
                   setErrorIndividual('');
@@ -309,13 +309,13 @@ export default function BuscarBienesMuebles({ onOpenDetail }: { onOpenDetail: (n
             </div>
             <div>
               <h3 className="font-bold text-fg-primary">Búsqueda por relación</h3>
-              <p className="mt-1 text-xs leading-relaxed text-fg-muted">Combina RFC, unidad, centro y área. Se requiere al menos un criterio.</p>
+              <p className="mt-1 text-xs leading-relaxed text-fg-muted">Filtra por RFC, ubicación o combina ambos criterios.</p>
             </div>
           </div>
 
           {catalogError && <p role="alert" className="mb-3 rounded-xl border border-danger-border bg-danger-soft p-3 text-xs text-danger-fg">{catalogError}</p>}
           <form onSubmit={(event) => void submitRelacion(event)} className="space-y-4">
-            <ResponsableRfcPicker value={rfc} token={token} onChange={(value) => { setRfc(value); clearRelationResults(); }} />
+            <ResponsableRfcPicker value={rfc} token={token} required={false} onChange={(value) => { setRfc(value); clearRelationResults(); }} />
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className={labelClass}>
@@ -360,50 +360,28 @@ export default function BuscarBienesMuebles({ onOpenDetail }: { onOpenDetail: (n
             {errorRelacion && <p role="alert" className="text-sm font-medium text-danger">{errorRelacion}</p>}
             <button
               type="submit"
-              disabled={loadingRelacion || loadingAreas}
+              disabled={loadingAreas}
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold text-white shadow-sm transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loadingRelacion && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
-              {loadingRelacion ? 'Buscando bienes…' : 'Buscar relación'}
+              Mostrar bienes
             </button>
           </form>
         </section>
       </div>
 
-      {(loadingRelacion || searchedRelation || errorRelacion) && (
-        <section aria-live="polite" className="space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-2 border-b border-border-subtle pb-3">
-            <div>
-              <h3 className="text-lg font-bold text-fg-primary">Resultados de la relación</h3>
-              {!loadingRelacion && !errorRelacion && <p className="mt-1 text-xs text-fg-muted">{bienes.length} {bienes.length === 1 ? 'bien encontrado' : 'bienes encontrados'}</p>}
-            </div>
-          </div>
-          {loadingRelacion && <div className="py-8 text-center text-sm text-fg-muted">Consultando bienes muebles…</div>}
-          {!loadingRelacion && errorRelacion && <div role="alert" className="rounded-xl border border-danger-border bg-danger-soft p-4 text-sm text-danger-fg">{errorRelacion}</div>}
-          {!loadingRelacion && !errorRelacion && searchedRelation && bienes.length === 0 && (
-            <div className="rounded-2xl border border-border-subtle bg-panel p-8 text-center text-sm text-fg-muted">No se encontraron bienes para los criterios seleccionados.</div>
-          )}
-          {!loadingRelacion && !errorRelacion && bienes.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {bienes.map((bien, index) => (
-                <div key={`${bien.nuibm}-${index}`}>
-                  <BmCard
-                    nuibm={bien.nuibm || 'Sin NUIBM'}
-                    descripcion={bien.descripcion}
-                    responsable={bien.responsable}
-                    nameArea={bien.area}
-                    verificado={bien.verificado}
-                    requiredActionId={bien.idRequiredAction}
-                    requiredActionDescription={bien.idRequiredAction != null && bien.idRequiredAction > 0
-                      ? requiredActions.get(bien.idRequiredAction)
-                      : undefined}
-                    onViewDetail={bien.nuibm ? () => onOpenDetail(bien.nuibm) : undefined}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+      {errorRelacion && <p role="alert" className="rounded-xl border border-danger-border bg-danger-soft p-4 text-sm text-danger-fg">{errorRelacion}</p>}
+
+      {relationCriteria && (
+        <DetalleBienesMuebles
+          ua={relationCriteria.ua}
+          ct={relationCriteria.ct}
+          area={relationCriteria.area}
+          nameArea={relationCriteria.nameArea}
+          rfc={relationCriteria.rfc}
+          embedded
+          onBack={() => setRelationCriteria(null)}
+          onOpenDetail={onOpenDetail}
+        />
       )}
     </section>
   );
