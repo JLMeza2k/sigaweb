@@ -183,7 +183,7 @@ if (is('presupuesto', 'estado-presupuesto')) {
         return <ResumenBienesMuebles onBack={() => navigate('bienes-muebles', 'resumen')} ua={centroSeleccionado.ua} ct={centroSeleccionado.ct} descripcion={centroSeleccionado.descripcion} onAreaClick={handleAreaClick} />;
      }
      if (is('bienes-muebles', 'detalle-area') && areaSeleccionada) {
-        return <DetalleBienesMuebles ua={areaSeleccionada.ua} ct={areaSeleccionada.ct} area={areaSeleccionada.area} nameArea={areaSeleccionada.nameArea} onBack={() => navigate('bienes-muebles', 'por-area')} />;
+         return <DetalleBienesMuebles ua={areaSeleccionada.ua} ct={areaSeleccionada.ct} area={areaSeleccionada.area} nameArea={areaSeleccionada.nameArea} onBack={() => navigate('bienes-muebles', 'por-area')} onOpenDetail={handleBienClick} />;
      }
      if (is('bienes-muebles', 'sin-registro')) {
         return <BienesSinRegistro onBack={() => navigate('home', 'inicio')} />;

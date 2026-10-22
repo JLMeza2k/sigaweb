@@ -9,9 +9,10 @@ interface DetalleBienesMueblesProps {
   area: string;
   nameArea: string;
   onBack: () => void;
+  onOpenDetail?: (nuibm: string) => void;
 }
 
-export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack }: DetalleBienesMueblesProps) {
+export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack, onOpenDetail }: DetalleBienesMueblesProps) {
   const { bienes, loading, error, refetch } = useBienesArea(ua, ct, area);
   const requiredActions = useBMRequiredActions();
 
@@ -121,10 +122,13 @@ export default function DetalleBienesMuebles({ ua, ct, area, nameArea, onBack }:
                   nameArea={b.nameArea}
                   verificado={b.verificado}
                   requiredActionId={b.idRequiredAction}
-                  requiredActionDescription={b.idRequiredAction != null && b.idRequiredAction > 0
-                    ? requiredActions.get(b.idRequiredAction)
-                    : undefined}
-                />
+                   requiredActionDescription={b.idRequiredAction != null && b.idRequiredAction > 0
+                     ? requiredActions.get(b.idRequiredAction)
+                     : undefined}
+                   onViewDetail={onOpenDetail && b.nuibm !== 'Sin NUIBM'
+                     ? () => onOpenDetail(b.nuibm)
+                     : undefined}
+                 />
               ))}
             </div>
           </>

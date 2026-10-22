@@ -32,8 +32,8 @@ function validarBienSinRegistro(body: BienSinRegistroBody): string | null {
             return `${nombre} debe ser un número entre 0 y 255.`;
         }
     }
-    if (typeof body.Area !== 'string' || body.Area.trim().length !== 3) {
-        return 'El área debe tener exactamente 3 caracteres.';
+    if (typeof body.Area !== 'string' || body.Area.trim().length < 1 || body.Area.trim().length > 3) {
+        return 'El área debe tener entre 1 y 3 caracteres.';
     }
     if (body.Observaciones != null && (typeof body.Observaciones !== 'string' || body.Observaciones.length > 255)) {
         return 'Las observaciones no pueden exceder 255 caracteres.';
@@ -102,7 +102,7 @@ bmRouter.get("/issues/:ua/:ct/:area", checkToken, async (req: AuthRequest, res: 
     if (!Number.isInteger(centro) || centro < 0 || centro > 255) {
         return res.status(400).json({ message: 'Centro inválido.' });
     }
-    if (typeof area !== 'string' || area.length !== 3) {
+    if (typeof area !== 'string' || area.trim().length < 1 || area.trim().length > 3) {
         return res.status(400).json({ message: 'Área inválida.' });
     }
     try {
@@ -151,8 +151,9 @@ bmRouter.get('/sin-registro', checkToken, async (req: AuthRequest, res: Response
             conditions.push('r.Centro = @centro');
         }
         if (typeof area === 'string' && area !== '') {
-            if (area.length !== 3) return res.status(400).json({ message: 'Área inválida.' });
-            request.input('area', sql.VarChar(3), area);
+            const areaValue = area.trim();
+            if (areaValue.length < 1 || areaValue.length > 3) return res.status(400).json({ message: 'Área inválida.' });
+            request.input('area', sql.VarChar(3), areaValue);
             conditions.push('r.Area = @area');
         }
 
