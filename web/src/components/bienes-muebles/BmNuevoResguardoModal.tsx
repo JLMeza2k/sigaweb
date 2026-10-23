@@ -182,11 +182,10 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/60 px-3 pb-3 pt-[6dvh] backdrop-blur-sm sm:items-center sm:p-4"
       onMouseDown={(event) => { if (event.target === event.currentTarget && !submitting) onClose(); }}
     >
-      <section role="dialog" aria-modal="true" aria-labelledby="bm-new-resguardo-title" className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl border border-border-subtle bg-panel p-5 shadow-2xl sm:rounded-3xl sm:p-7">
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-border-strong sm:hidden" />
+      <section role="dialog" aria-modal="true" aria-labelledby="bm-new-resguardo-title" className="max-h-[88dvh] w-full max-w-xl overflow-y-auto rounded-3xl border border-border-subtle bg-panel p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-7">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 id="bm-new-resguardo-title" className="text-xl font-black text-fg-primary">Nuevo resguardo</h2>
@@ -199,12 +198,17 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
         {latestDate && <p className="mb-4 text-xs text-fg-muted">La fecha debe ser posterior al resguardo actual ({latestDate}).</p>}
 
         <form onSubmit={(event) => void submit(event)} className="space-y-4">
-          <label className={labelClass}>
-            Fecha
-            <input type="date" required value={fecha} min={minimumDate || undefined} disabled={submitting} onChange={(event) => { setFecha(event.target.value); setError(''); }} className={`${inputClass} mt-1`} />
-          </label>
+          <div className="grid min-w-0 grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)] items-start gap-3">
+            <label className={`${labelClass} min-w-0`}>
+              Fecha
+              <input type="date" required value={fecha} min={minimumDate || undefined} disabled={submitting} onChange={(event) => { setFecha(event.target.value); setError(''); }} className={`${inputClass} mt-1 min-w-0 px-2 text-xs sm:text-sm`} />
+            </label>
+            <div className="min-w-0">
+              <ResponsableRfcPicker value={rfc} token={token} onChange={(value) => { setRfc(value); setError(''); }} />
+            </div>
+          </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3">
             <label className={labelClass}>
               Unidad
               <select required value={unidad} disabled={loadingCatalogs || submitting} onChange={(event) => { setUnidad(event.target.value); setCentro(''); setArea(''); setError(''); }} className={`${inputClass} mt-1`}>
@@ -229,7 +233,7 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
             </select>
           </label>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3">
             <label className={labelClass}>
               Condiciones
               <select required value={idCondiciones} disabled={loadingCatalogs || submitting} onChange={(event) => { setIdCondiciones(event.target.value); setError(''); }} className={`${inputClass} mt-1`}>
@@ -246,13 +250,11 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
             </label>
           </div>
 
-          <ResponsableRfcPicker value={rfc} token={token} onChange={(value) => { setRfc(value); setError(''); }} />
-
           {error && <p role="alert" className="rounded-xl border border-danger-border bg-danger-soft p-3 text-sm text-danger-fg">{error}</p>}
 
-          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
-            <button type="button" onClick={onClose} disabled={submitting} className="h-11 rounded-xl border border-border-strong px-4 text-sm font-bold text-fg-secondary transition hover:bg-hover disabled:opacity-50">Cancelar</button>
-            <button type="submit" disabled={!canSubmit} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold text-white shadow-sm transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50">
+          <div className="flex flex-row justify-end gap-2 pt-2">
+            <button type="button" onClick={onClose} disabled={submitting} className="h-11 flex-1 rounded-xl border border-border-strong px-3 text-sm font-bold text-fg-secondary transition hover:bg-hover disabled:opacity-50 sm:flex-none sm:px-4">Cancelar</button>
+            <button type="submit" disabled={!canSubmit} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-3 text-sm font-bold text-white shadow-sm transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-5">
               {submitting && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
               {submitting ? 'Guardando…' : 'Crear resguardo'}
             </button>
