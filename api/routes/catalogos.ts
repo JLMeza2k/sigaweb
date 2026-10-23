@@ -227,4 +227,22 @@ routerCatalogos.get('/estados-fisicos', async (req: Request, res: Response) => {
    }
 });
 
+routerCatalogos.get('/colores', async (req: Request, res: Response) => {   // Obtener el catálogo de colores
+   try {
+      const pool = await getPool();
+      const result = await (pool as sql.ConnectionPool)
+         .request()
+         .query(`SELECT Codigo, Descripcion FROM catColores ORDER BY Codigo`);
+      if (result.recordset.length === 0) {
+         return res.status(404).json({ message: 'Colores no encontrados' });
+      }
+      res.status(200).json(result.recordset);
+   } catch (error) {
+      console.error('Error en la consulta a la base de datos:', error);
+      return res.status(500).json({ message: 'Error en el servidor al obtener los colores.' });
+   }
+});
+
+
+
 export default routerCatalogos;

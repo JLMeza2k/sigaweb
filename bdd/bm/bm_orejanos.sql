@@ -41,3 +41,22 @@ CREATE TABLE Bienes_Muebles_Verificacion (
 	(NUIBM ASC, Id ASC) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON PRIMARY
 ) ON PRIMARY
 GO
+
+
+CREATE PROCEDURE webAddResgBM @NUIBM INT, @UA TINYINT, @Ct TINYINT, @Area VARCHAR(3), @RFC VARCHAR(13), @Fecha SMALLDATETIME, @Condiciones TINYINT, @Color TINYINT, @IdUser SMALLINT AS
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @NextId SMALLINT = 1, @VoBo VARCHAR(50)='', @Autorizo VARCHAR(50)='';
+	SELECT TOP 1 @NextId=IdResguardo+1 FROM Bienes_Muebles_Resguardos WHERE NUIBM=@NUIBM ORDER BY IdResguardo DESC
+	IF @Area <> '000' AND EXISTS (SELECT Area FROM Areas WHERE Unidad=@UA AND Centro=@Ct AND Area=@Area)
+		AND EXISTS (SELECT RFC FROM Empleados WHERE RFC=@RFC AND Activo=1)
+	BEGIN
+		SELECT @VoBo=Descripcion FROM Numerologia WHERE Variable='TitularDSG'
+		SELECT @Autorizo=Descripcion FROM Numerologia WHERE Variable='TitularBM'
+		INSERT INTO Bienes_Muebles_Resguardos (NUIBM, IdResguardo, Fecha, Condiciones, Color, Unidad, Centro, Area, Responsable, VoBo, Autorizo, Firmado, CreatedBy, CreatedAt) 
+			VALUES (@NUIBM, @NextId, @Fecha, @Condiciones, @Color, @UA, @Ct, @Area, @RFC, @VoBo, @Autorizo, 0, 'web'+CAST(@IdUser AS VARCHAR(5)), GETDATE())
+		RETURN @NextId
+	END
+	ELSE
+		RETURN -1
+END

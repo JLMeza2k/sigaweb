@@ -7,6 +7,7 @@ interface BmCardProps {
   requiredActionId?: number | null;
   requiredActionDescription?: string;
   onViewDetail?: () => void;
+  onNewResguardo?: () => void;
 }
 
 export default function BmCard({
@@ -18,6 +19,7 @@ export default function BmCard({
   requiredActionId,
   requiredActionDescription,
   onViewDetail,
+  onNewResguardo,
 }: BmCardProps) {
   const showRequiredAction = Number(requiredActionId) > 0 && Boolean(requiredActionDescription?.trim());
 
@@ -59,7 +61,15 @@ export default function BmCard({
           <p className="min-w-0 flex-1 truncate text-[10px] text-fg-faint">
             <span className="font-semibold text-fg-muted">Área:</span> {nameArea || '—'}
           </p>
-          {onViewDetail && (
+          {onNewResguardo ? (
+            <button
+              type="button"
+              onClick={onNewResguardo}
+              className="shrink-0 rounded-md px-1 py-1 text-[10px] font-bold text-accent-fg transition hover:bg-accent-soft hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              Nuevo Resguardo
+            </button>
+          ) : onViewDetail ? (
             <button
               type="button"
               onClick={onViewDetail}
@@ -67,7 +77,7 @@ export default function BmCard({
             >
               Ver detalle →
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

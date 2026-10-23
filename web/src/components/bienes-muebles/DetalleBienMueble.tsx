@@ -4,12 +4,16 @@ import HttpClient from '../../utils/HttpClient';
 import { API_BASE } from '../../utils/api';
 import BmCard from './BmCard';
 import BmVerificarModal from './BmVerificarModal';
+import BmNuevoResguardoModal from './BmNuevoResguardoModal';
 import { useBMRequiredActions } from './useBMRequiredActions';
 
 type BienMuebleRaw = {
   NUIBM?: number | string | null;
   FullDescripcion?: string | null;
+  IdCondiciones?: number | string | null;
   Condiciones?: string | null;
+  IdColor?: number | string | null;
+  Color?: string | null;
   Valor?: number | string | null;
   nameProveedor?: string | null;
   Factura?: string | null;
@@ -19,11 +23,13 @@ type BienMuebleRaw = {
   EF?: boolean | number | string | null;
   BlackList?: boolean | number | string | null;
   Resguardatarios?: string | null;
+  Responsable?: string | null;
   Unidad?: number | string | null;
   Centro?: number | string | null;
   Area?: string | null;
   Firmado?: boolean | number | string | null;
   IdResguardo?: string | null;
+  Fecha?: string | null;
   NameArea?: string | null;
   Baja?: boolean | number | string | null;
   FechaBaja?: string | null;
@@ -42,7 +48,10 @@ type BienMuebleRaw = {
 type BienMueble = {
   nuibm: string;
   descripcion: string;
+  idCondiciones: number | null;
   condiciones: string;
+  idColor: number | null;
+  color: string;
   valor: string;
   proveedor: string;
   factura: string;
@@ -52,11 +61,13 @@ type BienMueble = {
   ef: boolean;
   blackList: boolean;
   responsable: string;
+  rfcResponsable: string;
   unidad: number;
   centro: number;
   area: string;
   firmado: boolean;
   idResguardo: string;
+  fecha: string;
   nameArea: string;
   baja: boolean;
   fechaBaja: string;
@@ -85,10 +96,15 @@ function asBoolean(value: unknown): boolean {
 
 function normalizeBien(row: BienMuebleRaw): BienMueble {
   const actionId = row.IdRequiredAction == null || row.IdRequiredAction === '' ? null : Number(row.IdRequiredAction);
+  const conditionId = row.IdCondiciones == null || row.IdCondiciones === '' ? null : Number(row.IdCondiciones);
+  const colorId = row.IdColor == null || row.IdColor === '' ? null : Number(row.IdColor);
   return {
     nuibm: String(row.NUIBM ?? '').trim(),
     descripcion: String(row.FullDescripcion ?? '').trim() || 'Sin descripción',
+    idCondiciones: conditionId != null && Number.isFinite(conditionId) ? conditionId : null,
     condiciones: String(row.Condiciones ?? '').trim(),
+    idColor: colorId != null && Number.isFinite(colorId) ? colorId : null,
+    color: String(row.Color ?? '').trim(),
     valor: row.Valor == null ? '' : String(row.Valor).trim(),
     proveedor: String(row.nameProveedor ?? '').trim(),
     factura: String(row.Factura ?? '').trim(),
@@ -98,11 +114,13 @@ function normalizeBien(row: BienMuebleRaw): BienMueble {
     ef: asBoolean(row.EF),
     blackList: asBoolean(row.BlackList),
     responsable: String(row.Resguardatarios ?? '').trim(),
+    rfcResponsable: String(row.Responsable ?? '').trim().toUpperCase(),
     unidad: Number(row.Unidad) || 0,
     centro: Number(row.Centro) || 0,
     area: String(row.Area ?? '').trim(),
     firmado: asBoolean(row.Firmado),
     idResguardo: String(row.IdResguardo ?? '').trim(),
+    fecha: String(row.Fecha ?? '').trim(),
     nameArea: String(row.NameArea ?? '').trim(),
     baja: asBoolean(row.Baja),
     fechaBaja: String(row.FechaBaja ?? '').trim(),
@@ -213,6 +231,7 @@ export default function DetalleBienMueble({ nuibm, onBack }: { nuibm: string; on
   const [state, setState] = useState<DetailState>({ kind: 'loading' });
   const [reloadKey, setReloadKey] = useState(0);
   const [verifyOpen, setVerifyOpen] = useState(false);
+  const [newResguardoOpen, setNewResguardoOpen] = useState(false);
   const [resolvingAction, setResolvingAction] = useState(false);
   const [resolveError, setResolveError] = useState('');
   const requiredActions = useBMRequiredActions();
@@ -324,6 +343,7 @@ export default function DetalleBienMueble({ nuibm, onBack }: { nuibm: string; on
               requiredActionDescription={data.idRequiredAction != null && data.idRequiredAction > 0
                 ? requiredActions.get(data.idRequiredAction)
                 : undefined}
+              onNewResguardo={() => setNewResguardoOpen(true)}
             />
 
             <DetailSection title="Adquisición">
@@ -411,6 +431,28 @@ export default function DetalleBienMueble({ nuibm, onBack }: { nuibm: string; on
                 onClose={() => setVerifyOpen(false)}
                 onSuccess={() => {
                   setVerifyOpen(false);
+                  setState({ kind: 'loading' });
+                  setReloadKey((key) => key + 1);
+                }}
+              />
+            )}
+
+            {newResguardoOpen && (
+              <BmNuevoResguardoModal
+                key={`${data.nuibm}-${data.idResguardo}-${data.fecha}`}
+                nuibm={data.nuibm}
+                defaults={{
+                  fechaActual: data.fecha,
+                  unidad: data.unidad,
+                  centro: data.centro,
+                  area: data.area,
+                  idCondiciones: data.idCondiciones,
+                  idColor: data.idColor,
+                  rfc: data.rfcResponsable,
+                }}
+                onClose={() => setNewResguardoOpen(false)}
+                onSuccess={() => {
+                  setNewResguardoOpen(false);
                   setState({ kind: 'loading' });
                   setReloadKey((key) => key + 1);
                 }}

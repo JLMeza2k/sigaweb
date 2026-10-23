@@ -62,6 +62,12 @@ function validarBienSinRegistro(body: BienSinRegistroBody): string | null {
     return null;
 }
 
+function esFechaValida(fecha: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return false;
+    const parsed = new Date(`${fecha}T00:00:00.000Z`);
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === fecha;
+}
+
 async function insertarDetalles(
     transaction: sql.Transaction,
     folio: number,
@@ -359,6 +365,104 @@ bmRouter.patch('/:nuibm/required-action/resolve', checkToken, async (req: AuthRe
     }
 });
 
+bmRouter.post('/:nuibm/resguardo', checkToken, async (req: AuthRequest, res: Response) => {
+    const nuibm = Number(req.params.nuibm);
+    if (!Number.isInteger(nuibm) || nuibm <= 0) {
+        return res.status(400).json({ message: 'Nuibm inválido.' });
+    }
+    if (!Number.isInteger(req.idUser) || Number(req.idUser) <= 0) {
+        return res.status(403).json({ message: 'No se pudo identificar al usuario autenticado.' });
+    }
+
+    const body = (req.body ?? {}) as {
+        fecha?: unknown;
+        unidad?: unknown;
+        centro?: unknown;
+        area?: unknown;
+        rfc?: unknown;
+        idCondiciones?: unknown;
+        idColor?: unknown;
+    };
+    const fecha = typeof body.fecha === 'string' ? body.fecha.trim() : '';
+    const area = typeof body.area === 'string' ? body.area.trim() : '';
+    const rfc = typeof body.rfc === 'string' ? body.rfc.trim().toUpperCase() : '';
+    const unidad = Number(body.unidad);
+    const centro = Number(body.centro);
+    const idCondiciones = Number(body.idCondiciones);
+    const idColor = Number(body.idColor);
+
+    if (!esFechaValida(fecha)) {
+        return res.status(400).json({ message: 'La fecha del resguardo es obligatoria y debe ser válida.' });
+    }
+    for (const [label, value] of [['Unidad', unidad], ['Centro', centro], ['Condiciones', idCondiciones], ['Color', idColor]] as const) {
+        if (!Number.isInteger(value) || value < 0 || value > 255) {
+            return res.status(400).json({ message: `${label} debe ser un número entre 0 y 255.` });
+        }
+    }
+    if (area.length !== 3 || area === '000') {
+        return res.status(400).json({ message: 'Seleccione un área válida para el nuevo resguardo.' });
+    }
+    if (!rfc || rfc.length > 13) {
+        return res.status(400).json({ message: 'El RFC del responsable es obligatorio y no debe exceder 13 caracteres.' });
+    }
+
+    let transaction: sql.Transaction | undefined;
+    try {
+        const pool = await getPool();
+        transaction = new sql.Transaction(pool as sql.ConnectionPool);
+        await transaction.begin(sql.ISOLATION_LEVEL.SERIALIZABLE);
+
+        const asset = await transaction.request()
+            .input('nuibm', sql.Int, nuibm)
+            .query(`SELECT NUIBM FROM vwBienesMuebles_CG_Current WHERE NUIBM = @nuibm`);
+        if (asset.recordset.length === 0) {
+            await transaction.rollback();
+            transaction = undefined;
+            return res.status(404).json({ message: 'Bien mueble no encontrado.' });
+        }
+
+        const latestResguardo = await transaction.request()
+            .input('nuibm', sql.Int, nuibm)
+            .query(`SELECT TOP (1) CONVERT(char(10), Fecha, 23) AS Fecha
+                    FROM Bienes_Muebles_Resguardos WITH (UPDLOCK, HOLDLOCK)
+                    WHERE NUIBM = @nuibm
+                    ORDER BY IdResguardo DESC`);
+        const fechaActual = String(latestResguardo.recordset[0]?.Fecha ?? '').trim();
+        if (fechaActual && fecha <= fechaActual) {
+            await transaction.rollback();
+            transaction = undefined;
+            return res.status(400).json({ message: `La fecha debe ser posterior a la del resguardo actual (${fechaActual}).` });
+        }
+
+        const result = await transaction.request()
+            .input('NUIBM', sql.Int, nuibm)
+            .input('UA', sql.TinyInt, unidad)
+            .input('Ct', sql.TinyInt, centro)
+            .input('Area', sql.VarChar(3), area)
+            .input('RFC', sql.VarChar(13), rfc)
+            .input('Fecha', sql.SmallDateTime, new Date(`${fecha}T12:00:00`))
+            .input('Condiciones', sql.TinyInt, idCondiciones)
+            .input('Color', sql.TinyInt, idColor)
+            .input('IdUser', sql.SmallInt, req.idUser)
+            .execute('webAddResgBM');
+
+        const idResguardo = Number(result.returnValue);
+        if (!Number.isInteger(idResguardo) || idResguardo <= 0) {
+            await transaction.rollback();
+            transaction = undefined;
+            return res.status(422).json({ message: 'No se pudo crear el resguardo. Verifique que el área y el responsable estén vigentes.' });
+        }
+
+        await transaction.commit();
+        transaction = undefined;
+        return res.status(201).json({ NUIBM: nuibm, IdResguardo: idResguardo, message: 'Nuevo resguardo creado correctamente.' });
+    } catch (error) {
+        if (transaction) await transaction.rollback().catch(() => undefined);
+        console.error('Error al crear un nuevo resguardo:', error);
+        return res.status(500).json({ message: 'Error del servidor al crear el resguardo.' });
+    }
+});
+
 bmRouter.get("/:nuibm", checkToken, async (req: AuthRequest, res: Response) => {
     try {
         const nuibm = Number(req.params.nuibm);
@@ -369,15 +473,8 @@ bmRouter.get("/:nuibm", checkToken, async (req: AuthRequest, res: Response) => {
         const result = await (pool as sql.ConnectionPool)
             .request()
             .input('nuibm', sql.Int, nuibm)
-            .query(`SELECT bm.NUIBM, bm.FullDescripcion, bm.Condiciones, bm.Valor, bm.nameProveedor, bm.Factura, bm.FechaFactura, bm.Referencia, bm.Etiquetado, bm.EF, bm.BlackList, bm.Resguardatarios, bm.Unidad, bm.Centro, bm.Area, bm.Firmado, bm.IdResguardo, dbo.GetNameArea(bm.Unidad, bm.Centro, bm.Area, 0, 0, '') NameArea, bm.Baja, bm.FechaBaja, bm.dscCausaBaja, bm.obsBaja, bm.Verificado, bm.NameVerifiedBy, bm.FoundIn, bm.VerifiedAt, bm.IdRequiredAction, bm.VerifObs,
-                    latest.Resolved, latest.ResolvedAt
+            .query(`SELECT bm.NUIBM, bm.FullDescripcion, bm.IdCondiciones, bm.Condiciones, bm.IdColor, bm.Color, bm.Valor, bm.nameProveedor, bm.Factura, bm.FechaFactura, bm.Referencia, bm.Etiquetado, bm.EF, bm.BlackList, bm.Responsable, bm.Resguardatarios, bm.Unidad, bm.Centro, bm.Area, bm.Firmado, bm.IdResguardo, CONVERT(char(10), bm.Fecha, 23) AS Fecha, dbo.GetNameArea(bm.Unidad, bm.Centro, bm.Area, 0, 0, '') NameArea, bm.Baja, bm.FechaBaja, bm.dscCausaBaja, bm.obsBaja, bm.Verificado, bm.NameVerifiedBy, bm.FoundIn, bm.VerifiedAt, bm.IdRequiredAction, bm.VerifObs, Resolved, ResolvedAt
                     FROM vwBienesMuebles_CG_Current AS bm
-                    OUTER APPLY (
-                        SELECT TOP (1) v.Resolved, v.ResolvedAt
-                        FROM Bienes_Muebles_Verificacion AS v
-                        WHERE v.NUIBM = bm.NUIBM
-                        ORDER BY v.Id DESC
-                    ) AS latest
                     WHERE bm.NUIBM = @nuibm`);
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: 'Bien Mueble no encontrado' });
@@ -423,9 +520,9 @@ bmRouter.get("/:rfc/:ua/:ct/:area", checkToken, async (req: AuthRequest, res: Re
         const whereClause = conditions.length > 0 ? `WHERE baja=0 AND Blacklist=0 AND ${conditions.join(' AND ')}` : '';
 
         const query = `
-            SELECT NUIBM, FullDescripcion, Condiciones, Valor, nameProveedor, Factura, FechaFactura, Referencia, Etiquetado, EF, BlackList, Resguardatarios, Unidad, Centro, Area, 
-                   Firmado, IdResguardo, dbo.GetNameArea(Unidad, Centro, Area, 0, 0, '') NameArea, 
-                   Baja, FechaBaja, dscCausaBaja, obsBaja, Verificado, NameVerifiedBy, FoundIn, VerifiedAt, IdRequiredAction, VerifObs
+            SELECT NUIBM, FullDescripcion, IdCondiciones, Condiciones, IdColor, Color, Valor, nameProveedor, Factura, FechaFactura, Referencia, Etiquetado, EF, BlackList, Responsable, Resguardatarios, Unidad, Centro, Area,
+                   Firmado, IdResguardo, Fecha, dbo.GetNameArea(Unidad, Centro, Area, 0, 0, '') NameArea,
+                   Baja, FechaBaja, dscCausaBaja, obsBaja, Verificado, NameVerifiedBy, FoundIn, VerifiedAt, IdRequiredAction, VerifObs, Resolved, ResolvedAt
             FROM vwBienesMuebles_CG_Current 
             ${whereClause}
         `;
