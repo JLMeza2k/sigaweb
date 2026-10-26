@@ -27,13 +27,16 @@ function validarBienSinRegistro(body: BienSinRegistroBody): string | null {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || Number.isNaN(Date.parse(`${fecha}T12:00:00`))) {
         return 'La fecha es obligatoria y debe ser válida.';
     }
-    for (const [nombre, value] of [['Unidad', body.Unidad], ['Centro', body.Centro]] as const) {
-        if (value === '' || value == null || !Number.isInteger(Number(value)) || Number(value) < 0 || Number(value) > 255) {
-            return `${nombre} debe ser un número entre 0 y 255.`;
-        }
+    const unidad = Number(body.Unidad);
+    if (body.Unidad === '' || body.Unidad == null || !Number.isInteger(unidad) || unidad <= 0 || unidad > 255) {
+        return 'Unidad debe ser un número mayor que 0.';
     }
-    if (typeof body.Area !== 'string' || body.Area.trim().length < 1 || body.Area.trim().length > 3) {
-        return 'El área debe tener entre 1 y 3 caracteres.';
+    const centro = Number(body.Centro);
+    if (body.Centro === '' || body.Centro == null || !Number.isInteger(centro) || centro < 0 || centro >= 255) {
+        return 'Centro debe ser un número entre 0 y 254.';
+    }
+    if (typeof body.Area !== 'string' || body.Area.trim().length < 1 || body.Area.trim().length > 3 || body.Area.trim() === '000') {
+        return 'El área es obligatoria, debe tener entre 1 y 3 caracteres y ser distinta de 000.';
     }
     if (body.Observaciones != null && (typeof body.Observaciones !== 'string' || body.Observaciones.length > 255)) {
         return 'Las observaciones no pueden exceder 255 caracteres.';
@@ -154,13 +157,13 @@ bmRouter.get('/sin-registro', checkToken, async (req: AuthRequest, res: Response
             const value = Number(centro);
             if (!Number.isInteger(value) || value < 0 || value > 255) return res.status(400).json({ message: 'Centro inválido.' });
             request.input('centro', sql.TinyInt, value);
-            conditions.push('r.Centro = @centro');
+            conditions.push('(r.Centro = @centro OR @centro = 255)');
         }
         if (typeof area === 'string' && area !== '') {
             const areaValue = area.trim();
             if (areaValue.length < 1 || areaValue.length > 3) return res.status(400).json({ message: 'Área inválida.' });
             request.input('area', sql.VarChar(3), areaValue);
-            conditions.push('r.Area = @area');
+            conditions.push('(r.Area = @area OR @area = \'000\')');
         }
 
         const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

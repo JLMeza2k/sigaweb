@@ -68,9 +68,12 @@ function AreaSelectors({
   required?: boolean;
   groupUnitCenter?: boolean;
 }) {
-  const unidades = useMemo(() => areas.filter((item) => item.Centro === 0 && item.Area === '000'), [areas]);
-  const centros = useMemo(() => areas.filter((item) => item.Unidad === Number(unidad) && item.Area === '000' && item.Centro !== 0), [areas, unidad]);
-  const areasCentro = useMemo(() => areas.filter((item) => item.Unidad === Number(unidad) && item.Centro === Number(centro) && item.Area !== '000'), [areas, unidad, centro]);
+  const unidades = useMemo(() => areas.filter((item) => item.Unidad > 0 && item.Centro === 0 && item.Area.trim() === '000'), [areas]);
+  const centros = useMemo(() => areas.filter((item) => item.Unidad === Number(unidad) && item.Area.trim() === '000' && item.Centro >= 0 && item.Centro < 255), [areas, unidad]);
+  const areasCentro = useMemo(() => {
+    if (!required && Number(centro) === 255) return [];
+    return areas.filter((item) => item.Unidad === Number(unidad) && item.Centro === Number(centro) && item.Area.trim() !== '000');
+  }, [areas, unidad, centro, required]);
   const selectClass = 'h-10 w-full rounded-xl border border-border-strong bg-input px-3 text-sm text-fg-primary shadow-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-panel-muted disabled:text-fg-faint';
   return (
     <>
@@ -85,15 +88,17 @@ function AreaSelectors({
         <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
           Centro
           <select required={required} value={centro} disabled={!unidad} onChange={(event) => onCentro(event.target.value)} className={`${selectClass} mt-1`}>
-            <option value="">{required ? 'Selecciona un centro' : 'Todos los centros'}</option>
-            {centros.map((item) => <option key={`${item.Unidad}-${item.Centro}`} value={item.Centro}>{item.ShortName || item.Descripcion}</option>)}
+            <option value="">{required ? 'Selecciona un centro' : 'Sin filtro de centro'}</option>
+            {centros.map((item) => <option key={`${item.Unidad}-${item.Centro}`} value={item.Centro}>{item.Centro === 0 ? `Centro 0 — ${item.ShortName || item.Descripcion}` : item.ShortName || item.Descripcion}</option>)}
+            {!required && <option value="255">Todos los Centros</option>}
           </select>
         </label>
       </div>
       <label className="block text-xs font-bold uppercase tracking-wide text-fg-fainter">
         Área
         <select required={required} value={area} disabled={!centro} onChange={(event) => onArea(event.target.value)} className={`${selectClass} mt-1`}>
-          <option value="">{required ? 'Selecciona un área' : 'Todas las áreas'}</option>
+          <option value="">{required ? 'Selecciona un área' : 'Sin filtro de área'}</option>
+          {!required && <option value="000">Todas las áreas</option>}
           {areasCentro.map((item) => <option key={`${item.Unidad}-${item.Centro}-${item.Area}`} value={item.Area}>{item.Descripcion}</option>)}
         </select>
       </label>
@@ -199,6 +204,12 @@ export default function BienesSinRegistro({ onBack }: { onBack?: () => void } = 
 
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const unidad = Number(draft.Unidad);
+    const centro = Number(draft.Centro);
+    if (!Number.isInteger(unidad) || unidad <= 0 || !Number.isInteger(centro) || centro < 0 || centro >= 255 || !draft.Area.trim() || draft.Area.trim() === '000') {
+      void Swal.fire({ icon: 'error', title: 'Ubicación incompleta', text: 'La relación requiere una unidad mayor que 0, un centro menor que 255 y un área distinta de 000.' });
+      return;
+    }
     setSaving(true);
     const body = {
       ...draft,
@@ -277,7 +288,7 @@ export default function BienesSinRegistro({ onBack }: { onBack?: () => void } = 
           <AreaSelectors
             areas={areas} unidad={filter.Unidad} centro={filter.Centro} area={filter.Area}
             onUnidad={(Unidad) => setFilter({ Unidad, Centro: '', Area: '' })}
-            onCentro={(Centro) => setFilter((current) => ({ ...current, Centro, Area: '' }))}
+            onCentro={(Centro) => setFilter((current) => ({ ...current, Centro, Area: Centro === '255' ? '000' : '' }))}
             onArea={(Area) => setFilter((current) => ({ ...current, Area }))}
             groupUnitCenter
           />
