@@ -36,8 +36,8 @@ async function errorMessage(response: Response) {
 export default function BmVerificarModal({ nuibm, userId, defaults, onClose, onSuccess }: Props) {
   const { token } = useAuth();
   const [unidad, setUnidad] = useState(defaults.Unidad > 0 ? String(defaults.Unidad) : '');
-  const [centro, setCentro] = useState(defaults.Centro > 0 && defaults.Centro !== 255 ? String(defaults.Centro) : '');
-  const [area, setArea] = useState(defaults.Area && defaults.Area.trim() !== '000' ? defaults.Area : '');
+  const [centro, setCentro] = useState(defaults.Centro >= 0 && defaults.Centro < 255 ? String(defaults.Centro) : '');
+  const [area, setArea] = useState(defaults.Area && defaults.Area.trim() !== '000' ? defaults.Area.trim() : '');
   const [actionId, setActionId] = useState('0');
   const [observaciones, setObservaciones] = useState('');
 
@@ -68,7 +68,7 @@ export default function BmVerificarModal({ nuibm, userId, defaults, onClose, onS
     };
     void Promise.allSettled([loadUnits(), loadActions()]).then(([unitsResult, actionsResult]) => {
       if (controller.signal.aborted) return;
-      if (unitsResult.status === 'fulfilled') setUnidades(unitsResult.value);
+      if (unitsResult.status === 'fulfilled') setUnidades(unitsResult.value.filter((item) => Number(item.Unidad) > 0));
       else setCatalogError(unitsResult.reason instanceof Error ? unitsResult.reason.message : 'No se pudieron cargar las unidades.');
       setLoadingUnidades(false);
       if (actionsResult.status === 'fulfilled') setAcciones(actionsResult.value);
@@ -86,7 +86,7 @@ export default function BmVerificarModal({ nuibm, userId, defaults, onClose, onS
       .then(async (response) => {
         if (controller.signal.aborted) return;
         if (!response.ok) throw new Error(await errorMessage(response));
-        const list = unwrap<Centro>(await response.json()).filter((item) => Number(item.Centro) > 0);
+        const list = unwrap<Centro>(await response.json()).filter((item) => Number(item.Centro) >= 0 && Number(item.Centro) < 255);
         setCentros(list);
         setCentrosFor(requestedUnidad);
       })
@@ -113,7 +113,7 @@ export default function BmVerificarModal({ nuibm, userId, defaults, onClose, onS
           return;
         }
         if (!response.ok) throw new Error(await errorMessage(response));
-        setAreas(unwrap<CatalogArea>(await response.json()));
+        setAreas(unwrap<CatalogArea>(await response.json()).filter((item) => item.Area.trim() !== '000'));
         setAreasFor(requestedAreaQuery);
       })
       .catch((reason: unknown) => {
@@ -140,8 +140,9 @@ export default function BmVerificarModal({ nuibm, userId, defaults, onClose, onS
 
   const loadingCentros = Boolean(unidad) && centrosFor !== unidad;
   const loadingAreas = Boolean(areaQuery) && areasFor !== areaQuery;
-  const areaSelected = areas.some((item) => item.Area.trim() === area.trim());
-  const canSubmit = Boolean(unidad && centro && areaSelected) && !submitting && !loadingCentros && !loadingAreas;
+  const areaSelected = Boolean(area.trim() && area.trim() !== '000' && areas.some((item) => item.Area.trim() === area.trim()));
+  const canSubmit = Number(unidad) > 0 && Number(centro) >= 0 && Number(centro) < 255 && areaSelected
+    && !submitting && !loadingCentros && !loadingAreas;
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -560,8 +560,14 @@ bmRouter.post("/verificar/:nuibm", checkToken, async (req: AuthRequest, res: Res
         if (!fecha || !verifiedBy) {
             return res.status(400).json({ message: 'Faltan datos requeridos (fecha, verifiedBy).' });
         }
-        if (!foundArea || typeof foundArea !== 'string' || foundArea.trim() === '') {
-            return res.status(400).json({ message: 'El área es obligatoria.' });
+        if (!Number.isInteger(foundUA) || Number(foundUA) <= 0 || Number(foundUA) > 255) {
+            return res.status(400).json({ message: 'La unidad debe ser un número mayor que 0.' });
+        }
+        if (!Number.isInteger(foundCt) || Number(foundCt) < 0 || Number(foundCt) >= 255) {
+            return res.status(400).json({ message: 'El centro debe ser un número entre 0 y 254.' });
+        }
+        if (typeof foundArea !== 'string' || foundArea.trim().length < 1 || foundArea.trim().length > 3 || foundArea.trim() === '000') {
+            return res.status(400).json({ message: 'El área es obligatoria, debe tener entre 1 y 3 caracteres y ser distinta de 000.' });
         }
 
         const pool = await getPool();
