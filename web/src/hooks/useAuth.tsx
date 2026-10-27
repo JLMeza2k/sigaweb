@@ -10,7 +10,22 @@ function getErrorMessage(error: unknown): string {
    return String(error);
 }
 
-const NoUser: UserType = { IdUser: -1, RFC: '', Nombre: '', eMail: '', Profile: 0, Activo: false, sideBarOpcs: null }
+const NoUser: UserType = {
+   IdUser: -1,
+   RFC: '',
+   Nombre: '',
+   eMail: '',
+   Profile: 0,
+   Activo: false,
+   sideBarOpcs: null,
+   Viaticos: null,
+   BienesMuebles: null,
+   Adquisiciones: null,
+   Almacen: null,
+   Presupuesto: null,
+   Contabilidad: null,
+   eArch: null,
+}
 
 interface AuthContextType {
    user: UserType;

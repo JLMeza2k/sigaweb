@@ -15,7 +15,7 @@ routerUsers.get('/user', checkToken, async (req: AuthRequest, res: Response) => 
 		const pool = await getPool();
 		const userRow = await (pool as sql.ConnectionPool)
 			.request()
-			.query(`SELECT wu.IdUser, wu.RFC, e.Nombre, wu.eMail, wu.Profile, wu.Activo, wu.sideBarOpcs FROM WebUsers wu INNER JOIN Empleados e ON e.RFC = wu.RFC WHERE wu.IdUser=${req.idUser}`);
+			.query(`SELECT wu.IdUser, wu.RFC, e.Nombre, wu.eMail, wu.Profile, wu.Activo, wu.sideBarOpcs, wu.Viaticos, wu.BienesMuebles, wu.Adquisiciones, wu.Almacen, wu.Presupuesto, wu.Contabilidad, wu.eArch FROM WebUsers wu INNER JOIN Empleados e ON e.RFC = wu.RFC WHERE wu.IdUser=${req.idUser}`);
 		if (userRow.recordset.length === 0)
 			return res.status(404).json({ message: 'No se encontró el usuario' })
 		console.log("Usuario obtenido", JSON.stringify(userRow.recordset[0]))
