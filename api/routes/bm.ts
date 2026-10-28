@@ -397,7 +397,13 @@ bmRouter.post('/:nuibm/resguardo', checkToken, async (req: AuthRequest, res: Res
     if (!esFechaValida(fecha)) {
         return res.status(400).json({ message: 'La fecha del resguardo es obligatoria y debe ser válida.' });
     }
-    for (const [label, value] of [['Unidad', unidad], ['Centro', centro], ['Condiciones', idCondiciones], ['Color', idColor]] as const) {
+    if (body.unidad == null || body.unidad === '' || !Number.isInteger(unidad) || unidad <= 0 || unidad > 255) {
+        return res.status(400).json({ message: 'Unidad debe ser un número mayor que 0.' });
+    }
+    if (body.centro == null || body.centro === '' || !Number.isInteger(centro) || centro < 0 || centro >= 255) {
+        return res.status(400).json({ message: 'Centro debe ser un número entre 0 y 254.' });
+    }
+    for (const [label, value] of [['Condiciones', idCondiciones], ['Color', idColor]] as const) {
         if (!Number.isInteger(value) || value < 0 || value > 255) {
             return res.status(400).json({ message: `${label} debe ser un número entre 0 y 255.` });
         }

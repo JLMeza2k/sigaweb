@@ -75,7 +75,7 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
 
   const [fecha, setFecha] = useState(() => defaultDate(defaults.fechaActual));
   const [unidad, setUnidad] = useState(defaults.unidad > 0 ? String(defaults.unidad) : '');
-  const [centro, setCentro] = useState(defaults.centro > 0 && defaults.centro !== 255 ? String(defaults.centro) : '');
+  const [centro, setCentro] = useState(defaults.centro >= 0 && defaults.centro < 255 ? String(defaults.centro) : '');
   const [area, setArea] = useState(defaults.area.trim() !== '000' ? defaults.area.trim() : '');
   const [idCondiciones, setIdCondiciones] = useState(defaults.idCondiciones == null ? '' : String(defaults.idCondiciones));
   const [idColor, setIdColor] = useState(defaults.idColor == null ? '' : String(defaults.idColor));
@@ -125,11 +125,11 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
   }, [onClose, submitting]);
 
   const unidades = useMemo(
-    () => allAreas.filter((item) => Number(item.Centro) === 0 && item.Area.trim() === '000'),
+    () => allAreas.filter((item) => Number(item.Unidad) > 0 && Number(item.Centro) === 0 && item.Area.trim() === '000'),
     [allAreas],
   );
   const centros = useMemo(
-    () => allAreas.filter((item) => Number(item.Unidad) === Number(unidad) && Number(item.Centro) > 0 && item.Area.trim() === '000'),
+    () => allAreas.filter((item) => Number(item.Unidad) === Number(unidad) && Number(item.Centro) >= 0 && Number(item.Centro) < 255 && item.Area.trim() === '000'),
     [allAreas, unidad],
   );
   const areas = useMemo(
@@ -137,7 +137,7 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
     [allAreas, unidad, centro],
   );
 
-  const areaSelected = areas.some((item) => item.Area.trim() === area.trim());
+  const areaSelected = Boolean(area.trim() && area.trim() !== '000' && areas.some((item) => item.Area.trim() === area.trim()));
   const conditionSelected = conditions.some((item) => String(item.Codigo) === idCondiciones);
   const colorSelected = colors.some((item) => String(item.Codigo) === idColor);
   const rfcValid = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/.test(rfc);
@@ -145,7 +145,8 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
     && !Number.isNaN(Date.parse(`${fecha}T12:00:00`))
     && (!latestDate || fecha > latestDate);
   const canSubmit = !loadingCatalogs && !catalogError && !submitting
-    && Boolean(unidad && centro && areaSelected && conditionSelected && colorSelected && rfcValid && fechaValid);
+    && Boolean(unidad && centro) && Number(unidad) > 0 && Number(centro) >= 0 && Number(centro) < 255
+    && areaSelected && conditionSelected && colorSelected && rfcValid && fechaValid;
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -220,7 +221,7 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
               Centro
               <select required value={centro} disabled={!unidad || loadingCatalogs || submitting} onChange={(event) => { setCentro(event.target.value); setArea(''); setError(''); }} className={`${inputClass} mt-1`}>
                 <option value="">{!unidad ? 'Selecciona una unidad primero' : 'Selecciona un centro'}</option>
-                {centros.map((item) => <option key={`${item.Unidad}-${item.Centro}`} value={item.Centro}>{item.ShortName || item.Descripcion}</option>)}
+        {centros.map((item) => <option key={`${item.Unidad}-${item.Centro}`} value={item.Centro}>{Number(item.Centro) === 0 ? `Centro 0 — ${item.ShortName || item.Descripcion}` : item.ShortName || item.Descripcion}</option>)}
               </select>
             </label>
           </div>
@@ -229,7 +230,7 @@ export default function BmNuevoResguardoModal({ nuibm, defaults, onClose, onSucc
             Área
             <select required value={area} disabled={!unidad || !centro || loadingCatalogs || submitting} onChange={(event) => { setArea(event.target.value); setError(''); }} className={`${inputClass} mt-1`}>
               <option value="">{!centro ? 'Selecciona un centro primero' : 'Selecciona un área'}</option>
-              {areas.map((item) => <option key={`${item.Unidad}-${item.Centro}-${item.Area}`} value={item.Area}>{item.Descripcion}</option>)}
+              {areas.map((item) => <option key={`${item.Unidad}-${item.Centro}-${item.Area}`} value={item.Area.trim()}>{item.Descripcion}</option>)}
             </select>
           </label>
 
