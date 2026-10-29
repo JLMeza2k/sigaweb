@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import HttpClient from '../../utils/HttpClient';
 import { API_BASE } from '../../utils/api';
+
+const httpClient = new HttpClient(API_BASE);
 
 export interface EdoPptoRow {
   Partida: number;
@@ -46,6 +50,7 @@ export function useEdoPptoData(
   ff: string,
   byCapConcPart: 0 | 1 | 2
 ): EdoPptoDataResult {
+  const { token } = useAuth();
   const [rows, setRows] = useState<EdoPptoRow[]>([]);
   const [totals, setTotals] = useState<EdoPptoTotals>(ZERO_TOTALS);
   const [loading, setLoading] = useState(true);
@@ -58,8 +63,9 @@ export function useEdoPptoData(
 
     const ctrl = new AbortController();
 
-    fetch(
-      `${API_BASE}/edoppto/cog/${ejercicio}/${encodeURIComponent(ff)}/1/${byCapConcPart}`,
+    httpClient.get(
+      `edoppto/cog/${ejercicio}/${encodeURIComponent(ff)}/1/${byCapConcPart}`,
+      token,
       { signal: ctrl.signal }
     )
       .then(res => {
@@ -88,7 +94,7 @@ export function useEdoPptoData(
       .finally(() => setLoading(false));
 
     return () => ctrl.abort();
-  }, [ejercicio, ff, byCapConcPart, tick]);
+  }, [ejercicio, ff, byCapConcPart, tick, token]);
 
   return {
     rows,

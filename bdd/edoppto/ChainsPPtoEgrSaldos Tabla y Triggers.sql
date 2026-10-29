@@ -77,6 +77,7 @@ CREATE TABLE [dbo].[ChainsPptoEgrSaldos](
 GO
 
 
+DELETE FROM ChainsPptoEgrSaldos;
 
 INSERT INTO ChainsPptoEgrSaldos (Año, FF, Rubro, ProgPPtal, Partida, MomentoEgreso, Saldo)
     SELECT p.Año, pd.FF, pd.Rubro, pd.ClasifProgramatLocal, pd.Partida, pd.MomentoEgreso, SUM(Cargo-Abono)*CASE pd.MomentoEgreso WHEN 1 THEN -1 WHEN 3 THEN -1 ELSE 1 END

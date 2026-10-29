@@ -8,6 +8,7 @@ import NuevaComision from './components/viaticos/NuevaComision';
 import MisViaticos from './components/viaticos/MisViaticos';
 import FinancierosDashboard from './components/archivo-electronico/FinancierosDashboard';
 import EstadoPresupuesto from './components/presupuesto/EstadoPresupuesto';
+import SuficienciasPresupuestales from './components/presupuesto/SuficienciasPresupuestales';
 import CfdiModule from './components/cfdirepo/CfdiModule';
 import ResumenBienesMuebles from './components/bienes-muebles/ResumenBienesMuebles';
 import BienesSinRegistro from './components/bienes-muebles/BienesSinRegistro';
@@ -137,6 +138,7 @@ function App() {
        }
        if (group === 'system' && view === 'configuracion') return 'Configuración de Perfil';
        if (group === 'presupuesto' && view === 'estado-presupuesto') return 'Estado del Presupuesto';
+       if (group === 'presupuesto' && view === 'suficiencias-presupuestales') return 'Suficiencias Presupuestales';
        if (group === 'archivo-electronico') {
           if (view === 'financieros') return 'Dashboard Financiero';
           if (view === 'materiales') return 'Materiales';
@@ -162,6 +164,7 @@ function App() {
       && !is('archivo-electronico', 'financieros')
       && !is('archivo-electronico', 'materiales')
       && !is('presupuesto', 'estado-presupuesto')
+      && !is('presupuesto', 'suficiencias-presupuestales')
       && !is('contabilidad', 'cfdis')
        && !is('bienes-muebles', 'resumen')
        && !is('bienes-muebles', 'buscar')
@@ -175,6 +178,9 @@ function App() {
    }
 if (is('presupuesto', 'estado-presupuesto')) {
        return <EstadoPresupuesto onBack={() => navigate('home', 'inicio')} />;
+    }
+    if (is('presupuesto', 'suficiencias-presupuestales')) {
+       return <SuficienciasPresupuestales onBack={() => navigate('home', 'inicio')} />;
     }
      if (is('bienes-muebles', 'resumen')) {
         return <ResumenBienesMuebles onBack={() => navigate('home', 'inicio')} onRowClick={handleRowClick} />;

@@ -142,7 +142,7 @@ export default function BuscarBienesMuebles({ onOpenDetail }: { onOpenDetail: (n
     [areas],
   );
   const centros = useMemo(
-    () => areas.filter((item) => Number(item.Unidad) === Number(unidad) && Number(item.Centro) !== 0 && item.Area.trim() === '000'),
+    () => areas.filter((item) => Number(item.Unidad) === Number(unidad) && Number(item.Centro) >= 0 && Number(item.Centro) < 255 && item.Area.trim() === '000'),
     [areas, unidad],
   );
   const areasCentro = useMemo(
@@ -205,8 +205,10 @@ export default function BuscarBienesMuebles({ onOpenDetail }: { onOpenDetail: (n
     setErrorRelacion('');
     const unitLabel = unidades.find((item) => Number(item.Unidad) === ua)?.ShortName
       ?? unidades.find((item) => Number(item.Unidad) === ua)?.Descripcion;
-    const centerLabel = centros.find((item) => Number(item.Centro) === ct)?.ShortName
-      ?? centros.find((item) => Number(item.Centro) === ct)?.Descripcion;
+    const selectedCenter = centros.find((item) => Number(item.Centro) === ct);
+    const centerLabel = ct === 255 && ua > 0
+      ? 'Todos los Centros'
+      : selectedCenter?.ShortName ?? selectedCenter?.Descripcion;
     const areaLabel = areasCentro.find((item) => item.Area.trim() === areaCode)?.Descripcion;
     const location = [unitLabel, centerLabel, areaLabel].filter(Boolean).join(' / ');
     const nameArea = [normalizedRfc ? `RFC ${normalizedRfc}` : '', location].filter(Boolean).join(' · ');
