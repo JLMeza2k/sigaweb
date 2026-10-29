@@ -134,10 +134,10 @@ export default function VisorDocumentos({ documentos }: Props) {
   // ── Empty state ──
   if (documentos.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-14 text-center">
-        <div className="w-14 h-14 bg-slate-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+      <div className="bg-panel rounded-2xl border border-dashed border-border-strong p-14 text-center">
+        <div className="w-14 h-14 bg-panel-muted rounded-2xl mx-auto mb-4 flex items-center justify-center">
           <svg
-            className="w-7 h-7 text-slate-400"
+            className="w-7 h-7 text-fg-faint"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -150,7 +150,7 @@ export default function VisorDocumentos({ documentos }: Props) {
             />
           </svg>
         </div>
-        <p className="text-slate-500 font-semibold">
+        <p className="text-fg-muted font-semibold">
           No hay documentos disponibles
         </p>
       </div>
@@ -160,11 +160,11 @@ export default function VisorDocumentos({ documentos }: Props) {
   return (
     <div className="w-full h-full flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 max-h-full">
       {/* ── Document header ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4 shrink-0">
+      <div className="bg-panel rounded-2xl border border-border-subtle shadow-sm px-5 py-4 shrink-0">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <div className="flex items-center gap-2">
             <svg
-              className="w-4 h-4 text-blue-500 shrink-0"
+              className="w-4 h-4 text-accent shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -176,13 +176,13 @@ export default function VisorDocumentos({ documentos }: Props) {
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            <span className="text-sm font-bold text-slate-700">
+            <span className="text-sm font-bold text-fg-primary">
               {formatDate(selected!.Fecha)}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <svg
-              className="w-4 h-4 text-blue-500 shrink-0"
+              className="w-4 h-4 text-accent shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -194,38 +194,38 @@ export default function VisorDocumentos({ documentos }: Props) {
                 d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
               />
             </svg>
-            <span className="text-sm font-semibold text-slate-600">
+            <span className="text-sm font-semibold text-fg-secondary">
               {selected!.Referencia}
             </span>
           </div>
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-accent-soft text-accent-fg text-xs font-bold border border-accent-border">
             {selected!.TipoDocto}
           </span>
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-hover text-fg-secondary text-xs font-bold border border-border-subtle">
             {selected!.TipoArchivo === 1 ? 'PDF' : 'JPEG'}
           </span>
           <div className="flex items-center gap-1 ml-auto">
             <button
               onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}
               disabled={zoom <= 0.25}
-              className="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="h-7 w-7 flex items-center justify-center rounded-lg border border-border-strong bg-input text-sm font-bold text-fg-secondary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               −
             </button>
-            <span className="text-xs font-semibold text-slate-600 min-w-[3rem] text-center">
+            <span className="text-xs font-semibold text-fg-secondary min-w-[3rem] text-center">
               {Math.round(zoom * 100)}%
             </span>
             <button
               onClick={() => setZoom((z) => Math.min(4, z + 0.25))}
               disabled={zoom >= 4}
-              className="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="h-7 w-7 flex items-center justify-center rounded-lg border border-border-strong bg-input text-sm font-bold text-fg-secondary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               +
             </button>
             <button
               onClick={() => setZoom(1)}
               disabled={zoom === 1}
-              className="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="h-7 w-7 flex items-center justify-center rounded-lg border border-border-strong bg-input text-xs font-bold text-fg-secondary hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               title="Restablecer zoom"
             >
               ⟲
@@ -236,8 +236,8 @@ export default function VisorDocumentos({ documentos }: Props) {
 
       <div className="flex gap-4 flex-1 min-h-0">
         {/* ── Thumbnails (left) ── */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 w-28 shrink-0 flex flex-col">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 px-1">
+        <div className="bg-panel rounded-2xl border border-border-subtle shadow-sm p-3 w-28 shrink-0 flex flex-col">
+          <p className="text-xs font-bold text-fg-muted uppercase tracking-wide mb-3 px-1">
             Documentos ({documentos.length})
           </p>
           <div className="flex-1 overflow-y-auto space-y-3">
@@ -250,8 +250,8 @@ export default function VisorDocumentos({ documentos }: Props) {
                   setNumPages(null);
                 }}
                 className={`shrink-0 w-full rounded-xl border-2 overflow-hidden transition-all duration-150 flex flex-col items-center justify-center gap-1 p-1 ${idx === selectedIdx
-                  ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-md'
-                  : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'
+                  ? 'border-accent ring-2 ring-accent/20 shadow-md'
+                  : 'border-border-subtle hover:border-border-strong hover:bg-hover'
                   }`}
               >
                 {doc.thumbnail ? (
@@ -261,8 +261,8 @@ export default function VisorDocumentos({ documentos }: Props) {
                     className="w-full h-16 object-cover rounded-lg"
                   />
                 ) : (
-                  <div className="w-full h-16 bg-slate-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-full h-16 bg-panel-muted rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-fg-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                         d={doc.TipoArchivo === 1
                           ? 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'
@@ -270,7 +270,7 @@ export default function VisorDocumentos({ documentos }: Props) {
                     </svg>
                   </div>
                 )}
-                <span className="text-[10px] font-semibold text-slate-600 text-center leading-tight line-clamp-2">
+                <span className="text-[10px] font-semibold text-fg-secondary text-center leading-tight line-clamp-2">
                   {doc.TipoDocto}
                 </span>
               </button>
@@ -279,12 +279,12 @@ export default function VisorDocumentos({ documentos }: Props) {
         </div>
 
         {/* ── Document viewer ── */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+        <div className="bg-panel rounded-2xl border border-border-subtle shadow-sm overflow-hidden flex-1 flex flex-col">
           {loading && (
-            <div className="flex items-center justify-center flex-1 p-4 bg-slate-50/50">
+            <div className="flex items-center justify-center flex-1 p-4 bg-app/50">
               <div className="flex flex-col items-center gap-3">
                 <svg
-                  className="animate-spin w-8 h-8 text-blue-500"
+                  className="animate-spin w-8 h-8 text-accent"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -302,7 +302,7 @@ export default function VisorDocumentos({ documentos }: Props) {
                     d="M4 12a8 8 0 018-8v8H4z"
                   />
                 </svg>
-                <p className="text-sm font-semibold text-slate-500">
+                <p className="text-sm font-semibold text-fg-muted">
                   Cargando documento…
                 </p>
               </div>
@@ -310,11 +310,11 @@ export default function VisorDocumentos({ documentos }: Props) {
           )}
 
           {error && (
-            <div className="flex items-center justify-center flex-1 p-4 bg-slate-50/50">
+            <div className="flex items-center justify-center flex-1 p-4 bg-danger-soft">
               <div className="flex flex-col items-center gap-2 text-center">
-                <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-danger-soft border border-danger-border rounded-2xl flex items-center justify-center">
                   <svg
-                    className="w-6 h-6 text-red-500"
+                    className="w-6 h-6 text-danger-fg"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -327,7 +327,7 @@ export default function VisorDocumentos({ documentos }: Props) {
                     />
                   </svg>
                 </div>
-                <p className="text-sm font-semibold text-red-600">{error}</p>
+                <p className="text-sm font-semibold text-danger-fg">{error}</p>
               </div>
             </div>
           )}
@@ -336,7 +336,7 @@ export default function VisorDocumentos({ documentos }: Props) {
             <div className="flex flex-col flex-1">
               <div
                 ref={viewerRef}
-                className="flex-1 relative overflow-hidden min-h-0 p-4 bg-slate-50/50"
+                className="flex-1 relative overflow-hidden min-h-0 p-4 bg-app/50"
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -366,7 +366,7 @@ export default function VisorDocumentos({ documentos }: Props) {
                     </Document>
                   </div>
                 ) : (
-                  <div className="text-sm font-semibold text-slate-400">
+                  <div className="text-sm font-semibold text-fg-faint">
                     Preparando documento…
                   </div>
                 )}
@@ -376,11 +376,11 @@ export default function VisorDocumentos({ documentos }: Props) {
                   <button
                     onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
                     disabled={pageNumber <= 1}
-                    className="h-8 px-3 text-xs font-bold bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="h-8 px-3 text-xs font-bold bg-input text-fg-secondary border border-border-strong rounded-xl shadow-sm hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   >
                     Anterior
                   </button>
-                  <span className="text-sm font-semibold text-slate-600">
+                  <span className="text-sm font-semibold text-fg-secondary">
                     {pageNumber} / {numPages}
                   </span>
                   <button
@@ -388,7 +388,7 @@ export default function VisorDocumentos({ documentos }: Props) {
                       setPageNumber((p) => Math.min(numPages, p + 1))
                     }
                     disabled={pageNumber >= numPages}
-                    className="h-8 px-3 text-xs font-bold bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="h-8 px-3 text-xs font-bold bg-input text-fg-secondary border border-border-strong rounded-xl shadow-sm hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   >
                     Siguiente
                   </button>
@@ -399,7 +399,7 @@ export default function VisorDocumentos({ documentos }: Props) {
 
           {!loading && !error && selected!.TipoArchivo === 0 && documentUrl && (
             <div
-              className="relative flex-1 bg-slate-50/50 rounded-2xl overflow-hidden"
+              className="relative flex-1 bg-app/50 rounded-2xl overflow-hidden"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}

@@ -140,7 +140,7 @@ export default function MisViaticos() {
     if (!docParams) return null;
     const parts = [docParams.IdFUC, docParams.IdOficio, docParams.IdFTV, docParams.IdFacturas]
       .filter((id): id is number => id !== null && id !== 0 && id !== undefined);
-    return parts.length > 0 ? `viaticos/earchdata/${parts.join('-')}` : null;
+    return parts.length > 0 ? `earch/earchdata/${parts.join('-')}` : null;
   })();
   const { data: documentosData } = useFetch<DocumentoItem[]>(docUrl, [docUrl]);
 

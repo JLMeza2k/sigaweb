@@ -10,6 +10,14 @@ import ThemeToggle from '../shared/ThemeToggle';
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: CURRENT_YEAR - 2019 }, (_, i) => 2020 + i);
 
+function formatKpiAmount(value: number, inThousands: boolean): string {
+  const formatted = new Intl.NumberFormat('es-MX', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(Number(value ?? 0) / (inThousands ? 1_000 : 1_000_000));
+  return `${formatted} ${inThousands ? 'mil' : 'M'}`;
+}
+
 /* ── SVG icons ── */
 const IconMoney = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,6 +151,7 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
     loading, error,
     refetch,
   } = useEdoPptoData(ejercicio, ff, byCapConcPart);
+  const kpisInThousands = totals.Modificado < 1_000_000;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -208,14 +217,10 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
       </header>
 
       {/* ══ Main ══ */}
-      <main className="flex-1 overflow-auto p-4 flex flex-col gap-4">
+      <main className="custom-scrollbar flex-1 overflow-auto p-4 flex flex-col gap-2">
 
         {/* ━━━━ Filtros ━━━━ */}
         <section className="bg-panel rounded-2xl p-4 flex flex-col gap-4 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <SectionBadge color="green" label="Parámetros" />
-          </div>
-
           <div className="flex flex-wrap items-end gap-4">
             <YearSelect id="sel-ejercicio" label="Ejercicio" value={ejercicio} onChange={setEjercicio} />
 
@@ -244,37 +249,26 @@ export default function EdoPptoDashboard({ onBack }: EdoPptoDashboardProps) {
 
         {/* ━━━━ KPIs ━━━━ */}
         <section className="bg-panel rounded-2xl p-4 flex flex-col gap-4 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <SectionBadge color="blue" label="Totales" />
-          </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-            <KpiCard title="Autorizado" value={loading ? '—' : formatCurrency(totals.Autorizado)} subtitle="Presupuesto inicial" icon={<IconWallet />} color="blue" loading={loading} delay={0} />
-            <KpiCard title="Modificado" value={loading ? '—' : formatCurrency(totals.Modificado)} subtitle="Ajustes acumulados" icon={<IconScale />} color="purple" loading={loading} delay={60} />
-            <KpiCard title="Disponible" value={loading ? '—' : formatCurrency(totals.Disponible)} subtitle="Por ejercer" icon={<IconMoney />} color="green" loading={loading} delay={120} />
-            <KpiCard title="Reservado" value={loading ? '—' : formatCurrency(totals.Reservado)} subtitle="Pre-compromiso" icon={<IconScale />} color="amber" loading={loading} delay={180} />
-            <KpiCard title="Comprometido" value={loading ? '—' : formatCurrency(totals.Comprometido)} subtitle="Compromisos formales" icon={<IconWallet />} color="blue" loading={loading} delay={240} />
-            <KpiCard title="Devengado" value={loading ? '—' : formatCurrency(totals.Devengado)} subtitle="Cuentas por liquidar" icon={<IconMoney />} color="purple" loading={loading} delay={300} />
-            <KpiCard title="Pagado" value={loading ? '—' : formatCurrency(totals.Pagado)} subtitle="Ejercido" icon={<IconWallet />} color="green" loading={loading} delay={360} />
+            <KpiCard title="Autorizado" value={loading ? '—' : formatKpiAmount(totals.Autorizado, kpisInThousands)} subtitle="Presupuesto inicial" icon={<IconWallet />} color="blue" loading={loading} delay={0} />
+            <KpiCard title="Modificado" value={loading ? '—' : formatKpiAmount(totals.Modificado, kpisInThousands)} subtitle="Ajustes acumulados" icon={<IconScale />} color="purple" loading={loading} delay={60} />
+            <KpiCard title="Disponible" value={loading ? '—' : formatKpiAmount(totals.Disponible, kpisInThousands)} subtitle="Por ejercer" icon={<IconMoney />} color="green" loading={loading} delay={120} />
+            <KpiCard title="Reservado" value={loading ? '—' : formatKpiAmount(totals.Reservado, kpisInThousands)} subtitle="Pre-compromiso" icon={<IconScale />} color="amber" loading={loading} delay={180} />
+            <KpiCard title="Comprometido" value={loading ? '—' : formatKpiAmount(totals.Comprometido, kpisInThousands)} subtitle="Compromisos formales" icon={<IconWallet />} color="blue" loading={loading} delay={240} />
+            <KpiCard title="Devengado" value={loading ? '—' : formatKpiAmount(totals.Devengado, kpisInThousands)} subtitle="Cuentas por liquidar" icon={<IconMoney />} color="purple" loading={loading} delay={300} />
+            <KpiCard title="Pagado" value={loading ? '—' : formatKpiAmount(totals.Pagado, kpisInThousands)} subtitle="Ejercido" icon={<IconWallet />} color="green" loading={loading} delay={360} />
           </div>
         </section>
 
         {/* ━━━━ Listado ━━━━ */}
         <section className="bg-panel rounded-2xl p-4 flex-1 min-h-0 flex flex-col">
-          <div className="flex items-center justify-between mb-3 flex-shrink-0">
-            <SectionBadge color="green" label="Detalle por Clave" />
-            <span className="text-xs text-fg-faint font-mono">
-              {loading ? 'Cargando…' : `${rows.length} registro${rows.length === 1 ? '' : 's'}`}
-            </span>
-          </div>
-
           {error && (
             <div className="bg-danger-soft border border-danger-border text-danger-fg px-4 py-3 rounded-xl text-sm mb-3">
               {error}
             </div>
           )}
 
-          <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border-subtle">
+          <div className="custom-scrollbar flex-1 min-h-0 overflow-auto rounded-xl border border-border-subtle">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-app/95 backdrop-blur-sm z-10">
                 <tr className="text-fg-fainter uppercase tracking-wider text-[10px] font-black">
